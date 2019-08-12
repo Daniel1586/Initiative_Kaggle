@@ -47,5 +47,13 @@ print(x_train.head(5))
 x_tests = tests.copy()
 print(x_tests.shape)    # (506691, 432)
 
-# explore data
+# explore data [describe single variables]
+# Categorical=>isFraud/ProductCD/DeviceType/DeviceInfo——Figure_1.png
+f, axes = plt.subplots(1, 3, figsize=(12, 4))
+isFraud = sns.countplot(x="isFraud", data=train, ax=axes[0])        # 样本极不平衡[0/1]
+ProductCD = sns.countplot(x="ProductCD", data=train, ax=axes[1])    # 样本极不平衡[W/H/C/S/R]
+DeviceType = sns.countplot(x="DeviceType", data=train, ax=axes[2])  # desktop:mobile=86:56
+plt.tight_layout()
+plt.show()
+
 
