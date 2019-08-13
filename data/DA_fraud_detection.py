@@ -48,12 +48,24 @@ x_tests = tests.copy()
 print(x_tests.shape)    # (506691, 432)
 
 # explore data [describe single variables]
-# Categorical=>isFraud/ProductCD/DeviceType/DeviceInfo——Figure_1.png
+# Categorical => isFraud/ProductCD/DeviceType——Figure_1.png
 f, axes = plt.subplots(1, 3, figsize=(12, 4))
 isFraud = sns.countplot(x="isFraud", data=train, ax=axes[0])        # 样本极不平衡[0/1]
 ProductCD = sns.countplot(x="ProductCD", data=train, ax=axes[1])    # 样本极不平衡[W/H/C/S/R]
 DeviceType = sns.countplot(x="DeviceType", data=train, ax=axes[2])  # desktop:mobile=86:56
 plt.tight_layout()
-plt.show()
 
+# Categorical => DeviceInfo——Figure_2.png
+# the top devices are: Windows|IOS Device|MacOS|Trident/7.0|...
+group = pd.DataFrame()
+group["DeviceCount"] = train.groupby(["DeviceInfo"])["DeviceInfo"].count()
+group["DeviceInfo"] = group.index
+group_top = group.sort_values(by="DeviceCount", ascending=False).head(10)
+plt.figure(figsize=(15, 6))
+sns.set(color_codes=True)
+sns.set(font_scale=1.3)
+ax = sns.barplot(x="DeviceInfo", y="DeviceCount", data=group_top)
+xt = plt.xticks(rotation=60)
+plt.tight_layout()
+plt.show()
 
