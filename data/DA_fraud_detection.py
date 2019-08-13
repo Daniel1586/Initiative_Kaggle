@@ -49,23 +49,50 @@ print(x_tests.shape)    # (506691, 432)
 
 # explore data [describe single variables]
 # Categorical => isFraud/ProductCD/DeviceType——Figure_1.png
-f, axes = plt.subplots(1, 3, figsize=(12, 4))
-isFraud = sns.countplot(x="isFraud", data=train, ax=axes[0])        # 样本极不平衡[0/1]
-ProductCD = sns.countplot(x="ProductCD", data=train, ax=axes[1])    # 样本极不平衡[W/H/C/S/R]
-DeviceType = sns.countplot(x="DeviceType", data=train, ax=axes[2])  # desktop:mobile=86:56
-plt.tight_layout()
+# isFraud极不平衡[0/1],ProductCD不平衡[W/H/C/S/R],DeviceType=desktop:mobile=86:56
+plt_show = 0
+if plt_show:
+    _, axes = plt.subplots(1, 3, figsize=(12, 4))
+    isFraud = sns.countplot(x="isFraud", data=train, ax=axes[0])
+    ProductCD = sns.countplot(x="ProductCD", data=train, ax=axes[1])
+    DeviceType = sns.countplot(x="DeviceType", data=train, ax=axes[2])
+    plt.tight_layout()
+    plt.show()
 
 # Categorical => DeviceInfo——Figure_2.png
 # the top devices are: Windows|IOS Device|MacOS|Trident/7.0|...
-group = pd.DataFrame()
-group["DeviceCount"] = train.groupby(["DeviceInfo"])["DeviceInfo"].count()
-group["DeviceInfo"] = group.index
-group_top = group.sort_values(by="DeviceCount", ascending=False).head(10)
-plt.figure(figsize=(15, 6))
-sns.set(color_codes=True)
-sns.set(font_scale=1.3)
-ax = sns.barplot(x="DeviceInfo", y="DeviceCount", data=group_top)
-xt = plt.xticks(rotation=60)
-plt.tight_layout()
-plt.show()
+plt_show = 0
+if plt_show:
+    group = pd.DataFrame()
+    group["DeviceCount"] = train.groupby(["DeviceInfo"])["DeviceInfo"].count()
+    group["DeviceInfo"] = group.index
+    group_top = group.sort_values(by="DeviceCount", ascending=False).head(10)
+    plt.figure(figsize=(15, 6))
+    sns.set(color_codes=True)
+    sns.set(font_scale=1.3)
+    ax = sns.barplot(x="DeviceInfo", y="DeviceCount", data=group_top)
+    xt = plt.xticks(rotation=60)
+    plt.tight_layout()
+    plt.show()
 
+# Categorical => card1/card2/card3/card5——Figure_3.png
+# card1/card2取值较多且较均匀,card3/card5取值较少且分布不平衡
+plt_show = 0
+if plt_show:
+    _, axes = plt.subplots(4, 1, figsize=(20, 8))
+    c1 = sns.distplot(train["card1"].dropna(), kde=False, ax=axes[0])
+    c2 = sns.distplot(train["card2"].dropna(), kde=False, ax=axes[1])
+    c3 = sns.distplot(train["card3"].dropna(), kde=False, ax=axes[2])
+    c5 = sns.distplot(train["card5"].dropna(), kde=False, ax=axes[3])
+    plt.tight_layout()
+    # plt.show()
+
+# Categorical => card4/card6——Figure_4.png
+# card4绝大部分是visa/mastercard,card5绝大部分是debit/credit
+plt_show = 0
+if plt_show:
+    _, axes = plt.subplots(1, 2, figsize=(12, 6))
+    c4 = sns.countplot(x="card4", data=train, ax=axes[0])  # 样本极不平衡[0/1]
+    c6 = sns.countplot(x="card6", data=train, ax=axes[1])  # 样本极不平衡[W/H/C/S/R]
+    plt.tight_layout()
+    plt.show()
