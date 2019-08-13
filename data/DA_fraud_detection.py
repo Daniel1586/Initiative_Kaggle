@@ -61,7 +61,9 @@ if plt_show:
 
 # Categorical => DeviceInfo——Figure_2.png
 # the top devices are: Windows|IOS Device|MacOS|Trident/7.0|...
+# DeviceInfo取值数量1786
 plt_show = 0
+print(train["DeviceInfo"].nunique())
 if plt_show:
     group = pd.DataFrame()
     group["DeviceCount"] = train.groupby(["DeviceInfo"])["DeviceInfo"].count()
@@ -92,7 +94,56 @@ if plt_show:
 plt_show = 0
 if plt_show:
     _, axes = plt.subplots(1, 2, figsize=(12, 6))
-    c4 = sns.countplot(x="card4", data=train, ax=axes[0])  # 样本极不平衡[0/1]
-    c6 = sns.countplot(x="card6", data=train, ax=axes[1])  # 样本极不平衡[W/H/C/S/R]
+    c4 = sns.countplot(x="card4", data=train, ax=axes[0])
+    c6 = sns.countplot(x="card6", data=train, ax=axes[1])
+    plt.tight_layout()
+    plt.show()
+
+# Categorical => addr1——Figure_5.png
+# addr1数据前20呈现近似对偶性,取值数量332
+plt_show = 0
+print(train["addr1"].nunique())
+if plt_show:
+    group = pd.DataFrame()
+    group["addr1Count"] = train.groupby(["addr1"])["addr1"].count()
+    group["addr1"] = group.index
+    group_top = group.sort_values(by="addr1Count", ascending=False).head(20)
+    plt.figure(figsize=(15, 6))
+    sns.set(color_codes=True)
+    sns.set(font_scale=1.3)
+    sns.barplot(x="addr1", y="addr1Count", data=group_top)
+    plt.xticks(rotation=60)
+    plt.tight_layout()
+    plt.show()
+
+# Categorical => addr2——Figure_6.png
+# addr2存在1个点占近88%比例,取值数量74
+plt_show = 0
+print(train["addr2"].nunique())
+print(train["addr2"].value_counts().head(10))
+if plt_show:
+    group = pd.DataFrame()
+    group["addr2Count"] = train.groupby(["addr2"])["addr2"].count()
+    group["addr2"] = group.index
+    group_top = group.sort_values(by="addr2Count", ascending=False).head(20)
+    plt.figure(figsize=(15, 6))
+    sns.set(color_codes=True)
+    sns.set(font_scale=1.3)
+    sns.barplot(x="addr2", y="addr2Count", data=group_top)
+    plt.xticks(rotation=60)
+    plt.tight_layout()
+    plt.show()
+
+# Categorical => P_emaildomain/R_emaildomain——Figure_7.png
+# gmail占比最高,存在anonymous.com
+# P_emaildomain取值数量59,R_emaildomain取值数量60
+plt_show = 0
+print(train["P_emaildomain"].nunique())
+print(train["R_emaildomain"].nunique())
+if plt_show:
+    _, axes = plt.subplots(1, 2, figsize=(18, 9))
+    sns.set(color_codes=True)
+    p_email = sns.countplot(y="P_emaildomain", data=train, ax=axes[0])
+    r_email = sns.countplot(y="R_emaildomain", data=train, ax=axes[1])
     plt.tight_layout()
     plt.show()
