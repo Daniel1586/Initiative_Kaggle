@@ -1,4 +1,4 @@
-# Initiative_RecSys
+# Initiative_Kaggle
 [![MIT license](https://img.shields.io/dub/l/vibe-d.svg)](https://github.com/Daniel1586/Initiative_RecSys/blob/master/LICENSE)
 
 ## 项目介绍
