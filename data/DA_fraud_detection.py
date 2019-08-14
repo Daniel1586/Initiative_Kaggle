@@ -47,6 +47,8 @@ print(x_train.head(5))
 x_tests = tests.copy()
 print(x_tests.shape)    # (506691, 432)
 
+# =============================================================================
+# =============================================================================
 # explore data [describe single variables]
 # Categorical => isFraud/ProductCD/DeviceType——Figure_1.png
 # isFraud极不平衡[0/1],ProductCD不平衡[W/H/C/S/R],DeviceType=desktop:mobile=86:56
@@ -92,7 +94,7 @@ if plt_show:
     c3 = sns.distplot(train["card3"].dropna(), kde=False, ax=axes[2])
     c5 = sns.distplot(train["card5"].dropna(), kde=False, ax=axes[3])
     plt.tight_layout()
-    # plt.show()
+    plt.show()
 
 # Categorical => card4/card6——Figure_4.png
 # card4绝大部分是visa/mastercard,card5绝大部分是debit/credit
@@ -207,5 +209,52 @@ if plt_show:
     sns.set(font_scale=1.3)
     sns.barplot(x="id_31", y="id_31Count", data=group_top)
     plt.xticks(rotation=60)
+    plt.tight_layout()
+    plt.show()
+
+# =============================================================================
+# =============================================================================
+# explore data [describe continuous variables]
+# Numeric => TransactionDT/TransactionAmt——Figure_11.png
+# TransactionDT均匀分布,TransactionAmt指数分布[存在离群点]
+plt_show = 0
+if plt_show:
+    _, axes = plt.subplots(2, 1, figsize=(15, 10))
+    trans_dt = sns.distplot(train["TransactionDT"], kde=False, ax=axes[0])
+    trans_amt = sns.distplot(train["TransactionAmt"], kde=False, ax=axes[1], hist_kws={"log": True})
+    plt.tight_layout()
+    plt.show()
+
+# Numeric => C7-C14——Figure_12.png
+# C7-C14近似指数分布
+plt_show = 0
+c7_loc = train.columns.get_loc("C7")
+c14_loc = train.columns.get_loc("C14")
+df_c = train.iloc[:, c7_loc:c14_loc+1]
+cols = df_c.columns
+if plt_show:
+    _, axes = plt.subplots(4, 2, figsize=(15, 10))
+    count = 0
+    for i in range(4):
+        for j in range(2):
+            c_plt = sns.distplot(df_c[cols[count]], kde=False, hist_kws={"log": True}, ax=axes[i, j])
+            count += 1
+    plt.tight_layout()
+    plt.show()
+
+# Numeric => D1-D15——Figure_13.png
+# C7-C14近似指数分布
+plt_show = 0
+d1_loc = train.columns.get_loc("D1")
+d15_loc = train.columns.get_loc("D15")
+df_d = train.iloc[:, d1_loc:d15_loc+1]
+cols = df_d.columns
+if plt_show:
+    _, axes = plt.subplots(5, 3, figsize=(15, 10))
+    count = 0
+    for i in range(5):
+        for j in range(3):
+            d_plt = sns.distplot(df_d[cols[count]].dropna(), ax=axes[i, j])
+            count += 1
     plt.tight_layout()
     plt.show()
