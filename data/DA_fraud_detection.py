@@ -72,14 +72,19 @@ if plt_show:
     plt.figure(figsize=(15, 6))
     sns.set(color_codes=True)
     sns.set(font_scale=1.3)
-    ax = sns.barplot(x="DeviceInfo", y="DeviceCount", data=group_top)
-    xt = plt.xticks(rotation=60)
+    sns.barplot(x="DeviceInfo", y="DeviceCount", data=group_top)
+    plt.xticks(rotation=60)
     plt.tight_layout()
     plt.show()
 
 # Categorical => card1/card2/card3/card5——Figure_3.png
 # card1/card2取值较多且较均匀,card3/card5取值较少且分布不平衡
+# card1取值数量13553,card2取值数量500,card3取值数量114,card5取值数量119
 plt_show = 0
+print(train["card1"].nunique())
+print(train["card2"].nunique())
+print(train["card3"].nunique())
+print(train["card5"].nunique())
 if plt_show:
     _, axes = plt.subplots(4, 1, figsize=(20, 8))
     c1 = sns.distplot(train["card1"].dropna(), kde=False, ax=axes[0])
@@ -145,5 +150,62 @@ if plt_show:
     sns.set(color_codes=True)
     p_email = sns.countplot(y="P_emaildomain", data=train, ax=axes[0])
     r_email = sns.countplot(y="R_emaildomain", data=train, ax=axes[1])
+    plt.tight_layout()
+    plt.show()
+
+# Categorical => M1-M9——Figure_8.png
+# M4取值数量为3[M0/M1/M2],其他取值数量为2[T/F]
+plt_show = 0
+m1_loc = train.columns.get_loc("M1")
+m9_loc = train.columns.get_loc("M9")
+df_m = train.iloc[:, m1_loc:m9_loc+1]
+cols = df_m.columns
+if plt_show:
+    _, axes = plt.subplots(3, 3, figsize=(16, 12))
+    count = 0
+    for i in range(3):
+        for j in range(3):
+            m_plt = sns.countplot(x=cols[count], data=df_m, ax=axes[i, j])
+            count += 1
+    plt.tight_layout()
+    plt.show()
+
+# Categorical => id_12-id_38——Figure_9.png/Figure_10.png
+# 存在混合数据类型,NaN比例较大,id30为OS,id31为浏览器
+id12_loc = train.columns.get_loc("id_12")
+id38_loc = train.columns.get_loc("id_38")
+df_id = train.iloc[:, id12_loc:id38_loc+1]
+print(df_id.dtypes)
+print(df_id.head(15))
+
+# id30取值数量75,id30为OS
+plt_show = 0
+print(train["id_30"].nunique())
+if plt_show:
+    group = pd.DataFrame()
+    group["id_30Count"] = train.groupby(["id_30"])["id_30"].count()
+    group["id_30"] = group.index
+    group_top = group.sort_values(by="id_30Count", ascending=False).head(10)
+    plt.figure(figsize=(15, 6))
+    sns.set(color_codes=True)
+    sns.set(font_scale=1.3)
+    sns.barplot(x="id_30", y="id_30Count", data=group_top)
+    plt.xticks(rotation=60)
+    plt.tight_layout()
+    plt.show()
+
+# id31取值数量130,id31为浏览器
+plt_show = 0
+print(train["id_31"].nunique())
+if plt_show:
+    group = pd.DataFrame()
+    group["id_31Count"] = train.groupby(["id_31"])["id_31"].count()
+    group["id_31"] = group.index
+    group_top = group.sort_values(by="id_31Count", ascending=False).head(10)
+    plt.figure(figsize=(15, 6))
+    sns.set(color_codes=True)
+    sns.set(font_scale=1.3)
+    sns.barplot(x="id_31", y="id_31Count", data=group_top)
+    plt.xticks(rotation=60)
     plt.tight_layout()
     plt.show()
