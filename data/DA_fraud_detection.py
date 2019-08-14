@@ -44,12 +44,25 @@ print(x_tests.shape)    # (506691, 432)
 # explore data [describe single variables]
 # Categorical => isFraud/ProductCD/DeviceType——Figure_1.png
 # isFraud极不平衡[0/1],ProductCD不平衡[W/H/C/S/R],DeviceType=desktop:mobile=86:56
+# ProductCD: C/S 类别有最高的欺诈交易比例
+# DeviceType: mobile 类别有最高的欺诈交易比例
 plt_show = 0
 if plt_show:
-    _, axes = plt.subplots(1, 3, figsize=(12, 4))
-    isFraud = sns.countplot(x="isFraud", data=train, ax=axes[0])
-    ProductCD = sns.countplot(x="ProductCD", data=train, ax=axes[1])
-    DeviceType = sns.countplot(x="DeviceType", data=train, ax=axes[2])
+    _, axes = plt.subplots(3, 3, figsize=(16, 9))
+    # 原始分布
+    isFraud = sns.countplot(x="isFraud", data=train, ax=axes[0, 0])
+    ProductCD = sns.countplot(x="ProductCD", data=train, ax=axes[0, 1])
+    DeviceType = sns.countplot(x="DeviceType", data=train, ax=axes[0, 2])
+    # 带target的分布
+    isFraud1 = sns.countplot(x="isFraud", data=train, ax=axes[1, 0])
+    ProductCD1 = sns.countplot(x="ProductCD", hue="isFraud", data=train, ax=axes[1, 1])
+    DeviceType1 = sns.countplot(x="DeviceType", hue="isFraud", data=train, ax=axes[1, 2])
+    # 带target的百分比分布
+    isFraud2 = sns.countplot(x="isFraud", data=train, ax=axes[2, 0])
+    props1 = train.groupby("ProductCD")["isFraud"].value_counts(normalize=True).unstack()
+    props1.plot(kind="bar", stacked="True", ax=axes[2, 1])
+    props2 = train.groupby("DeviceType")["isFraud"].value_counts(normalize=True).unstack()
+    props2.plot(kind="bar", stacked="True", ax=axes[2, 2])
     plt.tight_layout()
     plt.show()
 
