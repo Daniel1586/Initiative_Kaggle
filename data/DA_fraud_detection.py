@@ -243,7 +243,7 @@ if plt_show:
     plt.show()
 
 # Numeric => D1-D15——Figure_13.png
-# C7-C14近似指数分布
+# D11-D15存在负值,D9特殊分布,其他近似指数分布
 plt_show = 0
 d1_loc = train.columns.get_loc("D1")
 d15_loc = train.columns.get_loc("D15")
@@ -256,5 +256,43 @@ if plt_show:
         for j in range(3):
             d_plt = sns.distplot(df_d[cols[count]].dropna(), ax=axes[i, j])
             count += 1
+    plt.tight_layout()
+    plt.show()
+
+# Numeric => V1-V339
+# V1-V305,V322-V339大部分取值为0/1,可能是categorical特征
+# V306-V321 seems to be true continuous variables
+v1_loc = train.columns.get_loc("V1")
+v339_loc = train.columns.get_loc("V339")
+df_v = train.iloc[:, v1_loc:v339_loc+1]
+print(df_v.head(20))
+
+# Numeric => id_01-id_06——Figure_14.png
+# id02 may be dollar amounts, with log distribution
+plt_show = 0
+id01_loc = train.columns.get_loc("id_01")
+id06_loc = train.columns.get_loc("id_06")
+df1 = train.iloc[:, id01_loc:id06_loc+1]
+cols = df1.columns
+if plt_show:
+    _, axes = plt.subplots(6, 2, figsize=(15, 10))
+    for i in range(6):
+        id1_plt = sns.distplot(df1[cols[i]].dropna(), ax=axes[i, 0])
+        id2_plt = sns.distplot(df1[cols[i]].dropna(), kde=False, hist_kws={"log": True}, ax=axes[i, 1])
+    plt.tight_layout()
+    # plt.show()
+
+# Numeric => id_07-id_11——Figure_15.png
+# id07/id08近似正态分布
+plt_show = 0
+id07_loc = train.columns.get_loc("id_07")
+id11_loc = train.columns.get_loc("id_11")
+df2 = train.iloc[:, id07_loc:id11_loc+1]
+cols = df2.columns
+if plt_show:
+    _, axes = plt.subplots(5, 2, figsize=(15, 10))
+    for i in range(5):
+        id1_plt = sns.distplot(df2[cols[i]].dropna(), ax=axes[i, 0])
+        id2_plt = sns.distplot(df2[cols[i]].dropna(), kde=False, hist_kws={"log": True}, ax=axes[i, 1])
     plt.tight_layout()
     plt.show()
