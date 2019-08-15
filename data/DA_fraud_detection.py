@@ -70,18 +70,20 @@ if plt_show:
 # the top devices are: Windows|IOS Device|MacOS|Trident/7.0|...
 # DeviceInfo取值数量1786
 # 欺诈交易样本中DeviceInfo大部分为Windows/IOS Device
-plt_show = 1
+plt_show = 0
 if plt_show:
     print(train["DeviceInfo"].nunique())
     group = pd.DataFrame()
     group["DeviceCount"] = train.groupby(["DeviceInfo"])["DeviceInfo"].count()
     group["DeviceInfo"] = group.index
     group_top = group.sort_values(by="DeviceCount", ascending=False).head(10)
+
     fraud = pd.DataFrame()
     is_fraud = train[train["isFraud"] == 1]
     fraud["DeviceCount"] = is_fraud.groupby(["DeviceInfo"])["DeviceInfo"].count()
     fraud["DeviceInfo"] = fraud.index
     fraud_top = fraud.sort_values(by="DeviceCount", ascending=False).head(10)
+
     _, axes = plt.subplots(2, 1, figsize=(16, 9))
     sns.set(color_codes=True)
     sns.set(font_scale=1.3)
@@ -95,17 +97,42 @@ if plt_show:
 # Categorical => card1/card2/card3/card5——Figure_3.png
 # card1/card2取值较多且较均匀,card3/card5取值较少且分布不平衡
 # card1取值数量13553,card2取值数量500,card3取值数量114,card5取值数量119
+# card1/card2/card3在欺诈/非欺诈样本中分布类似,card5在值225左右存在较大差异
 plt_show = 0
 if plt_show:
     print(train["card1"].nunique())
     print(train["card2"].nunique())
     print(train["card3"].nunique())
     print(train["card5"].nunique())
-    _, axes = plt.subplots(4, 1, figsize=(20, 8))
-    c1 = sns.distplot(train["card1"].dropna(), kde=False, ax=axes[0])
-    c2 = sns.distplot(train["card2"].dropna(), kde=False, ax=axes[1])
-    c3 = sns.distplot(train["card3"].dropna(), kde=False, ax=axes[2])
-    c5 = sns.distplot(train["card5"].dropna(), kde=False, ax=axes[3])
+    _, axes1 = plt.subplots(4, 1, figsize=(16, 9))
+    c1 = sns.distplot(train["card1"].dropna(), kde=False, ax=axes1[0])
+    c2 = sns.distplot(train["card2"].dropna(), kde=False, ax=axes1[1])
+    c3 = sns.distplot(train["card3"].dropna(), kde=False, ax=axes1[2])
+    c5 = sns.distplot(train["card5"].dropna(), kde=False, ax=axes1[3])
+    plt.tight_layout()
+
+    is_fraud = train[train["isFraud"] == 1]
+    no_fraud = train[train["isFraud"] == 0]
+    _, axes2 = plt.subplots(4, 1, figsize=(16, 9))
+    no_1 = sns.distplot(no_fraud["card1"].dropna(), color="fuchsia", label="No fraud", ax=axes2[0])
+    l11 = no_1.legend()
+    is_1 = sns.distplot(is_fraud["card1"].dropna(), color="black", label="Is Fraud", ax=axes2[0])
+    l12 = is_1.legend()
+
+    no_2 = sns.distplot(no_fraud["card2"].dropna(), color="fuchsia", label="No fraud", ax=axes2[1])
+    l21 = no_2.legend()
+    is_2 = sns.distplot(is_fraud["card2"].dropna(), color="black", label="Is Fraud", ax=axes2[1])
+    l22 = is_2.legend()
+
+    no_3 = sns.distplot(no_fraud["card3"].dropna(), color="fuchsia", label="No fraud", ax=axes2[2])
+    l31 = no_3.legend()
+    is_3 = sns.distplot(is_fraud["card3"].dropna(), color="black", label="Is Fraud", ax=axes2[2])
+    l32 = is_3.legend()
+
+    no_5 = sns.distplot(no_fraud["card5"].dropna(), color="fuchsia", label="No fraud", ax=axes2[3])
+    l51 = no_5.legend()
+    is_5 = sns.distplot(is_fraud["card5"].dropna(), color="black", label="Is Fraud", ax=axes2[3])
+    l52 = is_5.legend()
     plt.tight_layout()
     plt.show()
 
