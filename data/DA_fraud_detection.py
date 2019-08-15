@@ -207,7 +207,7 @@ if plt_show:
 
 # Categorical => addr2——Figure_6.png
 # addr2存在1个点占近88%比例,取值数量74
-plt_show = 0
+plt_show = 1
 if plt_show:
     print(train["addr2"].nunique())
     print(train["addr2"].value_counts().head(10))
@@ -215,10 +215,39 @@ if plt_show:
     group["addr2Count"] = train.groupby(["addr2"])["addr2"].count()
     group["addr2"] = group.index
     group_top = group.sort_values(by="addr2Count", ascending=False).head(20)
-    plt.figure(figsize=(15, 6))
+    plt.figure(figsize=(16, 9))
     sns.set(color_codes=True)
     sns.set(font_scale=1.3)
     sns.barplot(x="addr2", y="addr2Count", data=group_top)
+    plt.xticks(rotation=60)
+    plt.tight_layout()
+
+    addr2_is = pd.DataFrame()
+    is_fraud = train[train["isFraud"] == 1]
+    addr2_is["addr2Count"] = is_fraud.groupby(["addr2"])["addr2"].count()
+    addr2_is["addr2"] = addr2_is.index
+
+    addr2_no = pd.DataFrame()
+    no_fraud = train[train["isFraud"] == 0]
+    addr2_no["addr2Count"] = no_fraud.groupby(["addr2"])["addr2"].count()
+    addr2_no["addr2"] = addr2_no.index
+
+    group_top_f = addr2_is.sort_values(by="addr2Count", ascending=False).head(20)
+    order_f = group_top_f.sort_values(by="addr2Count", ascending=False)["addr2"]
+    group_top_l = addr2_no.sort_values(by="addr2Count", ascending=False).head(20)
+    order_l = group_top_l.sort_values(by="addr2Count", ascending=False)["addr2"]
+
+    _, axes = plt.subplots(4, 1, figsize=(16, 9))
+    sns.set(color_codes=True)
+    sns.set(font_scale=1.3)
+    ax = sns.barplot(x="addr2", y="addr2Count", data=group_top_f, order=order_f, ax=axes[0])
+    bx = sns.barplot(x="addr2", y="addr2Count", data=group_top_l, order=order_l, ax=axes[1])
+    az = sns.barplot(x="addr2", y="addr2Count", data=group_top_f, ax=axes[2])
+    bz = sns.barplot(x="addr2", y="addr2Count", data=group_top_l, ax=axes[3])
+    ax.set_title("Fraud transactions by addr2 (ranked)")
+    bx.set_title("Legit transactions by addr2 (ranked)")
+    az.set_title("Fraud transactions by addr2")
+    bz.set_title("Legit transactions by addr2")
     plt.xticks(rotation=60)
     plt.tight_layout()
     plt.show()
