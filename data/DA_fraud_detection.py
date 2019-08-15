@@ -69,17 +69,25 @@ if plt_show:
 # Categorical => DeviceInfo——Figure_2.png
 # the top devices are: Windows|IOS Device|MacOS|Trident/7.0|...
 # DeviceInfo取值数量1786
-plt_show = 0
+# 欺诈交易样本中DeviceInfo大部分为Windows/IOS Device
+plt_show = 1
 if plt_show:
     print(train["DeviceInfo"].nunique())
     group = pd.DataFrame()
     group["DeviceCount"] = train.groupby(["DeviceInfo"])["DeviceInfo"].count()
     group["DeviceInfo"] = group.index
     group_top = group.sort_values(by="DeviceCount", ascending=False).head(10)
-    plt.figure(figsize=(15, 6))
+    fraud = pd.DataFrame()
+    is_fraud = train[train["isFraud"] == 1]
+    fraud["DeviceCount"] = is_fraud.groupby(["DeviceInfo"])["DeviceInfo"].count()
+    fraud["DeviceInfo"] = fraud.index
+    fraud_top = fraud.sort_values(by="DeviceCount", ascending=False).head(10)
+    _, axes = plt.subplots(2, 1, figsize=(16, 9))
     sns.set(color_codes=True)
     sns.set(font_scale=1.3)
-    sns.barplot(x="DeviceInfo", y="DeviceCount", data=group_top)
+    sns.barplot(x="DeviceInfo", y="DeviceCount", data=group_top, ax=axes[0])
+    ax = sns.barplot(x="DeviceInfo", y="DeviceCount", data=fraud_top, ax=axes[1])
+    ax.set_title("Fraud transactions by DeviceInfo")
     plt.xticks(rotation=60)
     plt.tight_layout()
     plt.show()
