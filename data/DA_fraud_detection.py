@@ -157,8 +157,10 @@ if plt_show:
     plt.tight_layout()
     plt.show()
 
-# Categorical => addr1——Figure_5.png
-# addr1数据前20呈现近似对偶性,取值数量332
+# Categorical => addr1——Figure_5_1.png
+# addr1取值数量332,数据前20呈现近似对偶性
+# 欺诈样本最多的addr1取值为204/325/299,非欺诈样本最多的addr1取值为299/325/204
+# 欺诈样本和非欺诈样本前5取值一样,只是数量顺序有差异
 plt_show = 0
 if plt_show:
     print(train["addr1"].nunique())
@@ -166,10 +168,39 @@ if plt_show:
     group["addr1Count"] = train.groupby(["addr1"])["addr1"].count()
     group["addr1"] = group.index
     group_top = group.sort_values(by="addr1Count", ascending=False).head(20)
-    plt.figure(figsize=(15, 6))
+    plt.figure(figsize=(16, 9))
     sns.set(color_codes=True)
     sns.set(font_scale=1.3)
     sns.barplot(x="addr1", y="addr1Count", data=group_top)
+    plt.xticks(rotation=60)
+    plt.tight_layout()
+
+    addr1_is = pd.DataFrame()
+    is_fraud = train[train["isFraud"] == 1]
+    addr1_is["addr1Count"] = is_fraud.groupby(["addr1"])["addr1"].count()
+    addr1_is["addr1"] = addr1_is.index
+
+    addr1_no = pd.DataFrame()
+    no_fraud = train[train["isFraud"] == 0]
+    addr1_no["addr1Count"] = no_fraud.groupby(["addr1"])["addr1"].count()
+    addr1_no["addr1"] = addr1_no.index
+
+    group_top_f = addr1_is.sort_values(by="addr1Count", ascending=False).head(20)
+    order_f = group_top_f.sort_values(by="addr1Count", ascending=False)["addr1"]
+    group_top_l = addr1_no.sort_values(by="addr1Count", ascending=False).head(20)
+    order_l = group_top_l.sort_values(by="addr1Count", ascending=False)["addr1"]
+
+    _, axes = plt.subplots(4, 1, figsize=(16, 9))
+    sns.set(color_codes=True)
+    sns.set(font_scale=1.3)
+    ax = sns.barplot(x="addr1", y="addr1Count", data=group_top_f, order=order_f, ax=axes[0])
+    bx = sns.barplot(x="addr1", y="addr1Count", data=group_top_l, order=order_l, ax=axes[1])
+    az = sns.barplot(x="addr1", y="addr1Count", data=group_top_f, ax=axes[2])
+    bz = sns.barplot(x="addr1", y="addr1Count", data=group_top_l, ax=axes[3])
+    ax.set_title("Fraud transactions by addr1 (ranked)")
+    bx.set_title("Legit transactions by addr1 (ranked)")
+    az.set_title("Fraud transactions by addr1")
+    bz.set_title("Legit transactions by addr1")
     plt.xticks(rotation=60)
     plt.tight_layout()
     plt.show()
