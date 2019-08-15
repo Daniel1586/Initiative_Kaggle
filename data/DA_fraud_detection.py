@@ -94,7 +94,7 @@ if plt_show:
     plt.tight_layout()
     plt.show()
 
-# Categorical => card1/card2/card3/card5——Figure_3.png
+# Categorical => card1/card2/card3/card5——Figure_3_1.png/Figure_3_2.png
 # card1/card2取值较多且较均匀,card3/card5取值较少且分布不平衡
 # card1取值数量13553,card2取值数量500,card3取值数量114,card5取值数量119
 # card1/card2/card3在欺诈/非欺诈样本中分布类似,card5在值225左右存在较大差异
@@ -138,11 +138,22 @@ if plt_show:
 
 # Categorical => card4/card6——Figure_4.png
 # card4绝大部分是visa/mastercard,card5绝大部分是debit/credit
+# card4样本取值visa欺诈数量最多,但比例较小;取值discover欺诈数量最少,但欺诈比例最高
+# card5样本取值debit/credit占欺诈数量绝大多数,但credit欺诈比例最高
 plt_show = 0
 if plt_show:
-    _, axes = plt.subplots(1, 2, figsize=(12, 6))
-    c4 = sns.countplot(x="card4", data=train, ax=axes[0])
-    c6 = sns.countplot(x="card6", data=train, ax=axes[1])
+    _, axes = plt.subplots(3, 2, figsize=(16, 9))
+    # 原始分布
+    c4_1 = sns.countplot(x="card4", data=train, ax=axes[0, 0])
+    c6_1 = sns.countplot(x="card6", data=train, ax=axes[0, 1])
+    # 带target的分布
+    c4_2 = sns.countplot(x="card4", hue="isFraud", data=train, ax=axes[1, 0])
+    c6_2 = sns.countplot(x="card6", hue="isFraud", data=train, ax=axes[1, 1])
+    # 带target的百分比分布
+    props1 = train.groupby("card4")["isFraud"].value_counts(normalize=True).unstack()
+    props1.plot(kind="bar", stacked="True", ax=axes[2, 0])
+    props2 = train.groupby("card6")["isFraud"].value_counts(normalize=True).unstack()
+    props2.plot(kind="bar", stacked="True", ax=axes[2, 1])
     plt.tight_layout()
     plt.show()
 
