@@ -95,9 +95,9 @@ if plt_show:
     plt.show()
 
 # Categorical => card1/card2/card3/card5——Figure_3_1.png/Figure_3_2.png
-# card1/card2取值较多且较均匀,card3/card5取值较少且分布不平衡
 # card1取值数量13553,card2取值数量500,card3取值数量114,card5取值数量119
-# card1/card2/card3在欺诈/非欺诈样本中分布类似,card5在值225左右存在较大差异
+# card1/card2取值较多且较均匀,card3/card5取值较少且分布不平衡
+# card1/card2/card3在欺诈/非欺诈样本中分布类似,card5欺诈/非欺诈样本在值225左右存在较大差异
 plt_show = 0
 if plt_show:
     print(train["card1"].nunique())
@@ -157,7 +157,7 @@ if plt_show:
     plt.tight_layout()
     plt.show()
 
-# Categorical => addr1——Figure_5_1.png
+# Categorical => addr1——Figure_5_1.png/Figure_5_2.png
 # addr1取值数量332,数据前20呈现近似对偶性
 # 欺诈样本最多的addr1取值为204/325/299,非欺诈样本最多的addr1取值为299/325/204
 # 欺诈样本和非欺诈样本前5取值一样,只是数量顺序有差异
@@ -206,8 +206,8 @@ if plt_show:
     plt.show()
 
 # Categorical => addr2——Figure_6.png
-# addr2存在1个点占近88%比例,取值数量74
-plt_show = 1
+# addr2存在1个点占近88%比例[取值极不平衡],取值数量74
+plt_show = 0
 if plt_show:
     print(train["addr2"].nunique())
     print(train["addr2"].value_counts().head(10))
