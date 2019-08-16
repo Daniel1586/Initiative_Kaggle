@@ -255,14 +255,22 @@ if plt_show:
 # Categorical => P_emaildomain/R_emaildomain——Figure_7.png
 # gmail占比最高,存在anonymous.com
 # P_emaildomain取值数量59,R_emaildomain取值数量60
-plt_show = 0
+plt_show = 1
 if plt_show:
     print(train["P_emaildomain"].nunique())
     print(train["R_emaildomain"].nunique())
-    _, axes = plt.subplots(1, 2, figsize=(18, 9))
+    _, axes1 = plt.subplots(1, 2, figsize=(16, 9))
     sns.set(color_codes=True)
-    p_email = sns.countplot(y="P_emaildomain", data=train, ax=axes[0])
-    r_email = sns.countplot(y="R_emaildomain", data=train, ax=axes[1])
+    p_email = sns.countplot(y="P_emaildomain", data=train, ax=axes1[0])
+    r_email = sns.countplot(y="R_emaildomain", data=train, ax=axes1[1])
+    plt.tight_layout()
+
+    order_p = train["P_emaildomain"].value_counts().iloc[:10].index
+    order_r = train["R_emaildomain"].value_counts().iloc[:10].index
+    _, axes2 = plt.subplots(1, 2, figsize=(16, 9))
+    sns.set(color_codes=True)
+    sns.countplot(y="P_emaildomain", hue="isFraud", data=train, order=order_p, ax=axes2[0])
+    sns.countplot(y="R_emaildomain", hue="isFraud", data=train, order=order_r, ax=axes2[1])
     plt.tight_layout()
     plt.show()
 
