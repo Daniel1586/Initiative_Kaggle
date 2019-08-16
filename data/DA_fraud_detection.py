@@ -44,8 +44,8 @@ print(x_tests.shape)    # (506691, 432)
 # explore data [describe single variables]
 # Categorical => isFraud/ProductCD/DeviceType——Figure_1.png
 # isFraud极不平衡[0/1],ProductCD不平衡[W/H/C/S/R],DeviceType=desktop:mobile=86:56
-# ProductCD: C/S 类别有最高的欺诈交易比例
-# DeviceType: mobile 类别有最高的欺诈交易比例
+# ProductCD: W/C类别欺诈样本数量最多, C/S类别欺诈比例最高
+# DeviceType: mobile/desktop欺诈样本数量接近,但mobile类别欺诈比例较高
 plt_show = 0
 if plt_show:
     _, axes = plt.subplots(3, 3, figsize=(16, 9))
@@ -67,9 +67,9 @@ if plt_show:
     plt.show()
 
 # Categorical => DeviceInfo——Figure_2.png
-# the top devices are: Windows|IOS Device|MacOS|Trident/7.0|...
+# the top devices are: Windows|IOS Device|MacOS|Trident/7.0|占据90%以上
 # DeviceInfo取值数量1786
-# 欺诈交易样本中DeviceInfo大部分为Windows/IOS Device
+# 欺诈样本中DeviceInfo为Windows/IOS Device占据75%以上
 plt_show = 0
 if plt_show:
     print(train["DeviceInfo"].nunique())
