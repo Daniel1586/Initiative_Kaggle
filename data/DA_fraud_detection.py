@@ -253,9 +253,11 @@ if plt_show:
     plt.show()
 
 # Categorical => P_emaildomain/R_emaildomain——Figure_7.png
-# gmail占比最高,存在anonymous.com
 # P_emaildomain取值数量59,R_emaildomain取值数量60
-plt_show = 1
+# gmail占比最高,存在anonymous.com
+# P_emaildomain取值'Protonmail.com'/'mail.com'/'aim.com'/'outlook.es'欺诈比例最高,但欺诈样本数量较少
+# R_emaildomain取值'Protonmail.com'/'mail.com'/'netzero.net'/'outlook.com'欺诈比例最高,但欺诈样本数量较少
+plt_show = 0
 if plt_show:
     print(train["P_emaildomain"].nunique())
     print(train["R_emaildomain"].nunique())
@@ -272,11 +274,18 @@ if plt_show:
     sns.countplot(y="P_emaildomain", hue="isFraud", data=train, order=order_p, ax=axes2[0])
     sns.countplot(y="R_emaildomain", hue="isFraud", data=train, order=order_r, ax=axes2[1])
     plt.tight_layout()
+
+    _, axes3 = plt.subplots(1, 2, figsize=(16, 9))
+    props1 = train.groupby("P_emaildomain")["isFraud"].value_counts(normalize=True).unstack()
+    props1.plot(kind="barh", stacked="True", ax=axes3[0])
+    props2 = train.groupby("R_emaildomain")["isFraud"].value_counts(normalize=True).unstack()
+    props2.plot(kind="barh", stacked="True", ax=axes3[1])
+    plt.tight_layout()
     plt.show()
 
 # Categorical => M1-M9——Figure_8.png
 # M4取值数量为3[M0/M1/M2],其他取值数量为2[T/F]
-plt_show = 0
+plt_show = 1
 if plt_show:
     m1_loc = train.columns.get_loc("M1")
     m9_loc = train.columns.get_loc("M9")
