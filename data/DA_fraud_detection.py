@@ -283,7 +283,7 @@ if plt_show:
     plt.tight_layout()
     plt.show()
 
-# Categorical => M1-M9——Figure_8.png
+# Categorical => M1-M9——Figure_8_1.png/Figure_8_2.png/Figure_8_3.png
 # M4取值数量为3[M0/M1/M2],其他取值数量为2[T/F]
 # M4取值为M2是欺诈比例最高,M1取值为F时无欺诈样本
 plt_show = 0
@@ -326,7 +326,7 @@ if plt_show:
 
 # Categorical => id_12-id_38——Figure_9.png/Figure_10.png
 # 存在混合数据类型,NaN比例较大,id30为OS,id31为浏览器
-plt_show = 0
+plt_show = 1
 if plt_show:
     id12_loc = train.columns.get_loc("id_12")
     id38_loc = train.columns.get_loc("id_38")
