@@ -252,7 +252,7 @@ if plt_show:
     plt.tight_layout()
     plt.show()
 
-# Categorical => P_emaildomain/R_emaildomain——Figure_7.png
+# Categorical => P_emaildomain/R_emaildomain——Figure_7_1.png/Figure_7_2.png/Figure_7_3.png
 # P_emaildomain取值数量59,R_emaildomain取值数量60
 # gmail占比最高,存在anonymous.com
 # P_emaildomain取值'Protonmail.com'/'mail.com'/'aim.com'/'outlook.es'欺诈比例最高,但欺诈样本数量较少
@@ -285,19 +285,43 @@ if plt_show:
 
 # Categorical => M1-M9——Figure_8.png
 # M4取值数量为3[M0/M1/M2],其他取值数量为2[T/F]
-plt_show = 1
+# M4取值为M2是欺诈比例最高,M1取值为F时无欺诈样本
+plt_show = 0
 if plt_show:
     m1_loc = train.columns.get_loc("M1")
     m9_loc = train.columns.get_loc("M9")
     df_m = train.iloc[:, m1_loc:m9_loc + 1]
     cols = df_m.columns
-    _, axes = plt.subplots(3, 3, figsize=(16, 12))
+    _, axes1 = plt.subplots(3, 3, figsize=(16, 9))
     count = 0
     for i in range(3):
         for j in range(3):
-            m_plt = sns.countplot(x=cols[count], data=df_m, ax=axes[i, j])
+            sns.countplot(x=cols[count], data=df_m, ax=axes1[i, j])
             count += 1
     plt.tight_layout()
+
+    df_m1 = train.iloc[:, m1_loc:m9_loc + 1]
+    df_m1["isFraud"] = train["isFraud"]
+    cols1 = df_m1.columns
+    _, axes2 = plt.subplots(3, 3, figsize=(16, 9))
+    count = 0
+    for i in range(3):
+        for j in range(3):
+            sns.countplot(x=cols1[count], hue="isFraud", data=df_m1, ax=axes2[i, j])
+            count += 1
+    plt.tight_layout()
+
+    ms = df_m.columns.tolist()
+    print(ms)
+    _, axes3 = plt.subplots(3, 3, figsize=(16, 9))
+    count = 0
+    for i in range(3):
+        for j in range(3):
+            props = train.groupby(ms[count])["isFraud"].value_counts(normalize=True).unstack()
+            props.plot(kind="barh", stacked="True", ax=axes3[i, j])
+            count += 1
+    plt.tight_layout()
+
     plt.show()
 
 # Categorical => id_12-id_38——Figure_9.png/Figure_10.png
