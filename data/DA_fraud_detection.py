@@ -328,7 +328,9 @@ if plt_show:
     plt.show()
 
 # Categorical => id_12-id_38——Figure_9.png/Figure_10.png
-# 存在混合数据类型,NaN比例较大,id30为OS,id31为浏览器
+# 存在混合数据类型,NaN比例较大
+# id30为OS,取值数量75
+# id31为浏览器,取值数量130
 plt_show = 1
 if plt_show:
     id12_loc = train.columns.get_loc("id_12")
@@ -337,34 +339,22 @@ if plt_show:
     print(df_id.dtypes)
     print(df_id.head(15))
 
-# id30取值数量75,id30为OS
-plt_show = 0
-if plt_show:
+    _, axes1 = plt.subplots(1, 2, figsize=(16, 9))
     print(train["id_30"].nunique())
-    group = pd.DataFrame()
-    group["id_30Count"] = train.groupby(["id_30"])["id_30"].count()
-    group["id_30"] = group.index
-    group_top = group.sort_values(by="id_30Count", ascending=False).head(10)
-    plt.figure(figsize=(15, 6))
+    group1 = pd.DataFrame()
+    group1["id_30Count"] = train.groupby(["id_30"])["id_30"].count()
+    group1["id_30"] = group1.index
+    group_top1 = group1.sort_values(by="id_30Count", ascending=False).head(20)
     sns.set(color_codes=True)
     sns.set(font_scale=1.3)
-    sns.barplot(x="id_30", y="id_30Count", data=group_top)
-    plt.xticks(rotation=60)
-    plt.tight_layout()
-    plt.show()
+    sns.barplot(x="id_30Count", y="id_30", data=group_top1, ax=axes1[0])
 
-# id31取值数量130,id31为浏览器
-plt_show = 0
-if plt_show:
     print(train["id_31"].nunique())
-    group = pd.DataFrame()
-    group["id_31Count"] = train.groupby(["id_31"])["id_31"].count()
-    group["id_31"] = group.index
-    group_top = group.sort_values(by="id_31Count", ascending=False).head(10)
-    plt.figure(figsize=(15, 6))
-    sns.set(color_codes=True)
-    sns.set(font_scale=1.3)
-    sns.barplot(x="id_31", y="id_31Count", data=group_top)
+    group2 = pd.DataFrame()
+    group2["id_31Count"] = train.groupby(["id_31"])["id_31"].count()
+    group2["id_31"] = group2.index
+    group_top2 = group2.sort_values(by="id_31Count", ascending=False).head(20)
+    sns.barplot(x="id_31Count", y="id_31", data=group_top2, ax=axes1[1])
     plt.xticks(rotation=60)
     plt.tight_layout()
     plt.show()
