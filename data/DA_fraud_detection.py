@@ -23,21 +23,24 @@ tests_tran = pd.read_csv(input_dir + "\\test_transaction.csv", index_col="Transa
 tests_iden = pd.read_csv(input_dir + "\\test_identity.csv", index_col="TransactionID")
 
 train = train_tran.merge(train_iden, how="left", left_index=True, right_index=True)
-print(train.shape)      # (590540, 433)
-print(train.head(5))
-
 tests = tests_tran.merge(tests_iden, how="left", left_index=True, right_index=True)
-print(tests.shape)      # (506691, 432)
-print(tests.head(5))
+plt_show = 0
+if plt_show:
+    print(train.shape)      # (590540, 433)
+    print(train.head(5))
+    print(tests.shape)      # (506691, 432)
+    print(tests.head(5))
 
 y_train = train["isFraud"].copy()
-print(y_train.shape)    # (590540,)
-print(y_train.head(5))
 x_train = train.drop("isFraud", axis=1)
-print(x_train.shape)    # (590540, 432)
-print(x_train.head(5))
 x_tests = tests.copy()
-print(x_tests.shape)    # (506691, 432)
+plt_show = 0
+if plt_show:
+    print(y_train.shape)    # (590540,)
+    print(y_train.head(5))
+    print(x_train.shape)    # (590540, 432)
+    print(x_train.head(5))
+    print(x_tests.shape)    # (506691, 432)
 
 # =============================================================================
 # =============================================================================
