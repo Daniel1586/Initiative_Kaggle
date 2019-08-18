@@ -329,9 +329,9 @@ if plt_show:
 
 # Categorical => id_12-id_38——Figure_9.png/Figure_10.png
 # 存在混合数据类型,NaN比例较大
-# id30为OS,取值数量75
-# id31为浏览器,取值数量130
-plt_show = 1
+# id30为OS,取值数量75;取值Other|Android 5.1.1欺诈比例最高,但欺诈样本数量较少
+# id31为浏览器,取值数量130;取值Mozilla/Firefox|icedragon|comodo|Lanix/llium欺诈比例最高,但欺诈样本数量较少
+plt_show = 0
 if plt_show:
     id12_loc = train.columns.get_loc("id_12")
     id38_loc = train.columns.get_loc("id_38")
@@ -356,6 +356,40 @@ if plt_show:
     group_top2 = group2.sort_values(by="id_31Count", ascending=False).head(20)
     sns.barplot(x="id_31Count", y="id_31", data=group_top2, ax=axes1[1])
     plt.xticks(rotation=60)
+    plt.tight_layout()
+
+    id30_is = pd.DataFrame()
+    is_fraud = train[train["isFraud"] == 1]
+    id30_is["id30Count"] = is_fraud.groupby(["id_30"])["id_30"].count()
+    id30_is["id30"] = id30_is.index
+
+    id30_no = pd.DataFrame()
+    no_fraud = train[train["isFraud"] == 0]
+    id30_no["id30Count"] = no_fraud.groupby(["id_30"])["id_30"].count()
+    id30_no["id30"] = id30_no.index
+
+    group_top_f = id30_is.sort_values(by="id30Count", ascending=False).head(20)
+    order_f = group_top_f.sort_values(by="id30Count", ascending=False)["id30"]
+    group_top_l = id30_no.sort_values(by="id30Count", ascending=False).head(20)
+    order_l = group_top_l.sort_values(by="id30Count", ascending=False)["id30"]
+
+    _, axes2 = plt.subplots(1, 2, figsize=(16, 9))
+    sns.set(color_codes=True)
+    sns.set(font_scale=1.3)
+    ax = sns.barplot(x="id30Count", y="id30", data=group_top_f, order=order_f, ax=axes2[0])
+    bx = sns.barplot(x="id30Count", y="id30", data=group_top_l, order=order_l, ax=axes2[1])
+    ax.set_title("Fraud transactions by id_30 (ranked)")
+    bx.set_title("Legit transactions by id_30 (ranked)")
+    plt.xticks(rotation=60)
+    plt.tight_layout()
+
+    _, axes3 = plt.subplots(1, 2, figsize=(16, 9))
+    props1 = train.groupby("id_30")["isFraud"].value_counts(normalize=True).unstack()
+    props1 = props1.sort_values(by=1, ascending=False).head(20)
+    props1.plot(kind="barh", stacked="True", ax=axes3[0])
+    props2 = train.groupby("id_31")["isFraud"].value_counts(normalize=True).unstack()
+    props2 = props2.sort_values(by=1, ascending=False).head(20)
+    props2.plot(kind="barh", stacked="True", ax=axes3[1])
     plt.tight_layout()
     plt.show()
 
