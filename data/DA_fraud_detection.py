@@ -327,7 +327,7 @@ if plt_show:
 
     plt.show()
 
-# Categorical => id_12-id_38——Figure_9.png/Figure_10.png
+# Categorical => id_12-id_38——Figure_9_1.png/Figure_9_2.png/Figure_9_3.png
 # 存在混合数据类型,NaN比例较大
 # id30为OS,取值数量75;取值Other|Android 5.1.1欺诈比例最高,但欺诈样本数量较少
 # id31为浏览器,取值数量130;取值Mozilla/Firefox|icedragon|comodo|Lanix/llium欺诈比例最高,但欺诈样本数量较少
@@ -398,11 +398,27 @@ if plt_show:
 # explore data [describe continuous variables]
 # Numeric => TransactionDT/TransactionAmt——Figure_11.png
 # TransactionDT均匀分布,TransactionAmt指数分布[存在离群点]
+# TransactionDT:非欺诈样本在靠近0的地方数量较多; 欺诈样本更平滑,在0.55左右存在峰值
+# 非欺诈样本分布较紧凑, 欺诈样本较分散
 plt_show = 0
 if plt_show:
-    _, axes = plt.subplots(2, 1, figsize=(15, 10))
+    _, axes = plt.subplots(2, 1, figsize=(16, 9))
     trans_dt = sns.distplot(train["TransactionDT"], kde=False, ax=axes[0])
     trans_amt = sns.distplot(train["TransactionAmt"], kde=False, ax=axes[1], hist_kws={"log": True})
+    plt.tight_layout()
+
+    is_fraud = train[train["isFraud"] == 1]
+    no_fraud = train[train["isFraud"] == 0]
+    _, axes1 = plt.subplots(2, 1, figsize=(16, 9))
+
+    d1 = sns.distplot(no_fraud["TransactionDT"], color="fuchsia", label="No fraud", ax=axes1[0])
+    l1 = d1.legend()
+    d2 = sns.distplot(is_fraud["TransactionDT"], color="black", label="Fraud", ax=axes1[0])
+    l2 = d1.legend()
+    t1 = sns.distplot(no_fraud["TransactionAmt"].apply(np.log2), color="fuchsia", label="No fraud", ax=axes1[1])
+    l3 = t1.legend()
+    t2 = sns.distplot(is_fraud["TransactionAmt"].apply(np.log2), color="black", label="Fraud", ax=axes1[1])
+    l4 = t2.legend()
     plt.tight_layout()
     plt.show()
 
