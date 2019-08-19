@@ -396,7 +396,7 @@ if plt_show:
 # =============================================================================
 # =============================================================================
 # explore data [describe continuous variables]
-# Numeric => TransactionDT/TransactionAmt——Figure_11.png
+# Numeric => TransactionDT/TransactionAmt——Fig_10_1.png/Fig_10_2.png
 # TransactionDT均匀分布,TransactionAmt指数分布[存在离群点]
 # TransactionDT:非欺诈样本在靠近0的地方数量较多; 欺诈样本更平滑,在0.55左右存在峰值
 # 非欺诈样本分布较紧凑, 欺诈样本较分散
@@ -422,7 +422,7 @@ if plt_show:
     plt.tight_layout()
     plt.show()
 
-# Numeric => C7-C14——Figure_12.png
+# Numeric => C7-C14——Fig_11_1.png/Fig_11_2.png
 # C7-C14近似指数分布
 plt_show = 0
 if plt_show:
@@ -430,11 +430,27 @@ if plt_show:
     c14_loc = train.columns.get_loc("C14")
     df_c = train.iloc[:, c7_loc:c14_loc + 1]
     cols = df_c.columns
-    _, axes = plt.subplots(4, 2, figsize=(15, 10))
+    _, axes = plt.subplots(4, 2, figsize=(16, 9))
     count = 0
     for i in range(4):
         for j in range(2):
             c_plt = sns.distplot(df_c[cols[count]], kde=False, hist_kws={"log": True}, ax=axes[i, j])
+            count += 1
+    plt.tight_layout()
+
+    # run this to allow np.log to work, i.e., prevent zero division
+    df_c1 = train.iloc[:, c7_loc:c14_loc + 1]
+    df_c1.replace(0, 0.000000001, inplace=True)
+    df_c1["isFraud"] = train["isFraud"]
+
+    is_fraud = df_c1[train["isFraud"] == 1]
+    no_fraud = df_c1[train["isFraud"] == 0]
+    _, axes1 = plt.subplots(4, 2, figsize=(16, 9))
+    count = 0
+    for i in range(4):
+        for j in range(2):
+            sns.distplot(no_fraud[cols[count]].apply(np.log), color="fuchsia", label="No fraud", ax=axes1[i, j])
+            sns.distplot(is_fraud[cols[count]].apply(np.log), color="black", label="Is Fraud", ax=axes1[i, j])
             count += 1
     plt.tight_layout()
     plt.show()
