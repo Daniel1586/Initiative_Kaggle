@@ -45,8 +45,9 @@ if plt_show:
 # =============================================================================
 # =============================================================================
 # explore data [describe single variables]
-# Categorical => isFraud/ProductCD/DeviceType——Figure_1.png
-# isFraud极不平衡[0/1],ProductCD不平衡[W/H/C/S/R],DeviceType=desktop:mobile=86:56
+# Categorical => isFraud/ProductCD/DeviceType——Fig_1.png
+# isFraud极不平衡[0/1],ProductCD不平衡[W/H/C/S/R]
+# DeviceType=desktop:mobile=86:56 [76% for null values]
 # ProductCD: W/C类别欺诈样本数量最多, C/S类别欺诈比例最高
 # DeviceType: mobile/desktop欺诈样本数量接近,但mobile类别欺诈比例较高
 plt_show = 0
@@ -69,7 +70,7 @@ if plt_show:
     plt.tight_layout()
     plt.show()
 
-# Categorical => DeviceInfo——Figure_2.png
+# Categorical => DeviceInfo——Fig_2.png
 # the top devices are: Windows|IOS Device|MacOS|Trident/7.0|占据90%以上
 # DeviceInfo取值数量1786
 # 欺诈样本中DeviceInfo为Windows/IOS Device占据75%以上
@@ -97,7 +98,7 @@ if plt_show:
     plt.tight_layout()
     plt.show()
 
-# Categorical => card1/card2/card3/card5——Figure_3_1.png/Figure_3_2.png
+# Categorical => card1/card2/card3/card5——Fig_3_1.png/Fig_3_2.png
 # card1取值数量13553,card2取值数量500,card3取值数量114,card5取值数量119
 # card1/card2取值较多且较均匀,card3/card5取值较少且分布不平衡
 # card1/card2/card3在欺诈/非欺诈样本中分布类似,card5欺诈/非欺诈样本在值225左右存在较大差异
@@ -139,7 +140,7 @@ if plt_show:
     plt.tight_layout()
     plt.show()
 
-# Categorical => card4/card6——Figure_4.png
+# Categorical => card4/card6——Fig_4.png
 # card4绝大部分是visa/mastercard,card5绝大部分是debit/credit
 # card4样本取值visa欺诈数量最多,但比例较小;取值discover欺诈数量最少,但欺诈比例最高
 # card5样本取值debit/credit占欺诈数量绝大多数,但credit欺诈比例最高
@@ -160,7 +161,7 @@ if plt_show:
     plt.tight_layout()
     plt.show()
 
-# Categorical => addr1——Figure_5_1.png/Figure_5_2.png
+# Categorical => addr1——Fig_5_1.png/Fig_5_2.png
 # addr1取值数量332,数据前20呈现近似对偶性
 # 欺诈样本最多的addr1取值为204/325/299,非欺诈样本最多的addr1取值为299/325/204
 # 欺诈样本和非欺诈样本前5取值一样,只是数量顺序有差异
@@ -208,7 +209,7 @@ if plt_show:
     plt.tight_layout()
     plt.show()
 
-# Categorical => addr2——Figure_6.png
+# Categorical => addr2——Fig_6_1.png/Fig_6_2.png
 # addr2存在1个点占近88%比例[取值极不平衡],取值数量74
 plt_show = 0
 if plt_show:
@@ -255,7 +256,7 @@ if plt_show:
     plt.tight_layout()
     plt.show()
 
-# Categorical => P_emaildomain/R_emaildomain——Figure_7_1.png/Figure_7_2.png/Figure_7_3.png
+# Categorical => P_emaildomain/R_emaildomain——Fig_7_1.png/Fig_7_2.png/Fig_7_3.png
 # P_emaildomain取值数量59,R_emaildomain取值数量60
 # gmail占比最高,存在anonymous.com
 # P_emaildomain取值'Protonmail.com'/'mail.com'/'aim.com'/'outlook.es'欺诈比例最高,但欺诈样本数量较少
@@ -286,7 +287,7 @@ if plt_show:
     plt.tight_layout()
     plt.show()
 
-# Categorical => M1-M9——Figure_8_1.png/Figure_8_2.png/Figure_8_3.png
+# Categorical => M1-M9——Fig_8_1.png/Fig_8_2.png/Fig_8_3.png
 # M4取值数量为3[M0/M1/M2],其他取值数量为2[T/F]
 # M4取值为M2是欺诈比例最高,M1取值为F时无欺诈样本
 plt_show = 0
@@ -327,7 +328,7 @@ if plt_show:
 
     plt.show()
 
-# Categorical => id_12-id_38——Figure_9_1.png/Figure_9_2.png/Figure_9_3.png
+# Categorical => id_12-id_38——Fig_9_1.png/Fig_9_2.png/Fig_9_3.png
 # 存在混合数据类型,NaN比例较大
 # id30为OS,取值数量75;取值Other|Android 5.1.1欺诈比例最高,但欺诈样本数量较少
 # id31为浏览器,取值数量130;取值Mozilla/Firefox|icedragon|comodo|Lanix/llium欺诈比例最高,但欺诈样本数量较少
@@ -493,6 +494,7 @@ if plt_show:
 # Numeric => V1-V339
 # V1-V305,V322-V339大部分取值为0/1,可能是categorical特征
 # V306-V321 seems to be true continuous variables
+# A lot features where Fraud transactions have higher means
 plt_show = 0
 if plt_show:
     v1_loc = train.columns.get_loc("V1")
