@@ -424,6 +424,7 @@ if plt_show:
 
 # Numeric => C7-C14——Fig_11_1.png/Fig_11_2.png
 # C7-C14近似指数分布
+# 非欺诈样本取值更大,峰度高;欺诈样本较平滑分布,峰度低,意味着离群点更多
 plt_show = 0
 if plt_show:
     c7_loc = train.columns.get_loc("C7")
@@ -457,17 +458,34 @@ if plt_show:
 
 # Numeric => D1-D15——Figure_13.png
 # D11-D15存在负值,D9特殊分布,其他近似指数分布
+# 欺诈样本随时间分布分散,非欺诈样本随时间更密集
 plt_show = 0
 if plt_show:
     d1_loc = train.columns.get_loc("D1")
     d15_loc = train.columns.get_loc("D15")
     df_d = train.iloc[:, d1_loc:d15_loc + 1]
     cols = df_d.columns
-    _, axes = plt.subplots(5, 3, figsize=(15, 10))
+    _, axes = plt.subplots(5, 3, figsize=(16, 9))
     count = 0
     for i in range(5):
         for j in range(3):
             d_plt = sns.distplot(df_d[cols[count]].dropna(), ax=axes[i, j])
+            count += 1
+    plt.tight_layout()
+
+    # run this to allow np.log to work, i.e., prevent zero division
+    df_d1 = train.iloc[:, d1_loc:d15_loc + 1]
+    df_d1.replace(0, 0.000000001, inplace=True)
+    df_d1["isFraud"] = train["isFraud"]
+    is_fraud = df_d1[train["isFraud"] == 1].apply(np.log)
+    no_fraud = df_d1[train["isFraud"] == 0].apply(np.log)
+
+    _, axes1 = plt.subplots(5, 3, figsize=(16, 9))
+    count = 0
+    for i in range(5):
+        for j in range(3):
+            sns.distplot(no_fraud[cols[count]].dropna(), color="fuchsia", ax=axes1[i, j])
+            sns.distplot(is_fraud[cols[count]].dropna(), color="black", ax=axes1[i, j])
             count += 1
     plt.tight_layout()
     plt.show()
