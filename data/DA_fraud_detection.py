@@ -530,17 +530,28 @@ if plt_show:
     plt.tight_layout()
     plt.show()
 
-# Numeric => id_07-id_11——Figure_15.png
+# Numeric => id_07-id_11——Fig_13_2.png
 # id07/id08近似正态分布
+# Fraud more clustered with a higher peak
+# Not-Fraud more spread out with longer/heavier tails
 plt_show = 0
 if plt_show:
     id07_loc = train.columns.get_loc("id_07")
     id11_loc = train.columns.get_loc("id_11")
     df2 = train.iloc[:, id07_loc:id11_loc + 1]
     cols = df2.columns
-    _, axes = plt.subplots(5, 2, figsize=(15, 10))
+
+    # run this to allow np.log to work, i.e., prevent zero division
+    df2 = train.iloc[:, id07_loc:id11_loc + 1]
+    df2.replace(0, 0.000000001, inplace=True)
+    df2["isFraud"] = train["isFraud"]
+    is_fraud = df2[train["isFraud"] == 1].apply(np.log)
+    no_fraud = df2[train["isFraud"] == 0].apply(np.log)
+    _, axes = plt.subplots(5, 3, figsize=(16, 9))
     for i in range(5):
-        id1_plt = sns.distplot(df2[cols[i]].dropna(), ax=axes[i, 0])
-        id2_plt = sns.distplot(df2[cols[i]].dropna(), kde=False, hist_kws={"log": True}, ax=axes[i, 1])
+        sns.distplot(df2[cols[i]].dropna(), ax=axes[i, 0])
+        sns.distplot(df2[cols[i]].dropna(), kde=False, hist_kws={"log": True}, ax=axes[i, 1])
+        sns.distplot(no_fraud[cols[i]].dropna(), color="fuchsia", ax=axes[i, 2])
+        sns.distplot(is_fraud[cols[i]].dropna(), color="black", ax=axes[i, 2])
     plt.tight_layout()
     plt.show()
