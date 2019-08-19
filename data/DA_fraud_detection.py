@@ -456,7 +456,7 @@ if plt_show:
     plt.tight_layout()
     plt.show()
 
-# Numeric => D1-D15——Figure_13.png
+# Numeric => D1-D15——Fig_12_1.png/Fig_12_2.png
 # D11-D15存在负值,D9特殊分布,其他近似指数分布
 # 欺诈样本随时间分布分散,非欺诈样本随时间更密集
 plt_show = 0
@@ -500,20 +500,35 @@ if plt_show:
     df_v = train.iloc[:, v1_loc:v339_loc + 1]
     print(df_v.head(20))
 
-# Numeric => id_01-id_06——Figure_14.png
+# Numeric => id_01-id_06——Fig_13_1.png
 # id02 may be dollar amounts, with log distribution
+# Fraud more clustered with a higher peak
+# Not-Fraud more spread out with longer/heavier tails
 plt_show = 0
 if plt_show:
     id01_loc = train.columns.get_loc("id_01")
     id06_loc = train.columns.get_loc("id_06")
     df1 = train.iloc[:, id01_loc:id06_loc + 1]
     cols = df1.columns
-    _, axes = plt.subplots(6, 2, figsize=(15, 10))
+
+    # run this to allow np.log to work, i.e., prevent zero division
+    df2 = train.iloc[:, id01_loc:id06_loc + 1]
+    df2.replace(0, 0.000000001, inplace=True)
+    df2["isFraud"] = train["isFraud"]
+    is_fraud = df2[train["isFraud"] == 1].apply(np.log)
+    no_fraud = df2[train["isFraud"] == 0].apply(np.log)
+
+    # run this to avoid runtime error (log is undefined for inf/NaN values in 'isFraud')
+    is_fraud.drop(columns=["isFraud"], inplace=True)
+    no_fraud.drop(columns=["isFraud"], inplace=True)
+    _, axes = plt.subplots(6, 3, figsize=(16, 9))
     for i in range(6):
-        id1_plt = sns.distplot(df1[cols[i]].dropna(), ax=axes[i, 0])
-        id2_plt = sns.distplot(df1[cols[i]].dropna(), kde=False, hist_kws={"log": True}, ax=axes[i, 1])
+        sns.distplot(df1[cols[i]].dropna(), ax=axes[i, 0])
+        sns.distplot(df1[cols[i]].dropna(), kde=False, hist_kws={"log": True}, ax=axes[i, 1])
+        sns.distplot(no_fraud[cols[i]].dropna(), color="fuchsia", ax=axes[i, 2])
+        sns.distplot(is_fraud[cols[i]].dropna(), color="black", ax=axes[i, 2])
     plt.tight_layout()
-    # plt.show()
+    plt.show()
 
 # Numeric => id_07-id_11——Figure_15.png
 # id07/id08近似正态分布
