@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-Preprocess Criteo dataset. This dataset was used for the Display Advertising
-Challenge (https://www.kaggle.com/c/criteo-display-ad-challenge).
+Preprocess ieee-fraud-detection dataset.
+(https://www.kaggle.com/c/ieee-fraud-detection).
 ----数据解压: train.csv=45840617条样本[has label], test.csv=6042135条样本[no label]
 ----从train.txt取最后330000条数据,最后30000条数据为测试集;
 ----前面300000条数据按9:1比例随机选取为训练集/验证集;
@@ -20,6 +20,7 @@ import sys
 import random
 import argparse
 import collections
+import pandas as pd
 
 # There are 13 numeric features and 26 categorical features
 # 数值特征I1-I13(整数), 离散特征C1-C26
@@ -105,12 +106,13 @@ class NumericFeatureGenerator:
 
 
 def preprocess(datain_dir, dataou_dir):
-    """
-    All the 13 numeric(integer) features are normalized to [0,1] and these
-    numeric features are combined into one vector with dimension 13.
-    Each of the 26 categorical features are one-hot encoded and all the one-hot
-    vectors are combined into one sparse binary vector.
-    """
+    # import data [index_col指定哪一列数据作为行索引,返回DataFrame]
+    train_tran = pd.read_csv(datain_dir + "\\train_tran.csv", index_col="TransactionID")
+    train_iden = pd.read_csv(datain_dir + "\\train_iden.csv", index_col="TransactionID")
+    # tests_tran = pd.read_csv(datain_dir + "\\test_transaction.csv", index_col="TransactionID")
+    # tests_iden = pd.read_csv(datain_dir + "\\test_identity.csv", index_col="TransactionID")
+    train = train_tran.merge(train_iden, how="left", left_index=True, right_index=True)
+    # tests = tests_tran.merge(tests_iden, how="left", left_index=True, right_index=True)
 
     print("========== 1.Preprocess numeric and categorical features...")
     n_feat = NumericFeatureGenerator(len(numeric_features))
@@ -200,14 +202,14 @@ def preprocess(datain_dir, dataou_dir):
 if __name__ == "__main__":
     run_mode = 0        # 0: windows环境
     if run_mode == 0:
-        dir_datain = os.getcwd() + "\\data_raw_criteo\\"
-        dir_dataou = os.getcwd() + "\\data_set_criteo\\"
+        dir_datain = os.getcwd() + "\\ieee-fraud-detection\\"
+        dir_dataou = os.getcwd() + "\\ieee-fraud-detection-set\\"
     else:
         dir_datain = ""
         dir_dataou = ""
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--threads", type=int, default=2, help="threads num")
+    parser.add_argument("--threads", type=int, default=4, help="threads num")
     parser.add_argument("--data_in", type=str, default=dir_datain, help="data_in dir")
     parser.add_argument("--data_ou", type=str, default=dir_dataou, help="data_out dir")
     parser.add_argument("--cut_off", type=int, default=200, help="cutoff long-tailed categorical values")
