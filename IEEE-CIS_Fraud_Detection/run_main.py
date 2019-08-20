@@ -18,17 +18,10 @@ import shutil
 import tensorflow as tf
 from datetime import date, timedelta
 from tensorflow_estimator import estimator
-from ctr_model import lr, fm
-from ctr_model import deepcrossing, fpnn, wd, deepfm, dcn
-from ctr_model import nfm
 
 # =================== CMD Arguments for CTR model =================== #
 flags = tf.app.flags
 flags.DEFINE_integer("run_mode", 0, "{0-local, 1-single_distributed, 2-multi_distributed}")
-flags.DEFINE_string("ps_hosts", None, "Comma-separated list of hostname:port pairs")
-flags.DEFINE_string("wk_hosts", None, "Comma-separated list of hostname:port pairs")
-flags.DEFINE_string("job_name", None, "Job name: ps or worker")
-flags.DEFINE_integer("task_id", None, "Index of task within the job")
 flags.DEFINE_integer("num_thread", 4, "Number of threads")
 # global parameters--全局参数设置
 flags.DEFINE_string("algorithm", "NFM", "{LR,FM,DC,FNN,IPNN,OPNN,WD,DeepFM,DCN,NFM}")
@@ -91,62 +84,6 @@ def input_fn(filenames, batch_size=64, num_epochs=1, perform_shuffle=True):
     return batch_features, batch_labels
 
 
-def batch_norm_layer(x, train_phase, scope_bn):
-    bn_train = tf.contrib.layers.batch_norm(x, decay=FLAGS.batch_norm_decay, center=True, scale=True, updates_collections=None, is_training=True,  reuse=None, scope=scope_bn)
-    bn_infer = tf.contrib.layers.batch_norm(x, decay=FLAGS.batch_norm_decay, center=True, scale=True, updates_collections=None, is_training=False, reuse=True, scope=scope_bn)
-    z = tf.cond(tf.cast(train_phase, tf.bool), lambda: bn_train, lambda: bn_infer)
-    return z
-
-
-# Initialized Distributed Environment,初始化分布式环境
-def distr_env_set():
-    if FLAGS.run_mode == 1:         # 单机分布式
-        ps_hosts = FLAGS.ps_hosts.split(',')
-        cf_hosts = FLAGS.wk_hosts.split(',')
-        job_name = FLAGS.job_name
-        task_idx = FLAGS.task_id
-        print("ps_host --------", ps_hosts)
-        print("chief_hosts ----", cf_hosts)
-        print("job_name -------", job_name)
-        print("task_index -----", str(task_idx))
-        # 无worker参数
-        tf_config = {
-            "cluster": {"chief": cf_hosts, "ps": ps_hosts},
-            "task": {"type": job_name, "index": task_idx}
-        }
-        print(json.dumps(tf_config))
-        os.environ["TF_CONFIG"] = json.dumps(tf_config)
-    elif FLAGS.run_mode == 2:      # 集群分布式
-        ps_hosts = FLAGS.ps_hosts.split(',')
-        worker_hosts = FLAGS.wk_hosts.split(',')
-        cf_hosts = worker_hosts[0:1]    # get first worker as chief
-        wk_hosts = worker_hosts[1:]     # the rest as worker
-        task_idx = FLAGS.task_id
-        job_name = FLAGS.job_name
-        print("ps_host --------", ps_hosts)
-        print("chief_hosts ----", cf_hosts)
-        print("worker_host ----", wk_hosts)
-        print("job_name -------", job_name)
-        print("task_index -----", str(task_idx))
-        # use #worker=0 as chief
-        if job_name == "worker" and task_idx == 0:
-            job_name = "chief"
-        # use #worker=1 as evaluator
-        if job_name == "worker" and task_idx == 1:
-            job_name = "evaluator"
-            task_idx = 0
-        # the others as worker
-        if job_name == "worker" and task_idx > 1:
-            task_idx -= 2
-
-        tf_config = {
-            "cluster": {"chief": cf_hosts, "worker": wk_hosts, "ps": ps_hosts},
-            "task": {"type": job_name, "index": task_idx}
-        }
-        print(json.dumps(tf_config))
-        os.environ["TF_CONFIG"] = json.dumps(tf_config)
-
-
 def main(_):
     print("==================== 1.Check Args and Initialized Distributed Env...")
     if FLAGS.model_dir == "":       # 算法模型checkpoint文件
@@ -168,7 +105,6 @@ def main(_):
             print(e, "At clear_existed_model")
         else:
             print("Existed model cleared at %s folder" % FLAGS.model_dir)
-    distr_env_set()       # 分布式环境设置
 
     print("==================== 2.Set model params and Build CTR model...")
     model_params = {
