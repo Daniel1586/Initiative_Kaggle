@@ -22,10 +22,10 @@ import argparse
 import collections
 import pandas as pd
 
-# There are 13 numeric features and 26 categorical features
-# 数值特征I1-I13(整数), 离散特征C1-C26
-numeric_features = range(1, 14)
-categorical_features = range(14, 40)
+# There are 371 numeric features and 49 categorical features
+# 数值特征I1-I371(整数), 离散特征C1-C49
+numeric_features = range(1, 372)
+categorical_features = range(372, 421)
 
 # Clip numeric features. The clip point for each numeric feature is
 # derived from the 95% quantile of the total values in each feature
