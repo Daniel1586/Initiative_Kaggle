@@ -39,12 +39,13 @@ def csv2txt(datain_dir, dataou_dir):
     train_tran = pd.read_csv(datain_dir + "\\train_tran.csv", index_col="TransactionID")
     train_iden = pd.read_csv(datain_dir + "\\train_iden.csv", index_col="TransactionID")
     train = train_tran.merge(train_iden, how="left", left_index=True, right_index=True)
-    order = ["isFraud","ProductCD","card1","card2","card3","card4","card5","card6","addr1",
-             "addr2","P_emaildomain","R_emaildomain","M1","M2","M3","M4","M5","M6","M7",
-             "M8","M9",
-             "TransactionDT","TransactionAmt","dist1","dist2","C1","C2","C3","C4","C5",
-             "C6","C7","C8","C9","C10","C11","C12","C13","C14","D1","D2","D3","D4","D5",
-             "D6","D7","D8","D9","D10","D11","D12","D13","D14","D15","V1","V2","V3","V4",
+    order = ["isFraud", "ProductCD", "card1", "card2", "card3", "card4", "card5", "card6",
+             "addr1", "addr2", "P_emaildomain", "R_emaildomain", "M1", "M2", "M3", "M4",
+             "M5", "M6", "M7", "M8", "M9",
+             "TransactionDT", "TransactionAmt", "dist1", "dist2", "C1", "C2", "C3", "C4",
+             "C5", "C6", "C7", "C8", "C9", "C10", "C11", "C12", "C13", "C14", "D1", "D2",
+             "D3", "D4", "D5", "D6", "D7", "D8", "D9", "D10", "D11", "D12", "D13", "D14",
+             "D15", "V1", "V2", "V3", "V4",
              "V5","V6","V7","V8","V9","V10","V11","V12","V13","V14","V15","V16","V17",
              "V18","V19","V20","V21","V22","V23","V24","V25","V26","V27","V28","V29",
              "V30","V31","V32","V33","V34","V35","V36","V37","V38","V39","V40","V41",
