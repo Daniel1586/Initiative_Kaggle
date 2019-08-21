@@ -19,37 +19,63 @@ print(os.listdir(input_dir))
 # import data [index_col指定哪一列数据作为行索引,返回DataFrame]
 train_tran = pd.read_csv(input_dir + "\\train_transaction.csv", index_col="TransactionID")
 train_iden = pd.read_csv(input_dir + "\\train_identity.csv", index_col="TransactionID")
-tests_tran = pd.read_csv(input_dir + "\\test_transaction.csv", index_col="TransactionID")
-tests_iden = pd.read_csv(input_dir + "\\test_identity.csv", index_col="TransactionID")
+# tests_tran = pd.read_csv(input_dir + "\\test_transaction.csv", index_col="TransactionID")
+# tests_iden = pd.read_csv(input_dir + "\\test_identity.csv", index_col="TransactionID")
 
 train = train_tran.merge(train_iden, how="left", left_index=True, right_index=True)
-tests = tests_tran.merge(tests_iden, how="left", left_index=True, right_index=True)
+# tests = tests_tran.merge(tests_iden, how="left", left_index=True, right_index=True)
 plt_show = 0
 if plt_show:
     print(train.shape)      # (590540, 433)
     print(train.head(5))
-    print(tests.shape)      # (506691, 432)
-    print(tests.head(5))
+    # print(tests.shape)      # (506691, 432)
+    # print(tests.head(5))
 
 y_train = train["isFraud"].copy()
 x_train = train.drop("isFraud", axis=1)
-x_tests = tests.copy()
-plt_show = 0
+# x_tests = tests.copy()
+plt_show = 1
 if plt_show:
     print(y_train.shape)    # (590540,)
-    print(y_train.head(5))
+    # print(y_train.head(5))
     print(x_train.shape)    # (590540, 432)
-    print(x_train.head(5))
-    print(x_tests.shape)    # (506691, 432)
+    # print(x_train.head(5))
+    # print(x_tests.shape)    # (506691, 432)
 
 # =============================================================================
 # =============================================================================
 # explore data [describe single variables]
 # Categorical => isFraud/ProductCD/DeviceType——Fig_1.png
+# isFraud==>极不平衡[0:569877,1:20663],正样本比例3.5%左右
 # isFraud极不平衡[0/1],ProductCD不平衡[W/H/C/S/R]
 # DeviceType=desktop:mobile=86:56 [76% for null values]
 # ProductCD: W/C类别欺诈样本数量最多, C/S类别欺诈比例最高
 # DeviceType: mobile/desktop欺诈样本数量接近,但mobile类别欺诈比例较高
+plt_show = 1
+if plt_show:
+    isFraud_cnt = 0
+    if isFraud_cnt:
+        # isFraud数量统计
+        train_feat = pd.DataFrame()
+        train_feat["isFraud"] = train["isFraud"]
+        feat1 = train_feat[train_feat["isFraud"] == 1]
+        feat2 = train_feat[train_feat["isFraud"] == 0]
+        print(train_feat.shape)
+        print(feat1.shape)
+        print(feat2.shape)
+
+    isFraud_cnt = 0
+    if isFraud_cnt:
+        # ProductCD数量统计
+        train_feat = pd.DataFrame()
+        train_feat["ProductCD"] = train["ProductCD"]
+        feat1 = train_feat[train_feat["isFraud"] == 1]
+        feat2 = train_feat[train_feat["isFraud"] == 0]
+        print(train_feat.shape)
+        print(feat1.shape)
+        print(feat2.shape)
+
+
 plt_show = 0
 if plt_show:
     _, axes = plt.subplots(3, 3, figsize=(16, 9))
