@@ -107,18 +107,15 @@ class NumericFeatureGenerator:
 
 def preprocess(datain_dir, dataou_dir):
     # import data [index_col指定哪一列数据作为行索引,返回DataFrame]
-    train_tran = pd.read_csv(datain_dir + "\\train_tran.csv", index_col="TransactionID")
-    train_iden = pd.read_csv(datain_dir + "\\train_iden.csv", index_col="TransactionID")
-    # tests_tran = pd.read_csv(datain_dir + "\\test_transaction.csv", index_col="TransactionID")
-    # tests_iden = pd.read_csv(datain_dir + "\\test_identity.csv", index_col="TransactionID")
+    train_tran = pd.read_csv(datain_dir + "\\train_transaction.csv", index_col="TransactionID")
+    train_iden = pd.read_csv(datain_dir + "\\train_identity.csv", index_col="TransactionID")
     train = train_tran.merge(train_iden, how="left", left_index=True, right_index=True)
-    # tests = tests_tran.merge(tests_iden, how="left", left_index=True, right_index=True)
 
-    print("========== 1.Preprocess numeric and categorical features...")
-    n_feat = NumericFeatureGenerator(len(numeric_features))
-    n_feat.build(datain_dir + "train.txt", numeric_features)
+    print("========== 1.Preprocess categorical and numeric features...")
     c_feat = CategoryDictGenerator(len(categorical_features))
     c_feat.build(datain_dir + "train.txt", categorical_features, cutoff=FLAGS.cut_off)
+    n_feat = NumericFeatureGenerator(len(numeric_features))
+    n_feat.build(datain_dir + "train.txt", numeric_features)
 
     print("========== 2.Generate index of feature embedding ...")
     # 生成数值特征编号: I1-I13
