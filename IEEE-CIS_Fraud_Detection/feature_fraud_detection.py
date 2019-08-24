@@ -27,8 +27,7 @@ import pandas as pd
 categorical_features = range(1, 49)
 numeric_features = range(50, 432)
 
-# Clip numeric features. The clip point for each numeric feature is
-# derived from the 95% quantile of the total values in each feature
+###############################################################################
 # 数值特征的阈值[95%~分位数],若数值特征超过阈值,则该特征值置为阈值[剔除异常值]
 # TransactionDT-[相对时间: sec,(86400,15811131)]: 590540/590540,取值573349种,类均匀分布
 # TransactionAmt[交易金额: USD,(0.251,31937.391)]: 590540/590540,取值20902种,类指数分布[存在离群点]
@@ -48,9 +47,15 @@ numeric_features = range(50, 432)
 # C12----[计数12: ?,(0.0,3188.0)]: 590540/590540,取值1199种,极度不平衡,[0.0,20.0)占比99.3%
 # C13----[计数13: ?,(0.0,2918.0)]: 590540/590540,取值1597种,分布不平衡,[0.0,100.0)占比94.9%
 # C14----[计数14: ?,(0.0,1429.0)]: 590540/590540,取值1108种,极度不平衡,[0.0,20.0)占比95.4%
+# D1-----[时间1: ?,(0.0,640.0)]: 589271/590540,取值641种,分布不平衡,[0.0,500.0)占比95.4%
+# D2-----[时间2: ?,(0.0,640.0)]: 309743/590540,取值641种,分布不平衡,[0.0,550.0)占比95.6%
+# D3-----[时间3: ?,(0.0,819.0)]: 327662/590540,取值649种,分布不平衡,[0.0,150.0)占比95.7%
+# D4-----[时间4: ?,(-122.0,869.0)]: 421618/590540,取值808种,分布不平衡,[0.0,550.0)占比95.4%
+# D5-----[时间5: ?,(0.0,819.0)]: 280699/590540,取值688种,分布不平衡,[0.0,250.0)占比95.1%
+# D6-----[时间6: ?,(-83.0,873.0)]: 73187/590540,取值829种,分布不平衡,[0.0,400.0)占比94.8%
+# D7-----[时间7: ?,(0.0,843.0)]: 38917/590540,取值597种,分布不平衡,[0.0,300.0)占比94.4%
 
-ord__ = ["C7", "C8", "C9", "C10", "C11", "C12", "C13", "C14", "D1", "D2",
-             "D3", "D4", "D5", "D6", "D7", "D8", "D9", "D10", "D11", "D12", "D13", "D14",
+ord__ = ["D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "D9", "D10", "D11", "D12", "D13", "D14",
              "D15", "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10", "V11",
              "V12", "V13", "V14", "V15", "V16", "V17", "V18", "V19", "V20", "V21", "V22",
              "V23", "V24", "V25", "V26", "V27", "V28", "V29", "V30", "V31", "V32", "V33",
@@ -98,15 +103,14 @@ def csv2txt(datain_dir, dataou_dir):
     train = train_tran.merge(train_iden, how="left", left_index=True, right_index=True)
     # tests = tests_tran.merge(tests_iden, how="left", left_index=True, right_index=True)
 
-    df_v = train["C14"]
+    df_v = train["D7"]
     print(df_v.count())
     print(df_v.min(), df_v.max())
     print("\n")
     print(df_v.value_counts())
-    df_vv = train[train["C14"] < 20.0]
-    df_vvv = df_vv["C14"]
+    df_vv = train[train["D7"] < 300.0]
+    df_vvv = df_vv["D7"]
     print(df_vvv.count(), df_vvv.count()/df_v.count())
-
 
     # order = ["isFraud", "ProductCD", "card1", "card2", "card3", "card4", "card5", "card6",
     #          "addr1", "addr2", "P_emaildomain", "R_emaildomain", "M1", "M2", "M3", "M4",
