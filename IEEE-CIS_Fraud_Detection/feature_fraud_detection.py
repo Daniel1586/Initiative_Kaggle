@@ -36,12 +36,18 @@ numeric_clip = [20, 600, 100, 50, 64000, 500, 100, 50, 500, 10, 10, 10, 50]
 
 def csv2txt(datain_dir, dataou_dir):
     # import data [index_col指定哪一列数据作为行索引,返回DataFrame]
-    train_tran = pd.read_csv(datain_dir + "\\train_tran.csv", index_col="TransactionID")
-    train_iden = pd.read_csv(datain_dir + "\\train_iden.csv", index_col="TransactionID")
+    train_tran = pd.read_csv(datain_dir + "\\train_transaction.csv", index_col="TransactionID")
+    train_iden = pd.read_csv(datain_dir + "\\train_identity.csv", index_col="TransactionID")
+    tests_tran = pd.read_csv(datain_dir + "\\test_transaction.csv", index_col="TransactionID")
+    tests_iden = pd.read_csv(datain_dir + "\\test_identity.csv", index_col="TransactionID")
     train = train_tran.merge(train_iden, how="left", left_index=True, right_index=True)
+    tests = tests_tran.merge(tests_iden, how="left", left_index=True, right_index=True)
     order = ["isFraud", "ProductCD", "card1", "card2", "card3", "card4", "card5", "card6",
              "addr1", "addr2", "P_emaildomain", "R_emaildomain", "M1", "M2", "M3", "M4",
-             "M5", "M6", "M7", "M8", "M9",
+             "M5", "M6", "M7", "M8", "M9", "id_12", "id_13", "id_14", "id_15", "id_16",
+             "id_17", "id_18", "id_19", "id_20", "id_21", "id_22", "id_23", "id_24",
+             "id_25", "id_26", "id_27", "id_28", "id_29", "id_30", "id_31", "id_32",
+             "id_33", "id_34", "id_35", "id_36", "id_37", "id_38", "DeviceType", "DeviceInfo",
              "TransactionDT", "TransactionAmt", "dist1", "dist2", "C1", "C2", "C3", "C4",
              "C5", "C6", "C7", "C8", "C9", "C10", "C11", "C12", "C13", "C14", "D1", "D2",
              "D3", "D4", "D5", "D6", "D7", "D8", "D9", "D10", "D11", "D12", "D13", "D14",
@@ -77,14 +83,14 @@ def csv2txt(datain_dir, dataou_dir):
              "V300", "V301", "V302", "V303", "V304", "V305", "V306", "V307", "V308", "V309",
              "V310", "V311", "V312", "V313", "V314", "V315", "V316", "V317", "V318", "V319",
              "V320", "V321", "V322", "V323", "V324", "V325", "V326", "V327", "V328", "V329",
-             "V330", "V331", "V332", "V333", "V334", "V335", "V336", "V337", "V338", "V339"]
-    train.to_csv(dataou_dir + "train.txt", sep='\t', index=False)
-
-    # id_01, id_02, id_03, id_04, id_05, id_06, id_07, id_08, id_09, id_10, id_11, id_12,
-    # id_13, id_14, id_15, id_16, id_17, id_18, id_19, id_20, id_21, id_22, id_23, id_24,
-    # id_25, id_26, id_27, id_28, id_29, id_30, id_31, id_32, id_33, id_34, id_35, id_36,
-    # id_37, id_38, DeviceType, DeviceInfo
-    pass
+             "V330", "V331", "V332", "V333", "V334", "V335", "V336", "V337", "V338", "V339",
+             "id_01", "id_02", "id_03", "id_04", "id_05", "id_06", "id_07", "id_08", "id_09",
+             "id_10", "id_11"]
+    order_ = order[1:]
+    train_txt = train[order]
+    tests_txt = tests[order_]
+    train_txt.to_csv(dataou_dir + "train.txt", sep='\t', index=False, header=0)
+    tests_txt.to_csv(dataou_dir + "tests.txt", sep='\t', index=False, header=0)
 
 
 class CategoryDictGenerator:
@@ -269,8 +275,11 @@ if __name__ == "__main__":
     print("set_dir -------------- ", FLAGS.data_set)
     print("cutoff --------------- ", FLAGS.cut_off)
 
-    # CSV转TXT
-    csv2txt(FLAGS.data_csv, FLAGS.data_txt)
-    # 特征预处理
-    # preprocess(FLAGS.data_txt, FLAGS.data_set)
+    is_csv = 1
+    if is_csv:
+        # CSV转TXT
+        csv2txt(FLAGS.data_csv, FLAGS.data_txt)
+    else:
+        # 特征预处理
+        preprocess(FLAGS.data_txt, FLAGS.data_set)
     pass
