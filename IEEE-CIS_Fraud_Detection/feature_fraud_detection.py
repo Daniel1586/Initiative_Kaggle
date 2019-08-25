@@ -25,13 +25,11 @@ import pandas as pd
 
 ###############################################################################
 # ================================ 离散特征分析 ================================
-# ProductCD-[相对时间: sec,(86400,15811131)]: 590540/590540,取值573349种,类均匀分布
-# TransactionAmt[交易金额: USD,(0.251,31937.391)]: 590540/590540,取值20902种,类指数分布[存在离群点]
-# dist1--[距离1: ?,(0.0,10286.0)]: 238269/590540,取值2651种,分布不平衡,[0.0,900.0)占比95.3%
-# dist2--[距离2: ?,(0.0,11623.0)]: 37627/590540,取值1751种,分布不平衡,[0.0,1000.0)占比94.9%
-# C1-----[计数1: ?,(0.0,4685.0)]: 590540/590540,取值1657种,极度不平衡,[0.0,25.0)占比95.1%
-# C2-----[计数2: ?,(0.0,5691.0)]: 590540/590540,取值1216种,极度不平衡,[0.0,25.0)占比94.9%
-# C3-----[计数3: ?,(0.0,26.0)]:   590540/590540,取值27种,极度不平衡,[0.0,10.0)占比99.9%
+# ProductCD-[product code: ?,(W,C,R,H,S)]: 590540/590540,取值5种,极度不平衡,W占比74.4%
+# card1-----[card info: ?,(1000,18396)]: 590540/590540,取值13553种,均匀分布,数值特征???
+# card2-----[card info: ?,(100.0,600.0)]: 581607/590540,取值500种,类均匀分布,数值特征???
+# card3-----[card info: ?,(1000,18396)]: 590540/590540,取值13553种,均匀分布,数值特征???
+# card4-----[card info: ?,(100.0,600.0)]: 581607/590540,取值500种,类均匀分布,数值特征???
 # C4-----[计数4: ?,(0.0,2253.0)]: 590540/590540,取值1260种,极度不平衡,[0.0,10.0)占比99.2%
 order = ["isFraud", "ProductCD", "card1", "card2", "card3", "card4", "card5", "card6",
          "addr1", "addr2", "P_emaildomain", "R_emaildomain", "M1", "M2", "M3", "M4",
@@ -91,14 +89,14 @@ def csv2txt(datain_dir, dataou_dir):
     train = train_tran.merge(train_iden, how="left", left_index=True, right_index=True)
     # tests = tests_tran.merge(tests_iden, how="left", left_index=True, right_index=True)
 
-    df_v = train["ProductCD"]
+    df_v = train["card3"]
     print(df_v.count())
-    # print(df_v.min(), df_v.max())
+    print(df_v.min(), df_v.max())
     print("\n")
     print(df_v.value_counts())
-    # df_vv = train[train["ProductCD"] < 550]
-    # df_vvv = df_vv["ProductCD"]
-    # print(df_vvv.count(), df_vvv.count()/df_v.count())
+    df_vv = train[train["card3"] < 17000]
+    df_vvv = df_vv["card3"]
+    print(df_vvv.count(), df_vvv.count()/df_v.count())
 
     # order = ["isFraud", "ProductCD", "card1", "card2", "card3", "card4", "card5", "card6",
     #          "addr1", "addr2", "P_emaildomain", "R_emaildomain", "M1", "M2", "M3", "M4",
