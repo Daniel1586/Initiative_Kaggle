@@ -26,11 +26,11 @@ import pandas as pd
 ###############################################################################
 # ================================ 离散特征分析 ================================
 # ProductCD-[product code: ?,(W,C,R,H,S)]: 590540/590540,取值5种,极度不平衡,W占比74.4%
-# card1-----[card info: ?,(1000,18396)]: 590540/590540,取值13553种,均匀分布,数值特征???
-# card2-----[card info: ?,(100.0,600.0)]: 581607/590540,取值500种,类均匀分布,数值特征???
-# card3-----[card info: ?,(1000,18396)]: 590540/590540,取值13553种,均匀分布,数值特征???
-# card4-----[card info: ?,(100.0,600.0)]: 581607/590540,取值500种,类均匀分布,数值特征???
-# C4-----[计数4: ?,(0.0,2253.0)]: 590540/590540,取值1260种,极度不平衡,[0.0,10.0)占比99.2%
+# card1-----[card info:(1000,18396)]: 590540/590540,取值13553种,类均匀分布,数值特征???
+# card2-----[card info:(100.0,600.0)]: 581607/590540,取值500种,类均匀分布,数值特征???
+# card3-----[card info:(100.0,231.0)]: 588975/590540,取值114种,极度不平衡,150.0占比88.3%
+# card4-----[card info:(visa,mastercard,american express,discover)]: 588963/590540,
+# ----------取值4种,极度不平衡,visa占比65.1%,mastercard占比32.0%
 order = ["isFraud", "ProductCD", "card1", "card2", "card3", "card4", "card5", "card6",
          "addr1", "addr2", "P_emaildomain", "R_emaildomain", "M1", "M2", "M3", "M4",
          "M5", "M6", "M7", "M8", "M9", "id_12", "id_13", "id_14", "id_15", "id_16",
@@ -89,14 +89,14 @@ def csv2txt(datain_dir, dataou_dir):
     train = train_tran.merge(train_iden, how="left", left_index=True, right_index=True)
     # tests = tests_tran.merge(tests_iden, how="left", left_index=True, right_index=True)
 
-    df_v = train["card3"]
+    df_v = train["card4"]
     print(df_v.count())
-    print(df_v.min(), df_v.max())
+    # print(df_v.min(), df_v.max())
     print("\n")
     print(df_v.value_counts())
-    df_vv = train[train["card3"] < 17000]
-    df_vvv = df_vv["card3"]
-    print(df_vvv.count(), df_vvv.count()/df_v.count())
+    # df_vv = train[train["card4"] < 200]
+    # df_vvv = df_vv["card4"]
+    # print(df_vvv.count(), df_vvv.count()/df_v.count())
 
     # order = ["isFraud", "ProductCD", "card1", "card2", "card3", "card4", "card5", "card6",
     #          "addr1", "addr2", "P_emaildomain", "R_emaildomain", "M1", "M2", "M3", "M4",
