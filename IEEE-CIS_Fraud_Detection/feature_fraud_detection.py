@@ -26,20 +26,22 @@ import pandas as pd
 ###############################################################################
 # ================================ 离散特征分析 ================================
 # ProductCD-[product code: ?,(W,C,R,H,S)]: 590540/590540,取值5种,极度不平衡,W占比74.4%
-# card1-----[card info:(1000,18396)]: 590540/590540,取值13553种,类均匀分布,数值特征???
-# card2-----[card info:(100.0,600.0)]: 581607/590540,取值500种,类均匀分布,数值特征???
-# card3-----[card info:(100.0,231.0)]: 588975/590540,取值114种,极度不平衡,150.0占比88.3%,数值特征???
+# card1-----[card info:(1000,18396)]: 590540/590540,取值13553种,类指数分布,数值特征???
+# card2-----[card info:(100.0,600.0)]: 581607/590540,取值500种,类指数分布,数值特征???
+# card3-----[card info:(100.0,231.0)]: 588975/590540,取值114种,极度不平衡,150.0占比88.5%,数值特征???
 # card4-----[card info:(visa,mastercard,american express,discover)]: 588963/590540,
-# ----------取值4种,极度不平衡,visa占比65.1%,mastercard占比32.0%
-# card5-----[card info:(100.0,237.0)]: 586281/590540,取值119种,分布不平衡,226.0占比50.2%,数值特征???
+# ----------取值4种,极度不平衡,visa占比65.3%,mastercard占比32.1%
+# card5-----[card info:(100.0,237.0)]: 586281/590540,取值119种,极度不平衡,226.0占比50.5%,数值特征???
 # card6-----[card info:(debit,credit,debit or credit,charge card)]: 588969/590540,
-# ----------取值4种,极度不平衡,debit占比74.5%,credit占比25.2%
-# addr1-----[addr info:(100.0,540.0)]: 524834/590540,取值332种,分布不平衡,数值特征???
-# addr2-----[addr info:(10.0,102.0)]: 524834/590540,取值74种,极度不平衡,87.0占比88.1%,数值特征???
+# ----------取值4种,极度不平衡,debit占比74.69%,credit占比25.29%
+# addr1-----[addr info:(100.0,540.0)]: 524834/590540,取值332种,类指数分布,数值特征???
+# addr2-----[addr info:(10.0,102.0)]: 524834/590540,取值74种,极度不平衡,87.0占比99.1%,数值特征???
+# P_emaildomain[email info:(...com,...net,...)]: 496084/590540,取值59种,极度不平衡,
+# -------------gmail.com占比46.0%,yahoo.com占比20.3%,...
+# R_emaildomain[email info:(...com,...net,...)]: 137291/590540,取值60种,极度不平衡,
+# -------------gmail.com占比41.6%,hotmail.com占比20.0%,anonymous.com占比14.9%,...
 
-# P_emaildomain[addr info:(10.0,102.0)]: 524834/590540,取值74种,极度不平衡,87.0占比88.1%,数值特征???
-
-order = ["isFraud", "P_emaildomain", "R_emaildomain", "M1", "M2", "M3", "M4",
+order = ["isFraud", "M1", "M2", "M3", "M4",
          "M5", "M6", "M7", "M8", "M9", "id_12", "id_13", "id_14", "id_15", "id_16",
          "id_17", "id_18", "id_19", "id_20", "id_21", "id_22", "id_23", "id_24",
          "id_25", "id_26", "id_27", "id_28", "id_29", "id_30", "id_31", "id_32",
@@ -96,7 +98,7 @@ def csv2txt(datain_dir, dataou_dir):
     train = train_tran.merge(train_iden, how="left", left_index=True, right_index=True)
     # tests = tests_tran.merge(tests_iden, how="left", left_index=True, right_index=True)
 
-    df_v = train["P_emaildomain"]
+    df_v = train["card1"]
     print(df_v.count())
     # print(df_v.min(), df_v.max())
     print("\n")
