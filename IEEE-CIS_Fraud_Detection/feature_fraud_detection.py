@@ -64,14 +64,14 @@ def csv2txt_eda(datain_dir):
     train_iden = pd.read_csv(datain_dir + "\\train_identity.csv", index_col="TransactionID")
     train = train_tran.merge(train_iden, how="left", left_index=True, right_index=True)
 
-    df_v = train["DeviceInfo"]
+    df_v = train["TransactionAmt"]
     print(df_v.count())
-    # print(df_v.min(), df_v.max())
+    print(df_v.min(), df_v.max())
     print("\n")
-    print(df_v.value_counts())
-    # df_vv = train[train["card6"] < 200]
-    # df_vvv = df_vv["card6"]
-    # print(df_vvv.count(), df_vvv.count()/df_v.count())
+    # print(df_v.value_counts())
+    df_vv = train[train["TransactionAmt"] < 500]
+    df_vvv = df_vv["TransactionAmt"]
+    print(df_vvv.count(), df_vvv.count()/df_v.count())
     print(0)
     # order = ["isFraud", "ProductCD", "card1", "card2", "card3", "card4", "card5", "card6",
     #          "addr1", "addr2", "P_emaildomain", "R_emaildomain", "M1", "M2", "M3", "M4",
@@ -122,9 +122,9 @@ def csv2txt_eda(datain_dir):
 
 ###############################################################################
 # ================================ 数值特征分析 ================================
-# 数值特征的阈值[95%~分位数],若数值特征超过阈值,则该特征值置为阈值[剔除异常值]
 # TransactionDT-[相对时间: sec,(86400,15811131)]: 590540/590540,取值573349种,均匀分布
-# TransactionAmt[交易金额: USD,(0.251,31937.391)]: 590540/590540,取值20902种,指数分布[存在离群点]
+# TransactionAmt[交易金额: USD,(0.251,31937.391)]: 590540/590540,取值20902种,
+# --------------高斯分布[存在离群点2个],[0.0,500.0)占比95.8%
 # dist1--[距离1: ?,(0.0,10286.0)]: 238269/590540,取值2651种,分布不平衡,[0.0,900.0)占比95.3%
 # dist2--[距离2: ?,(0.0,11623.0)]: 37627/590540,取值1751种,分布不平衡,[0.0,1000.0)占比94.9%
 # C1-----[计数1: ?,(0.0,4685.0)]: 590540/590540,取值1657种,极度不平衡,[0.0,25.0)占比95.1%
@@ -159,10 +159,14 @@ def csv2txt_eda(datain_dir):
 
 
 # There are 49 categorical features and 383 numeric features
-# 离散特征C1-C49,数值特征I1-I383
-categorical_features = range(1, 20)
-numeric_features = range(50, 432)
-numeric_clip = [20, 600, 100, 50, 64000, 500, 100, 50, 500, 10, 10, 10, 50]
+# 离散特征C1-C22,数值特征I1-I32
+# 数值特征的阈值[95%~分位数],若数值特征超过阈值,则该特征值置为阈值[剔除异常值]
+# 数值特征D9[I26]已经归一化,不用特征处理
+categorical_features = range(1, 22)
+numeric_features = range(23, 54)
+numeric_clip = [500, 900, 1000, 25, 25, 10, 10, 10, 20, 10, 10, 10, 10, 20,
+                20, 100, 20, 500, 550, 150, 550, 250, 400, 300, 700, 550,
+                550, 400, 100, 400, 550]
 
 
 def csv2txt(datain_dir, dataou_dir):
