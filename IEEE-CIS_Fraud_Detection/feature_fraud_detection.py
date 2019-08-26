@@ -40,9 +40,17 @@ import pandas as pd
 # -------------gmail.com占比46.0%,yahoo.com占比20.3%,...
 # R_emaildomain[email info:(...com,...net,...)]: 137291/590540,取值60种,极度不平衡,
 # -------------gmail.com占比41.6%,hotmail.com占比20.0%,anonymous.com占比14.9%,...
+# M1--------[match info:(T,F)]: 319440/590540,取值2种,极度不平衡,T占比99.9%
+# M2--------[match info:(T,F)]: 285468/590540,取值2种,极度不平衡,T占比89.3%
+# M3--------[match info:(T,F)]: 251731/590540,取值2种,极度不平衡,T占比78.8%
+# M4--------[match info:(M0,M1,M2)]: 309096/590540,取值3种,极度不平衡,M0占比63.5%
+# M5--------[match info:(T,F)]: 240058/590540,取值2种,分布不平衡,F占比55.2%
+# M6--------[match info:(T,F)]: 421180/590540,取值2种,分布不平衡,F占比54.1%
+# M7--------[match info:(T,F)]: 244275/590540,取值2种,分布不平衡,F占比86.5%
+# M8--------[match info:(T,F)]: 244288/590540,取值2种,分布不平衡,F占比63.5%
+# M9--------[match info:(T,F)]: 244288/590540,取值2种,分布不平衡,T占比84.2%
 
-order = ["isFraud", "M1", "M2", "M3", "M4",
-         "M5", "M6", "M7", "M8", "M9", "id_12", "id_13", "id_14", "id_15", "id_16",
+order = ["isFraud", "id_12", "id_13", "id_14", "id_15", "id_16",
          "id_17", "id_18", "id_19", "id_20", "id_21", "id_22", "id_23", "id_24",
          "id_25", "id_26", "id_27", "id_28", "id_29", "id_30", "id_31", "id_32",
          "id_33", "id_34", "id_35", "id_36", "id_37", "id_38", "DeviceType", "DeviceInfo"]
@@ -98,7 +106,7 @@ def csv2txt(datain_dir, dataou_dir):
     train = train_tran.merge(train_iden, how="left", left_index=True, right_index=True)
     # tests = tests_tran.merge(tests_iden, how="left", left_index=True, right_index=True)
 
-    df_v = train["card1"]
+    df_v = train["M9"]
     print(df_v.count())
     # print(df_v.min(), df_v.max())
     print("\n")
