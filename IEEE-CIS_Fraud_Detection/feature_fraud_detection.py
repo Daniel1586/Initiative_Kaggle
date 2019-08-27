@@ -163,8 +163,8 @@ def csv2txt_eda(datain_dir):
 # 离散特征C1-C22,数值特征I1-I32
 # 数值特征的阈值[95%~分位数],若数值特征超过阈值,则该特征值置为阈值
 # 数值特征D9[I26]已经归一化,不用特征处理[阈值设置为1]
-categorical_features = range(1, 22)
-numeric_features_etl = range(23, 54)
+numeric_features_etl = range(1, 32)
+categorical_features = range(33, 54)
 numeric_clip = [500, 900, 1000, 25, 25, 10, 10, 10, 20, 10, 10, 10, 10, 20,
                 20, 100, 20, 500, 550, 150, 550, 250, 400, 300, 700, 1, 550,
                 550, 400, 100, 400, 550]
@@ -179,12 +179,12 @@ def csv2txt(datain_dir, dataou_dir):
     train = train_tran.merge(train_iden, how="left", left_index=True, right_index=True)
     tests = tests_tran.merge(tests_iden, how="left", left_index=True, right_index=True)
 
-    order = ["isFraud", "ProductCD", "card1", "card2", "card3", "card4", "card5", "card6",
-             "addr1", "addr2", "P_emaildomain", "R_emaildomain", "M1", "M2", "M3", "M4",
-             "M5", "M6", "M7", "M8", "M9", "DeviceType", "DeviceInfo", "TransactionAmt",
-             "dist1", "dist2", "C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C10",
-             "C11", "C12", "C13", "C14", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8",
-             "D9", "D10", "D11", "D12", "D13", "D14", "D15"]
+    order = ["isFraud", "TransactionAmt", "dist1", "dist2", "C1", "C2", "C3", "C4", "C5",
+             "C6", "C7", "C8", "C9", "C10", "C11", "C12", "C13", "C14", "D1", "D2", "D3",
+             "D4", "D5", "D6", "D7", "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15",
+             "ProductCD", "card1", "card2", "card3", "card4", "card5", "card6", "addr1",
+             "addr2", "P_emaildomain", "R_emaildomain", "M1", "M2", "M3", "M4", "M5", "M6",
+             "M7", "M8", "M9", "DeviceType", "DeviceInfo"]
     order_ = order[1:]
     train_txt = train[order]
     tests_txt = tests[order_]
@@ -377,7 +377,7 @@ if __name__ == "__main__":
     print("set_dir -------------- ", FLAGS.data_set)
     print("cutoff --------------- ", FLAGS.cut_off)
 
-    is_csv = 2
+    is_csv = 1
     if is_csv == 0:
         # CSV转TXT,特征探索分析
         csv2txt_eda(FLAGS.data_csv)
