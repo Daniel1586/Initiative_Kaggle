@@ -4,10 +4,10 @@
 """
 Preprocess ieee-fraud-detection dataset.
 (https://www.kaggle.com/c/ieee-fraud-detection).
-----数据解压: train.csv=45840617条样本[has label], test.csv=6042135条样本[no label]
-----从train.txt取最后330000条数据,最后30000条数据为测试集;
-----前面300000条数据按9:1比例随机选取为训练集/验证集;
-----从test.txt取开始30000条数据为infer样本集;
+----csv转换为txt:train.txt=590540条样本[has label]和tests.txt=506691条样本[no label]
+----train.txt取最后50540条数据组成train_test.txt,作为测试集;
+----train.txt前面540000条数据按9:1比例随机选取为训练集/验证集;
+----从tests.txt取开始30000条数据为infer样本集;
 This code is referenced from PaddlePaddle models.
 (https://github.com/PaddlePaddle/models/blob/develop/legacy/deep_fm/preprocess.py)
 --For numeric features, clipped and normalized.
@@ -263,22 +263,21 @@ class NumericFeatureGenerator:
 
 
 def preprocess(datain_dir, dataou_dir):
-
     print("========== 1.Preprocess categorical and numeric features...")
     c_feat = CategoryDictGenerator(len(categorical_features))
     c_feat.build(datain_dir + "train.txt", categorical_features, cutoff=FLAGS.cut_off)
-    n_feat = NumericFeatureGenerator(len(numeric_features))
-    n_feat.build(datain_dir + "train.txt", numeric_features)
+    n_feat = NumericFeatureGenerator(len(numeric_features_etl))
+    n_feat.build(datain_dir + "train.txt", numeric_features_etl)
 
     print("========== 2.Generate index of feature embedding ...")
-    # 生成数值特征编号: I1-I13
+    # 生成数值特征编号
     output = open(dataou_dir + "embed.set", 'w')
-    for i in numeric_features:
+    for i in numeric_features_etl:
         output.write("{0} {1}\n".format('I'+str(i), i))
 
     dict_sizes = list(c_feat.dicts_sizes())
     c_feat_offset = [n_feat.num_feature]
-    # 生成离散特征编号: C1|xxxx XX (不同离散特征第一个特征编号的特征统一为<unk>)
+    # 生成离散特征编号: C1|xx XX (不同离散特征第一个特征编号的特征统一为<unk>)
     for i in range(1, len(categorical_features)+1):
         offset = c_feat_offset[i - 1] + dict_sizes[i - 1]
         c_feat_offset.append(offset)
@@ -295,12 +294,10 @@ def preprocess(datain_dir, dataou_dir):
                     features = line.rstrip('\n').split('\t')
 
                     feat_val = []
-                    # numeric features normalized to [0,1]
-                    for i in range(0, len(numeric_features)):
-                        val = n_feat.gen(i, features[numeric_features[i]])
-                        feat_val.append(str(numeric_features[i]) + ':' + "{0:.6f}".format(val).rstrip('0').rstrip('.'))
-
-                    # categorical features one-hot embedding
+                    for i in range(0, len(numeric_features_etl)):
+                        val = n_feat.gen(i, features[numeric_features_etl[i]])
+                        feat_val.append(str(numeric_features_etl[i]) + ':' + "{0:.6f}".format(val).
+                                        rstrip('0').rstrip('.'))
                     for i in range(0, len(categorical_features)):
                         val = c_feat.gen(i, features[categorical_features[i]]) + c_feat_offset[i] + 1
                         feat_val.append(str(val) + ':1')
@@ -317,12 +314,10 @@ def preprocess(datain_dir, dataou_dir):
                 features = line.rstrip('\n').split('\t')
 
                 feat_val = []
-                # numeric features normalized to [0,1]
-                for i in range(0, len(numeric_features)):
-                    val = n_feat.gen(i, features[numeric_features[i]])
-                    feat_val.append(str(numeric_features[i]) + ':' + "{0:.6f}".format(val).rstrip('0').rstrip('.'))
-
-                # categorical features one-hot embedding
+                for i in range(0, len(numeric_features_etl)):
+                    val = n_feat.gen(i, features[numeric_features_etl[i]])
+                    feat_val.append(str(numeric_features_etl[i]) + ':' + "{0:.6f}".format(val).
+                                    rstrip('0').rstrip('.'))
                 for i in range(0, len(categorical_features)):
                     val = c_feat.gen(i, features[categorical_features[i]]) + c_feat_offset[i] + 1
                     feat_val.append(str(val) + ':1')
@@ -332,15 +327,15 @@ def preprocess(datain_dir, dataou_dir):
 
     print("========== 4.Generate infer dataset ...")
     with open(dataou_dir + "infer.set", 'w') as out_infer:
-        with open(datain_dir + "test.txt", 'r') as f:
+        with open(datain_dir + "tests.txt", 'r') as f:
             for line in f:
                 features = line.rstrip('\n').split('\t')
 
                 feat_val = []
-                for i in range(0, len(numeric_features)):
-                    val = n_feat.gen(i, features[numeric_features[i] - 1])
-                    feat_val.append(str(numeric_features[i]) + ':' + "{0:.6f}".format(val).rstrip('0').rstrip('.'))
-
+                for i in range(0, len(numeric_features_etl)):
+                    val = n_feat.gen(i, features[numeric_features_etl[i] - 1])
+                    feat_val.append(str(numeric_features_etl[i]) + ':' + "{0:.6f}".format(val).
+                                    rstrip('0').rstrip('.'))
                 for i in range(0, len(categorical_features)):
                     val = c_feat.gen(i, features[categorical_features[i] - 1]) + c_feat_offset[i] + 1
                     feat_val.append(str(val) + ':1')
@@ -373,7 +368,7 @@ if __name__ == "__main__":
     print("set_dir -------------- ", FLAGS.data_set)
     print("cutoff --------------- ", FLAGS.cut_off)
 
-    is_csv = 1
+    is_csv = 2
     if is_csv == 0:
         # CSV转TXT,特征探索分析
         csv2txt_eda(FLAGS.data_csv)
