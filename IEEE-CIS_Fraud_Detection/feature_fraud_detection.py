@@ -17,6 +17,7 @@ This code is referenced from PaddlePaddle models.
 
 import os
 import sys
+import math
 import random
 import argparse
 import collections
@@ -249,7 +250,7 @@ class NumericFeatureGenerator:
                 for i in range(0, self.num_feature):
                     val = features[numeric_feature[i]]
                     if val != '':
-                        val = int(val)
+                        val = float(val)
                         if val > numeric_clip[i]:
                             val = numeric_clip[i]
                         self.min[i] = min(self.min[i], val)
@@ -259,7 +260,15 @@ class NumericFeatureGenerator:
         if val == '':
             return 0.0
         val = float(val)
-        return (val - self.min[idx]) / (self.max[idx] - self.min[idx])
+        if self.min[idx] >= 0:
+            _min = math.ceil(self.min[idx])
+        else:
+            _min = math.floor(self.min[idx])
+        if self.max[idx] >= 0:
+            _max = math.ceil(self.max[idx])
+        else:
+            _max = math.floor(self.max[idx])
+        return (val - _min) / (_max - _min)
 
 
 def preprocess(datain_dir, dataou_dir):
