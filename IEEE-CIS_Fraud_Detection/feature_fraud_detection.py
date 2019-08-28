@@ -159,8 +159,8 @@ def csv2txt_eda(datain_dir):
 # D15----[时间15: ?,(-83.0,879.0)]: 501427/590540,取值859种,分布不平衡,[0.0,550.0)占比93.8%
 
 
-# There are 22 categorical features and 32 numeric features
-# 离散特征C1-C22,数值特征I1-I32
+# There are 32 numeric features and 22 categorical features
+# 数值特征I1-I32,数值特征C1-C22
 # 数值特征的阈值[95%~分位数],若数值特征超过阈值,则该特征值置为阈值
 # 数值特征D9[I26]已经归一化,不用特征处理[阈值设置为1]
 numeric_features_etl = range(1, 32)
@@ -377,7 +377,7 @@ if __name__ == "__main__":
     print("set_dir -------------- ", FLAGS.data_set)
     print("cutoff --------------- ", FLAGS.cut_off)
 
-    is_csv = 1
+    is_csv = 2
     if is_csv == 0:
         # CSV转TXT,特征探索分析
         csv2txt_eda(FLAGS.data_csv)
