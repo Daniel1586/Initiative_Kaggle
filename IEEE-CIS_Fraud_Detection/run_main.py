@@ -2,22 +2,18 @@
 # -*- coding: utf-8 -*-
 
 """
-Implementation of CTR model with the following features:
-#1 Input pipeline using Dataset API, Support parallel and prefetch.
-#2 Train pipeline using Custom Estimator by rewriting model_fn.
-#3 Support distributed training by TF_CONFIG.
-#4 Support export_model for TensorFlow Serving.
 ############### TF Version: 1.13.1/Python Version: 3.7 ###############
 """
 
 import os
-import json
 import glob
 import random
 import shutil
 import tensorflow as tf
 from datetime import date, timedelta
 from tensorflow_estimator import estimator
+from model_local import lr, fm, deepcrossing, fpnn
+from model_local import wd, deepfm, dcn, nfm
 
 # =================== CMD Arguments for CTR model =================== #
 flags = tf.app.flags
@@ -32,10 +28,10 @@ flags.DEFINE_string("serve_dir", "", "Export servable model for TensorFlow Servi
 flags.DEFINE_string("clear_mod", "True", "{True, False},Clear existed model or not")
 flags.DEFINE_integer("log_steps", 2000, "Save summary every steps")
 # model parameters--模型参数设置
-flags.DEFINE_integer("samples_size", 269738, "Number of train samples")
-flags.DEFINE_integer("feature_size", 2829, "Number of features[numeric + one-hot categorical_feature]")
-flags.DEFINE_integer("field_size", 39, "Number of fields")
-flags.DEFINE_integer("embed_size", 16, "Embedding size[length of hidden vector of xi/xj]")
+flags.DEFINE_integer("train_size", 540000, "Number of train samples")
+flags.DEFINE_integer("feature_size", 857, "Number of features[numeric + one-hot categorical_feature]")
+flags.DEFINE_integer("field_size", 54, "Number of fields")
+flags.DEFINE_integer("embed_size", 10, "Embedding size[length of hidden vector of xi/xj]")
 flags.DEFINE_integer("num_epochs", 10, "Number of epochs")
 flags.DEFINE_integer("batch_size", 256, "Number of batch size")
 flags.DEFINE_string("loss_mode", "log_loss", "{log_loss, square_loss}")
@@ -45,8 +41,6 @@ flags.DEFINE_float("l2_reg_lambda", 0.0001, "L2 regularization")
 flags.DEFINE_string("deep_layers", "256,128,64", "Deep layers")
 flags.DEFINE_string("dropout", "0.5,0.5,0.5", "Dropout rate")
 flags.DEFINE_integer("cross_layers", 3, "Cross layers, polynomial degree")
-flags.DEFINE_integer("batch_norm", 1, "Whether to perform batch normalization {0,1}")
-flags.DEFINE_float("batch_norm_decay", 0.9, "decay for the moving average")
 FLAGS = flags.FLAGS
 
 
@@ -91,11 +85,11 @@ def main(_):
     if FLAGS.serve_dir == "":       # 算法模型输出pb文件
         FLAGS.serve_dir = (date.today() + timedelta(-1)).strftime("%Y%m") + "_exp_" + FLAGS.algorithm
     if FLAGS.input_dir == "":       # windows环境测试
-        FLAGS.input_dir = os.path.dirname(os.getcwd()) + "\\data" + "\\data_set_criteo\\"
+        FLAGS.input_dir = os.getcwd() + "\\ieee-fraud-detection-set\\"
 
-    train_files = glob.glob("%s/train*set" % FLAGS.input_dir)       # 获取指定目录下train文件
-    valid_files = glob.glob("%s/valid*set" % FLAGS.input_dir)       # 获取指定目录下valid文件
-    tests_files = glob.glob("%s/tests*set" % FLAGS.input_dir)       # 获取指定目录下tests文件
+    train_files = glob.glob("%s/train.set" % FLAGS.input_dir)       # 获取指定目录下train文件
+    valid_files = glob.glob("%s/valid.set" % FLAGS.input_dir)       # 获取指定目录下valid文件
+    tests_files = glob.glob("%s/tests.set" % FLAGS.input_dir)       # 获取指定目录下tests文件
     random.shuffle(train_files)                                     # 打散train文件
 
     if FLAGS.clear_mod == "True" and FLAGS.task_mode == "train":    # 删除已存在的模型文件
@@ -108,6 +102,7 @@ def main(_):
 
     print("==================== 2.Set model params and Build CTR model...")
     model_params = {
+        "algorithm": FLAGS.algorithm,
         "feature_size": FLAGS.feature_size,
         "field_size": FLAGS.field_size,
         "embed_size": FLAGS.embed_size,
@@ -117,8 +112,7 @@ def main(_):
         "l2_reg_lambda": FLAGS.l2_reg_lambda,
         "deep_layers": FLAGS.deep_layers,
         "cross_layers": FLAGS.cross_layers,
-        "dropout": FLAGS.dropout,
-        "algorithm": FLAGS.algorithm
+        "dropout": FLAGS.dropout
     }
     if FLAGS.algorithm == "LR":
         model_fn = lr
@@ -140,7 +134,7 @@ def main(_):
         model_fn = None
         print("Invalid algorithm, not supported!")
 
-    epoch_step = int(FLAGS.samples_size/FLAGS.batch_size)           # one epoch = num of steps
+    epoch_step = int(FLAGS.train_size/FLAGS.batch_size)             # one epoch = num of steps
     train_step = epoch_step * FLAGS.num_epochs                      # data_num * num_epochs / batch_size
     session_config = tf.ConfigProto(device_count={"GPU": 1, "CPU": FLAGS.num_thread})
     config = estimator.RunConfig(session_config=session_config,
