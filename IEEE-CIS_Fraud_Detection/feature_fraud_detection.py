@@ -163,8 +163,8 @@ def csv2txt_eda(datain_dir):
 # 数值特征I1-I32,数值特征C1-C22
 # 数值特征的阈值[95%~分位数],若数值特征超过阈值,则该特征值置为阈值
 # 数值特征D9[I26]已经归一化,不用特征处理[阈值设置为1]
-numeric_features_etl = range(1, 32)
-categorical_features = range(33, 54)
+numeric_features_etl = range(1, 33)
+categorical_features = range(33, 55)
 numeric_clip = [500, 900, 1000, 25, 25, 10, 10, 10, 20, 10, 10, 10, 10, 20,
                 20, 100, 20, 500, 550, 150, 550, 250, 400, 300, 700, 1, 550,
                 550, 400, 100, 400, 550]
