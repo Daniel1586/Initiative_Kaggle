@@ -190,6 +190,16 @@ def csv2txt(datain_dir, dataou_dir):
     tests_txt = tests[order_]
     train_txt.to_csv(dataou_dir + "train.txt", sep='\t', index=False, header=0)
     tests_txt.to_csv(dataou_dir + "tests.txt", sep='\t', index=False, header=0)
+    tests_idx = tests["ProductCD"]
+    tests_idx.to_csv(dataou_dir + "index.csv", index=True, header=True)
+
+
+def csv2csv(datain_dir, dataou_dir):
+    idx = pd.read_csv(datain_dir + "\\index.csv")
+    res = pd.read_csv(dataou_dir + "\\infer.csv", header=None, names=["isFraud"])
+    tests = idx.merge(res, how="left", left_index=True, right_index=True)
+    tests_txt = tests.drop("ProductCD", axis=1)
+    tests_txt.to_csv(dataou_dir + "sample_sub.csv", index=False, header=True)
 
 
 class CategoryDictGenerator:
@@ -377,14 +387,17 @@ if __name__ == "__main__":
     print("set_dir -------------- ", FLAGS.data_set)
     print("cutoff --------------- ", FLAGS.cut_off)
 
-    is_csv = 2
+    is_csv = 3
     if is_csv == 0:
         # CSV转TXT,特征探索分析
         csv2txt_eda(FLAGS.data_csv)
     elif is_csv == 1:
         # CSV转TXT
         csv2txt(FLAGS.data_csv, FLAGS.data_txt)
-    else:
+    elif is_csv == 2:
         # 特征预处理
         preprocess(FLAGS.data_txt, FLAGS.data_set)
+    else:
+        # 产生最终结果
+        csv2csv(FLAGS.data_txt, FLAGS.data_set)
     pass
