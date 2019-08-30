@@ -21,7 +21,7 @@ flags.DEFINE_integer("run_mode", 0, "{0-local, 1-single_distributed, 2-multi_dis
 flags.DEFINE_integer("num_thread", 4, "Number of threads")
 # global parameters--全局参数设置
 flags.DEFINE_string("algorithm", "LR", "{LR,FM,DC,FNN,IPNN,OPNN,WD,DeepFM,DCN,NFM}")
-flags.DEFINE_string("task_mode", "train", "{train, eval, infer, export}")
+flags.DEFINE_string("task_mode", "infer", "{train, eval, infer, export}")
 flags.DEFINE_string("input_dir", "", "Input data dir")
 flags.DEFINE_string("model_dir", "", "Model check point file dir")
 flags.DEFINE_string("serve_dir", "", "Export servable model for TensorFlow Serving")
