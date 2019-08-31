@@ -20,8 +20,8 @@ flags = tf.app.flags
 flags.DEFINE_integer("run_mode", 0, "{0-local, 1-single_distributed, 2-multi_distributed}")
 flags.DEFINE_integer("num_thread", 4, "Number of threads")
 # global parameters--全局参数设置
-flags.DEFINE_string("algorithm", "LR", "{LR,FM,DC,FNN,IPNN,OPNN,WD,DeepFM,DCN,NFM}")
-flags.DEFINE_string("task_mode", "infer", "{train, eval, infer, export}")
+flags.DEFINE_string("algorithm", "DeepFM", "{LR,FM,DC,FNN,IPNN,OPNN,WD,DeepFM,DCN,NFM}")
+flags.DEFINE_string("task_mode", "train", "{train, eval, infer, export}")
 flags.DEFINE_string("input_dir", "", "Input data dir")
 flags.DEFINE_string("model_dir", "", "Model check point file dir")
 flags.DEFINE_string("serve_dir", "", "Export servable model for TensorFlow Serving")
@@ -32,11 +32,11 @@ flags.DEFINE_integer("train_size", 540000, "Number of train samples")
 flags.DEFINE_integer("feature_size", 857, "Number of features[numeric + one-hot categorical_feature]")
 flags.DEFINE_integer("field_size", 54, "Number of fields")
 flags.DEFINE_integer("embed_size", 10, "Embedding size[length of hidden vector of xi/xj]")
-flags.DEFINE_integer("num_epochs", 40, "Number of epochs")
+flags.DEFINE_integer("num_epochs", 50, "Number of epochs")
 flags.DEFINE_integer("batch_size", 256, "Number of batch size")
 flags.DEFINE_string("loss_mode", "log_loss", "{log_loss, square_loss}")
 flags.DEFINE_string("optimizer", "Adam", "{Adam, Adagrad, Momentum, Ftrl, GD}")
-flags.DEFINE_float("learning_rate", 0.0005, "Learning rate")
+flags.DEFINE_float("learning_rate", 0.001, "Learning rate")
 flags.DEFINE_float("l2_reg_lambda", 0.0001, "L2 regularization")
 flags.DEFINE_string("deep_layers", "256,128,64", "Deep layers")
 flags.DEFINE_string("dropout", "0.5,0.5,0.5", "Dropout rate")
@@ -67,7 +67,7 @@ def input_fn(filenames, batch_size=64, num_epochs=1, perform_shuffle=True):
 
     # randomize the input data with a window of 256 elements (read into memory)
     if perform_shuffle:
-        dataset = dataset.shuffle(buffer_size=2048)
+        dataset = dataset.shuffle(buffer_size=5120)
 
     # epochs from blending together
     dataset = dataset.repeat(num_epochs)
