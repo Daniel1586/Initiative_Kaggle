@@ -5,9 +5,6 @@
 Preprocess ieee-fraud-detection dataset.
 (https://www.kaggle.com/c/ieee-fraud-detection).
 ----csv转换为txt:train.txt=590540条样本[has label]和tests.txt=506691条样本[no label]
-----train.txt取最后50540条数据组成train_test.txt,作为测试集;
-----train.txt前面540000条数据按9:1比例随机选取为训练集/验证集;
-----从tests.txt取开始30000条数据为infer样本集;
 This code is referenced from PaddlePaddle models.
 (https://github.com/PaddlePaddle/models/blob/develop/legacy/deep_fm/preprocess.py)
 --For numeric features, clipped and normalized.
@@ -188,7 +185,7 @@ def csv2txt(datain_dir, dataou_dir):
     order_ = order[1:]
     train_txt = train[order]
     tests_txt = tests[order_]
-    train_txt.to_csv(dataou_dir + "train.txt", sep='\t', index=False, header=0)
+    train_txt.to_csv(dataou_dir + "train_total.txt", sep='\t', index=False, header=0)
     tests_txt.to_csv(dataou_dir + "tests.txt", sep='\t', index=False, header=0)
     tests_idx = tests["ProductCD"]
     tests_idx.to_csv(dataou_dir + "index.csv", index=True, header=True)
@@ -199,7 +196,7 @@ def csv2csv(datain_dir, dataou_dir):
     res = pd.read_csv(dataou_dir + "\\infer.csv", header=None, names=["isFraud"])
     tests = idx.merge(res, how="left", left_index=True, right_index=True)
     tests_txt = tests.drop("ProductCD", axis=1)
-    tests_txt.to_csv(dataou_dir + "083101_DeepFM.csv", index=False, header=True)
+    tests_txt.to_csv(dataou_dir + "083107_DeepFM.csv", index=False, header=True)
 
 
 class CategoryDictGenerator:
@@ -284,9 +281,9 @@ class NumericFeatureGenerator:
 def preprocess(datain_dir, dataou_dir):
     print("========== 1.Preprocess categorical and numeric features...")
     c_feat = CategoryDictGenerator(len(categorical_features))
-    c_feat.build(datain_dir + "train.txt", categorical_features, cutoff=FLAGS.cut_off)
+    c_feat.build(datain_dir + "train_total.txt", categorical_features, cutoff=FLAGS.cut_off)
     n_feat = NumericFeatureGenerator(len(numeric_features_etl))
-    n_feat.build(datain_dir + "train.txt", numeric_features_etl)
+    n_feat.build(datain_dir + "train_total.txt", numeric_features_etl)
 
     print("========== 2.Generate index of feature embedding ...")
     # 生成数值特征编号
@@ -305,30 +302,9 @@ def preprocess(datain_dir, dataou_dir):
 
     random.seed(0)
     # 90% data are used for training, and 10% data are used for validation
-    print("========== 3.Generate train/valid/test dataset ...")
-    with open(dataou_dir + "train.set", 'w') as out_train:
-        with open(dataou_dir + "valid.set", 'w') as out_valid:
-            with open(datain_dir + "train.txt", 'r') as f:
-                for line in f:
-                    features = line.rstrip('\n').split('\t')
-
-                    feat_val = []
-                    for i in range(0, len(numeric_features_etl)):
-                        val = n_feat.gen(i, features[numeric_features_etl[i]])
-                        feat_val.append(str(numeric_features_etl[i]) + ':' + "{0:.6f}".format(val).
-                                        rstrip('0').rstrip('.'))
-                    for i in range(0, len(categorical_features)):
-                        val = c_feat.gen(i, features[categorical_features[i]]) + c_feat_offset[i] + 1
-                        feat_val.append(str(val) + ':1')
-
-                    label = features[0]
-                    if random.randint(0, 9999) % 10 != 0:
-                        out_train.write("{0} {1}\n".format(label, ' '.join(feat_val)))
-                    else:
-                        out_valid.write("{0} {1}\n".format(label, ' '.join(feat_val)))
-
-    with open(dataou_dir + "tests.set", 'w') as out_test:
-        with open(datain_dir + "train_test.txt", 'r') as f:
+    print("========== 3.Generate train dataset ...")
+    with open(dataou_dir + "train.set", 'w') as out_test:
+        with open(datain_dir + "train_total.txt", 'r') as f:
             for line in f:
                 features = line.rstrip('\n').split('\t')
 
