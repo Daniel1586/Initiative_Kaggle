@@ -5,6 +5,7 @@
 Preprocess ieee-fraud-detection dataset.
 (https://www.kaggle.com/c/ieee-fraud-detection).
 ----csv转换为txt:train.txt=590540条样本[has label]和tests.txt=506691条样本[no label]
+----train.txt 正样本比例3.5%
 This code is referenced from PaddlePaddle models.
 (https://github.com/PaddlePaddle/models/blob/develop/legacy/deep_fm/preprocess.py)
 --For numeric features, clipped and normalized.
@@ -126,7 +127,15 @@ numeric_clip = [500, 900, 1000, 25, 25, 10, 10, 10, 20, 10, 10, 10, 10, 20,
 # D14----[时间14: ?,(-193.0,878.0)]: 62187/590540,取值802种,分布不平衡,[0.0,400.0)占比95.1%
 # D15----[时间15: ?,(-83.0,879.0)]: 501427/590540,取值859种,分布不平衡,[0.0,550.0)占比93.8%
 
-# V1-----[Vesta info: ?,(0.0,1.0)]: 311253/590540,取值2种,极度不平衡,1.0占比99.99%,离散特征???
+# V1--[Vesta info:(0.0,1.0)]: 311253/590540,取值2种,极度不平衡,1.0占比99.99%,Boolean Columns???
+# V14-[Vesta info:(0.0,1.0)]: 514467/590540,取值2种,极度不平衡,1.0占比99.95%,Boolean Columns???
+# V41-[Vesta info:(0.0,1.0)]: 421571/590540,取值2种,极度不平衡,1.0占比99.92%,Boolean Columns???
+# V65-[Vesta info:(0.0,1.0)]: 513444/590540,取值2种,极度不平衡,1.0占比99.96%,Boolean Columns???
+# V88-[Vesta info:(0.0,1.0)]: 501376/590540,取值2种,极度不平衡,1.0占比99.92%,Boolean Columns???
+# V107[Vesta info:(0.0,1.0)]: 590226/590540,取值2种,极度不平衡,1.0占比99.95%,Boolean Columns???
+# V305[Vesta info:(1.0,2.0)]: 590528/590540,取值2种,极度不平衡,1.0占比99.99%,Boolean Columns???
+
+print(0)
 # V2-----[Vesta info: ?,(0.0,8.0)]: 311253/590540,取值9种,极度不平衡,1.0占比96.03%,离散特征???
 # V3-----[Vesta info: ?,(0.0,9.0)]: 311253/590540,取值10种,极度不平衡,1.0占比93.36%,离散特征???
 # V4-----[Vesta info: ?,(0.0,6.0)]: 311253/590540,取值7种,极度不平衡,1.0占比79.19%,离散特征???
@@ -139,7 +148,6 @@ numeric_clip = [500, 900, 1000, 25, 25, 10, 10, 10, 20, 10, 10, 10, 10, 20,
 # V11----[Vesta info: ?,(0.0,5.0)]: 311253/590540,取值6种,极度不平衡,0.0占比54.50%,1.0占比43.42%,离散特征???
 # V12----[Vesta info: ?,(0.0,3.0)]: 514467/590540,取值4种,极度不平衡,1.0占比54.62%,0.0占比44.71%,离散特征???
 # V13----[Vesta info: ?,(0.0,6.0)]: 514467/590540,取值7种,极度不平衡,1.0占比55.91%,0.0占比42.13%,离散特征???
-# V14----[Vesta info: ?,(0.0,1.0)]: 514467/590540,取值2种,极度不平衡,1.0占比99.95%,离散特征???
 # V15----[Vesta info: ?,(0.0,7.0)]: 514467/590540,取值8种,极度不平衡,0.0占比87.87%,1.0占比12.04%,离散特征???
 # V16----[Vesta info: ?,(0.0,15.0)]: 514467/590540,取值16种,极度不平衡,0.0占比87.86%,1.0占比12.00%,离散特征???
 # V17----[Vesta info: ?,(0.0,15.0)]: 514467/590540,取值16种,极度不平衡,0.0占比87.04%,1.0占比12.68%,离散特征???
@@ -199,15 +207,20 @@ def csv2txt_eda(datain_dir):
     train_iden = pd.read_csv(datain_dir + "\\train_identity.csv", index_col="TransactionID")
     train = train_tran.merge(train_iden, how="left", left_index=True, right_index=True)
 
-    df_v = train["V30"]
+    df_v = train["V305"]
     print(df_v.count())
     print("\n")
     print(df_v.value_counts())
     print(df_v.value_counts()/df_v.count())
     print(df_v.min(), df_v.max())
-    df_vv = train[train["V30"] < 500]
-    df_vvv = df_vv["V30"]
-    print(df_vvv.count(), df_vvv.count()/df_v.count())
+    df_v1 = train[train["V305"] < 500]
+    df_vv = df_v1["V305"]
+    print(df_vv.count(), df_vv.count()/df_v.count())
+    print("\n")
+    df_v2 = train[train["isFraud"] == 1]
+    df_vvv = df_v2["V305"]
+    print(df_vvv.value_counts())
+
     # print(0)
     # order = ["isFraud", "ProductCD", "card1", "card2", "card3", "card4", "card5", "card6",
     #          "addr1", "addr2", "P_emaildomain", "R_emaildomain", "M1", "M2", "M3", "M4",
