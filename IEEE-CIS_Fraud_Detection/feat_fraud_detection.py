@@ -146,6 +146,16 @@ numeric_clip = [500, 900, 1000, 25, 25, 10, 10, 10, 20, 10, 10, 10, 10, 20,
 # V18----[Vesta info: ?,(0.0,15.0)]: 514467/590540,取值16种,极度不平衡,0.0占比87.04%,1.0占比12.61%,离散特征???
 # V19----[Vesta info: ?,(0.0,7.0)]: 514467/590540,取值8种,极度不平衡,1.0占比78.85%,0.0占比19.80%,离散特征???
 # V20----[Vesta info: ?,(0.0,15.0)]: 514467/590540,取值16种,极度不平衡,1.0占比78.12%,0.0占比18.72%,离散特征???
+# V21----[Vesta info: ?,(0.0,5.0)]: 514467/590540,取值6种,极度不平衡,0.0占比87.12%,1.0占比12.79%,离散特征???
+# V22----[Vesta info: ?,(0.0,8.0)]: 514467/590540,取值9种,极度不平衡,0.0占比87.11%,1.0占比12.69%,离散特征???
+# V23----[Vesta info: ?,(0.0,13.0)]: 514467/590540,取值14种,极度不平衡,1.0占比96.94%,离散特征???
+# V24----[Vesta info: ?,(0.0,13.0)]: 514467/590540,取值14种,极度不平衡,1.0占比94.94%,离散特征???
+# V25----[Vesta info: ?,(0.0,7.0)]: 514467/590540,取值8种,极度不平衡,1.0占比96.65%,离散特征???
+# V26----[Vesta info: ?,(0.0,13.0)]: 514467/590540,取值14种,极度不平衡,1.0占比96.23%,离散特征???
+# V27----[Vesta info: ?,(0.0,4.0)]: 514467/590540,取值4种,极度不平衡,0.0占比99.92%,离散特征???
+# V28----[Vesta info: ?,(0.0,4.0)]: 514467/590540,取值4种,极度不平衡,0.0占比99.92%,离散特征???
+# V29----[Vesta info: ?,(0.0,5.0)]: 514467/590540,取值6种,极度不平衡,0.0占比62.27%,1.0占比36.74%,离散特征???
+# V30----[Vesta info: ?,(0.0,9.0)]: 514467/590540,取值10种,极度不平衡,0.0占比62.00%,1.0占比35.79%,离散特征???
 
 
 def csv2txt_eda(datain_dir):
@@ -189,14 +199,14 @@ def csv2txt_eda(datain_dir):
     train_iden = pd.read_csv(datain_dir + "\\train_identity.csv", index_col="TransactionID")
     train = train_tran.merge(train_iden, how="left", left_index=True, right_index=True)
 
-    df_v = train["V20"]
+    df_v = train["V30"]
     print(df_v.count())
     print("\n")
     print(df_v.value_counts())
     print(df_v.value_counts()/df_v.count())
     print(df_v.min(), df_v.max())
-    df_vv = train[train["V20"] < 500]
-    df_vvv = df_vv["V20"]
+    df_vv = train[train["V30"] < 500]
+    df_vvv = df_vv["V30"]
     print(df_vvv.count(), df_vvv.count()/df_v.count())
     # print(0)
     # order = ["isFraud", "ProductCD", "card1", "card2", "card3", "card4", "card5", "card6",
