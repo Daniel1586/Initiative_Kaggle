@@ -466,7 +466,7 @@ if __name__ == "__main__":
     parser.add_argument("--data_csv", type=str, default=dir_data_csv, help="data_csv dir")
     parser.add_argument("--data_txt", type=str, default=dir_data_txt, help="data_txt dir")
     parser.add_argument("--data_set", type=str, default=dir_data_set, help="data_set dir")
-    parser.add_argument("--cut_off", type=int, default=20, help="cutoff long-tailed categorical values")
+    parser.add_argument("--cut_off", type=int, default=50, help="cutoff long-tailed categorical values")
     FLAGS, unparsed = parser.parse_known_args()
     print("threads -------------- ", FLAGS.threads)
     print("csv_dir -------------- ", FLAGS.data_csv)
@@ -474,7 +474,7 @@ if __name__ == "__main__":
     print("set_dir -------------- ", FLAGS.data_set)
     print("cutoff --------------- ", FLAGS.cut_off)
 
-    is_csv = 0
+    is_csv = 2
     if is_csv == 0:
         # 特征探索分析
         csv2txt_eda(FLAGS.data_csv)
