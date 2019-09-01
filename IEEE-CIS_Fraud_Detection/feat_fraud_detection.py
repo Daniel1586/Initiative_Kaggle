@@ -47,30 +47,56 @@ import pandas as pd
 # M7--------[match info:(T,F)]: 244275/590540,取值2种,分布不平衡,F占比86.5%
 # M8--------[match info:(T,F)]: 244288/590540,取值2种,分布不平衡,F占比63.5%
 # M9--------[match info:(T,F)]: 244288/590540,取值2种,分布不平衡,T占比84.2%
+# id_12-----[id info:(NotFound,Found)]: 144233/590540,取值2种,分布不平衡,NotFound占比85.3%
+# id_13-----[id info:(10.0,64.0)]: 127320/590540,取值54种,分布不平衡,52.0占比45.6%,数值特征???
+# id_14-----[id info:(-660.0,720.0)]: 80044/590540,取值25种,分布不平衡,-300.0占比55.1%,数值特征???
+# id_15-----[id info:(Found,New,Unknown)]: 140985/590540,取值3种,分布不平衡,Found占比48.0%,New占比43.7%
+# id_16-----[id info:(Found,NotFound)]: 129340/590540,取值2种,Found占比51.3%,NotFound占比48.7%
+# id_17-----[id info:(100.0,229.0)]: 139369/590540,取值104种,分布不平衡,166.0占比56.4%,数值特征???
+# id_18-----[id info:(10.0,29.0)]: 45113/590540,取值18种,分布不平衡,15.0占比56.5%,数值特征???
+# id_19-----[id info:(100.0,671.0)]: 139318/590540,取值522种,类高斯分布,数值特征???
+# id_20-----[id info:(100.0,661.0)]: 139261/590540,取值394种,类高斯分布,数值特征???
+# id_21-----[id info:(100.0,854.0)]: 5159/590540,取值490种,分布不平衡,252.0占比49.3%,数值特征???
+# id_22-----[id info:(10.0,44.0)]: 5169/590540,取值25种,分布不平衡,14.0占比91.6%,数值特征???
+# id_23-----[id info:(IP_PROXY:TRANSPARENT,IP_PROXY:ANONYMOUS,IP_PROXY:HIDDEN)]: 5169/590540,
+# ----------取值3种,分布不平衡,IP_PROXY:TRANSPARENT占比67.5%
+# id_24-----[id info:(11.0,26.0)]: 4747/590540,取值12种,分布不平衡,11.0占比59.3%,数值特征???
+# id_25-----[id info:(100.0,548.0)]: 5132/590540,取值341种,分布不平衡,321.0占比48.6%,数值特征???
+# id_26-----[id info:(100.0,216.0)]: 5163/590540,取值95种,类高斯分布,数值特征???
+# id_27-----[id info:(Found,NotFound)]: 5169/590540,取值2种,分布极不平衡,Found占比99.7%
+# id_28-----[id info:(Found,NotFound)]: 140978/590540,取值2种,Found占比54.1%,NotFound占比45.9%
+# id_29-----[id info:(Found,NotFound)]: 140978/590540,取值2种,Found占比53.1%,NotFound占比46.9%
+# id_30-----[id info:(Window10,Windows7,IOS 11.2.1,...)]: 77565/590540,取值75种,分布不平衡
+# id_31-----[id info:(chrome 63.0,mobile safari 11.0,...)]: 140282/590540,取值130种,类高斯分布
+# id_32-----[id info:(0.0,32.0)]: 77586/590540,取值4种,分布不平衡,24.0占比68.4%,32.0占比31.5%,数值特征???
+# id_33-----[id info:(1920x1080,1366x768,...)]: 73289/590540,取值260种,类高斯分布
+# id_34-----[id info:(match_status:2,match_status:1,match_status:0,match_status:-1)]: 77805/590540,
+# ----------取值4种,分布极不平衡,match_status:2占比77.1%
+# id_35-----[id info:(T,F)]: 140985/590540,取值2种,T占比55.2%,F占比44.8%
+# id_36-----[id info:(F,T)]: 140985/590540,取值2种,F占比95.1%,T占比4.9%
+# id_37-----[id info:(T,F)]: 140985/590540,取值2种,T占比78.3%,F占比21.7%
+# id_38-----[id info:(F,T)]: 140985/590540,取值2种,F占比52.4%,T占比47.6%
 # DeviceType[device info:(desktop,mobile)]: 140810/590540,取值2种,分布不平衡,desktop占比60.5%
 # DeviceInfo[device info:(Windows,iOS Device,MacOS,...)]: 118666/590540,
 # ----------取值1786种,分布不平衡,Windows占比40.2%,iOS Device占比16.6%,...
 
 
 def csv2txt_eda(datain_dir):
-    order = ["isFraud", "id_12", "id_13", "id_14", "id_15", "id_16",
-             "id_17", "id_18", "id_19", "id_20", "id_21", "id_22", "id_23", "id_24",
-             "id_25", "id_26", "id_27", "id_28", "id_29", "id_30", "id_31", "id_32",
-             "id_33", "id_34", "id_35", "id_36", "id_37", "id_38", "DeviceType", "DeviceInfo"]
+    order = ["id_34", "id_35", "id_36", "id_37", "id_38"]
     # import data [index_col指定哪一列数据作为行索引,返回DataFrame]
     train_tran = pd.read_csv(datain_dir + "\\train_transaction.csv", index_col="TransactionID")
     train_iden = pd.read_csv(datain_dir + "\\train_identity.csv", index_col="TransactionID")
     train = train_tran.merge(train_iden, how="left", left_index=True, right_index=True)
 
-    df_v = train["TransactionAmt"]
+    df_v = train["id_38"]
     print(df_v.count())
-    print(df_v.min(), df_v.max())
     print("\n")
-    # print(df_v.value_counts())
-    df_vv = train[train["TransactionAmt"] < 500]
-    df_vvv = df_vv["TransactionAmt"]
-    print(df_vvv.count(), df_vvv.count()/df_v.count())
-    print(0)
+    print(df_v.value_counts())
+    print(df_v.min(), df_v.max())
+    # df_vv = train[train["id_12"] < 500]
+    # df_vvv = df_vv["id_12"]
+    # print(df_vvv.count(), df_vvv.count()/df_v.count())
+    # print(0)
     # order = ["isFraud", "ProductCD", "card1", "card2", "card3", "card4", "card5", "card6",
     #          "addr1", "addr2", "P_emaildomain", "R_emaildomain", "M1", "M2", "M3", "M4",
     #          "M5", "M6", "M7", "M8", "M9", "id_12", "id_13", "id_14", "id_15", "id_16",
@@ -363,9 +389,9 @@ if __name__ == "__main__":
     print("set_dir -------------- ", FLAGS.data_set)
     print("cutoff --------------- ", FLAGS.cut_off)
 
-    is_csv = 3
+    is_csv = 0
     if is_csv == 0:
-        # CSV转TXT,特征探索分析
+        # 特征探索分析
         csv2txt_eda(FLAGS.data_csv)
     elif is_csv == 1:
         # CSV转TXT
