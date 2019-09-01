@@ -310,9 +310,9 @@ class NumericFeatureGenerator:
 def preprocess(datain_dir, dataou_dir):
     print("========== 1.Preprocess categorical and numeric features...")
     c_feat = CategoryDictGenerator(len(categorical_features))
-    c_feat.build(datain_dir + "train_total.txt", categorical_features, cutoff=FLAGS.cut_off)
+    c_feat.build(datain_dir + "train.txt", categorical_features, cutoff=FLAGS.cut_off)
     n_feat = NumericFeatureGenerator(len(numeric_features_etl))
-    n_feat.build(datain_dir + "train_total.txt", numeric_features_etl)
+    n_feat.build(datain_dir + "train.txt", numeric_features_etl)
 
     print("========== 2.Generate index of feature embedding ...")
     # 生成数值特征编号
@@ -333,7 +333,7 @@ def preprocess(datain_dir, dataou_dir):
     # 90% data are used for training, and 10% data are used for validation
     print("========== 3.Generate train dataset ...")
     with open(dataou_dir + "train.set", 'w') as out_test:
-        with open(datain_dir + "train_total.txt", 'r') as f:
+        with open(datain_dir + "train.txt", 'r') as f:
             for line in f:
                 features = line.rstrip('\n').split('\t')
 
@@ -392,7 +392,7 @@ if __name__ == "__main__":
     print("set_dir -------------- ", FLAGS.data_set)
     print("cutoff --------------- ", FLAGS.cut_off)
 
-    is_csv = 1
+    is_csv = 2
     if is_csv == 0:
         # 特征探索分析
         csv2txt_eda(FLAGS.data_csv)
