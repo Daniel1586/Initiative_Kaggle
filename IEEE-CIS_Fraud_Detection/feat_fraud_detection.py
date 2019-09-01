@@ -187,7 +187,7 @@ def csv2txt_eda(datain_dir):
 # 数值特征的阈值[95%~分位数],若数值特征超过阈值,则该特征值置为阈值
 # 数值特征D9[I26]已经归一化,不用特征处理[阈值设置为1]
 numeric_features_etl = range(1, 33)
-categorical_features = range(33, 55)
+categorical_features = range(33, 82)
 numeric_clip = [500, 900, 1000, 25, 25, 10, 10, 10, 20, 10, 10, 10, 10, 20,
                 20, 100, 20, 500, 550, 150, 550, 250, 400, 300, 700, 1, 550,
                 550, 400, 100, 400, 550]
@@ -207,11 +207,14 @@ def csv2txt(datain_dir, dataou_dir):
              "D4", "D5", "D6", "D7", "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15",
              "ProductCD", "card1", "card2", "card3", "card4", "card5", "card6", "addr1",
              "addr2", "P_emaildomain", "R_emaildomain", "M1", "M2", "M3", "M4", "M5", "M6",
-             "M7", "M8", "M9", "DeviceType", "DeviceInfo"]
+             "M7", "M8", "M9", "id_12", "id_13", "id_14", "id_15", "id_16", "id_17", "id_18",
+             "id_19", "id_20", "id_21", "id_22", "id_23", "id_24", "id_25", "id_26", "id_27",
+             "id_28", "id_29", "id_30", "id_31", "id_32", "id_33", "id_34", "id_35", "id_36",
+             "id_37", "id_38", "DeviceType", "DeviceInfo"]
     order_ = order[1:]
     train_txt = train[order]
     tests_txt = tests[order_]
-    train_txt.to_csv(dataou_dir + "train_total.txt", sep='\t', index=False, header=0)
+    train_txt.to_csv(dataou_dir + "train.txt", sep='\t', index=False, header=0)
     tests_txt.to_csv(dataou_dir + "tests.txt", sep='\t', index=False, header=0)
     tests_idx = tests["ProductCD"]
     tests_idx.to_csv(dataou_dir + "index.csv", index=True, header=True)
@@ -389,7 +392,7 @@ if __name__ == "__main__":
     print("set_dir -------------- ", FLAGS.data_set)
     print("cutoff --------------- ", FLAGS.cut_off)
 
-    is_csv = 0
+    is_csv = 1
     if is_csv == 0:
         # 特征探索分析
         csv2txt_eda(FLAGS.data_csv)
