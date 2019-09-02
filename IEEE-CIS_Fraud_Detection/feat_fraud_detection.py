@@ -126,8 +126,10 @@ numeric_clip = [500, 900, 1000, 25, 25, 10, 10, 10, 20, 10, 10, 10, 10, 20,
 # D13----[时间13: ?,(0.0,847.0)]: 61952/590540,取值577种,分布不平衡,[0.0,100.0)占比94.7%
 # D14----[时间14: ?,(-193.0,878.0)]: 62187/590540,取值802种,分布不平衡,[0.0,400.0)占比95.1%
 # D15----[时间15: ?,(-83.0,879.0)]: 501427/590540,取值859种,分布不平衡,[0.0,550.0)占比93.8%
+print(0)
 
-# Boolean Columns: columns with only two unique values/特征类别只有2个
+# 1-Boolean Columns:
+# Columns with only two unique values/特征类别只有2个
 """
 V1--[Vesta info:(0.0,1.0)]: 311253/590540,取值2种,极度不平衡,1.0占比99.99%
 V14-[Vesta info:(0.0,1.0)]: 514467/590540,取值2种,极度不平衡,1.0占比99.95%
@@ -137,16 +139,16 @@ V88-[Vesta info:(0.0,1.0)]: 501376/590540,取值2种,极度不平衡,1.0占比99
 V107[Vesta info:(0.0,1.0)]: 590226/590540,取值2种,极度不平衡,1.0占比99.95%
 V305[Vesta info:(1.0,2.0)]: 590528/590540,取值2种,极度不平衡,1.0占比99.99%
 """
-# Pseudo Boolean: columns with 96.5% data covered by maximum two unique values
+# 2-Pseudo Boolean categorical:
+# Columns with 15 or less unique values but 95% data covered by maximum two unique values
 """
-V2--[Vesta info:(0.0,8.0)]: 311253/590540,取值9种,极度不平衡,1.0占比96.03%,2.0占比3.51%,二者占比超过99.54%
-V3--[Vesta info: ?,(0.0,9.0)]: 311253/590540,取值10种,极度不平衡,1.0占比93.36%,离散特征???
+V2--[Vesta info:(0.0,8.0)]: 311253/590540,取值 9种,极度不平衡,1.0占比96.03%,2.0占比 3.51%,二者占比超过99.54%
+V3--[Vesta info:(0.0,9.0)]: 311253/590540,取值10种,极度不平衡,1.0占比93.36%,2.0占比 5.70%,二者占比超过99.06%
+V4--[Vesta info:(0.0,6.0)]: 311253/590540,取值 7种,极度不平衡,1.0占比79.19%,0.0占比18.21%,二者占比超过97.40%
+V5--[Vesta info:(0.0,6.0)]: 311253/590540,取值 7种,极度不平衡,1.0占比78.03%,0.0占比17.43%,二者占比超过95.46%
 """
 
 #
-#
-# V4-----[Vesta info: ?,(0.0,6.0)]: 311253/590540,取值7种,极度不平衡,1.0占比79.19%,离散特征???
-# V5-----[Vesta info: ?,(0.0,6.0)]: 311253/590540,取值7种,极度不平衡,1.0占比78.03%,离散特征???
 # V6-----[Vesta info: ?,(0.0,9.0)]: 311253/590540,取值10种,极度不平衡,1.0占比95.94%,离散特征???
 # V7-----[Vesta info: ?,(0.0,9.0)]: 311253/590540,取值10种,极度不平衡,1.0占比93.65%,离散特征???
 # V8-----[Vesta info: ?,(0.0,8.0)]: 311253/590540,取值9种,极度不平衡,1.0占比97.49%,离散特征???
@@ -214,18 +216,18 @@ def csv2txt_eda(datain_dir):
     train_iden = pd.read_csv(datain_dir + "\\train_identity.csv", index_col="TransactionID")
     train = train_tran.merge(train_iden, how="left", left_index=True, right_index=True)
 
-    df_v = train["V3"]
+    df_v = train["V5"]
     print(df_v.count())
     print("\n")
     print(df_v.value_counts())
     print(df_v.value_counts()/df_v.count())
     print(df_v.min(), df_v.max())
-    df_v1 = train[train["V3"] < 500]
-    df_vv = df_v1["V3"]
+    df_v1 = train[train["V5"] < 500]
+    df_vv = df_v1["V5"]
     print(df_vv.count(), df_vv.count()/df_v.count())
     print("\n")
     df_v2 = train[train["isFraud"] == 1]
-    df_vvv = df_v2["V3"]
+    df_vvv = df_v2["V5"]
     print(df_vvv.value_counts())
     # print(0)
     # order = ["isFraud", "ProductCD", "card1", "card2", "card3", "card4", "card5", "card6",
@@ -474,7 +476,7 @@ if __name__ == "__main__":
     print("set_dir -------------- ", FLAGS.data_set)
     print("cutoff --------------- ", FLAGS.cut_off)
 
-    is_csv = 2
+    is_csv = 0
     if is_csv == 0:
         # 特征探索分析
         csv2txt_eda(FLAGS.data_csv)
