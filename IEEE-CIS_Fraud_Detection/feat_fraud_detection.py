@@ -338,12 +338,12 @@ def csv2txt(datain_dir, dataou_dir):
     """
     # 可以使用的特征
     """
-    num: dist1-dist2-C1-C2-C4-C5-C6-C7-C8-C9-C10-C11-C12-C13-C14-D1-D2-D3-D4-D5-D6-D7
+    num: dist1-dist2-C1-C2-C4-C5-C6-C7-C8-C9-C10-C11-C12-C13-C14-D1-D2-D3-D4-D5-D6-D7-D8
     cat: card3-
     """
     # 明确不用的特征
     """
-    num: TransactionID/TransactionDT/
+    num: TransactionDT-TransactionID
     """
     order = ["isFraud", "TransactionAmt", "dist1", "dist2", "C1", "C2", "C3", "C4", "C5",
              "C6", "C7", "C8", "C9", "C10", "C11", "C12", "C13", "C14", "D1", "D2", "D3",
