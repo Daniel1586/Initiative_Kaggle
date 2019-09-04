@@ -333,12 +333,12 @@ def csv2txt(datain_dir, dataou_dir):
 
     # 明确使用的特征
     """
-    num: TransactionAmt-
+    num: TransactionAmt-C3
     cat: ProductCD-card1-card2-card4-card5-card6-addr1-addr2-P_emaildomain-R_emaildomain
     """
     # 可以使用的特征
     """
-    num: dist1-dist2-C1-C2
+    num: dist1-dist2-C1-C2-C4-C5-C6-C7-C8-C9-C10-C11-C12-C13-C14-D1-D2-D3-D4-D5-D6-D7
     cat: card3-
     """
     # 明确不用的特征
