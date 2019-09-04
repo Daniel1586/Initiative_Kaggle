@@ -113,8 +113,8 @@ def csv2txt(datain_dir, dataou_dir):
     # cat离散特征=====明确使用的特征
     """
     ProductCD-----[W,C,R,H,S]:590540/590540,取值5种,W占比74.4%,C占比11.6%
-    num: TransactionAmt-C3
-    cat: ProductCD-card1-card2-card4-card5-card6-addr1-addr2-P_emaildomain-R_emaildomain
+    card1---------[1000,18396]:590540/590540,取值13553种,类均匀分布
+    card2---------[100.0,600.0]:581607/590540,取值501种,类均匀分布
     """
     # 可以使用的特征
     """
