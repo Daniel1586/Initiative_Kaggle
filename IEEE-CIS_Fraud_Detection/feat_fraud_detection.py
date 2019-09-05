@@ -73,8 +73,8 @@ def csv2txt(datain_dir, dataou_dir):
     card6----[debit,credit,debit or credit,charge card]: 588969/590540,debit占比74.69%,credit占比25.29%
     addr1----[100.0,540.0]:524834/590540,取值333种,类均匀分布
     addr2----[10.0,102.0]:524834/590540,取值75种,87.0占比99.1%
-    P_emaildomain[.com,.net,.]:496084/590540,取值60种,gmail.com=46.0%,yahoo.com=20.3%,null=
-    R_emaildomain[.com,.net,.]:137291/590540,取值61种,gmail.com=41.6%,hotmail.com=20.0%,anonymous.com=14.9%,...
+    P_emaildomain[.com,.net,.]:valid=84.00%,unique=60-->gmail.com=38.66%,yahoo.com=17.09%,null=15.99%
+    R_emaildomain[.com,.net,.]:valid=23.25%,unique=61-->gmail.com=9.67%,hotmail.com=4.65%,anonymous.com=3.47%,.
     """
 
     order = ["isFraud", "TransactionAmt", "dist1", "dist2", "C1", "C2", "C3", "C4", "C5",
