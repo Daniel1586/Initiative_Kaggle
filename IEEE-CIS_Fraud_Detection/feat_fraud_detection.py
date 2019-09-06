@@ -74,12 +74,16 @@ def csv2txt(datain_dir, dataou_dir):
     addr1------[100,540]:valid=88.87%,unique=333--->类均匀分布,null=11.12%,299=7.84%,.
     addr2-------[10,102]:valid=88.87%,unique=75---->87=88.13%,null=11.12%,.
     P_emaildomain[.com,]:valid=84.00%,unique=60---->gmail.com=38.66%,yahoo.com=17.09%,null=15.99%,.
-    R_emaildomain[.com,]:valid=23.25%,unique=61---->gmail.com=9.67%,hotmail.com=4.65%,anonymous.com=3.47%,.---[不使用]
+    R_emaildomain[.com,]:valid=23.25%,unique=61---->gmail.com=9.67%,hotmail.com=4.65%,anonymous.com=3.47%,.
     M1-------------[T,F]:valid=54.09%,unique=3----->T=54.08%,null=45.90%,.
     M2-------------[T,F]:valid=54.09%,unique=3----->T=48.34%,null=45.90%,.
     M3-------------[T,F]:valid=54.09%,unique=3----->null=45.90%,T=42.62%,.
     M4--------[M0,M1,M2]:valid=52.34%,unique=4----->null=47.65%,M0=33.25%,M2=10.13%,.
-    M5-------------[T,F]:valid=54.09%,unique=3----->null=45.90%,T=42.62%,.
+    M5-------------[T,F]:valid=40.65%,unique=3----->null=59.35%,F=22.43%,T=18.22%
+    M6-------------[T,F]:valid=71.32%,unique=3----->F=38.58%,T=32.73,null=28.68%
+    M7-------------[T,F]:valid=41.36%,unique=3----->null=58.63%,F=35.79%,T=5.57%
+    M8-------------[T,F]:valid=41.36%,unique=3----->null=58.63%,F=26.29%,T=15.07%
+    M9-------------[T,F]:valid=41.36%,unique=3----->null=58.63%,F=34.82%,T=6.54%
     """
 
     order = ["isFraud", "TransactionAmt", "dist1", "dist2", "C1", "C2", "C3", "C4", "C5",
