@@ -64,17 +64,22 @@ def csv2txt(datain_dir, dataou_dir):
     """
     # ==========cat离散特征==========
     """
-    ProductCD[W,C,R,H,S]:590540/590540,取值5种,W占比74.4%,C占比11.6%
-    card1----[1000,18396]:590540/590540,取值13553种,类均匀分布
-    card2----[100.0,600.0]:581607/590540,取值501种,类均匀分布
-    card3----[100.0,231.0]:588975/590540,取值115种,150.0占比88.5%,185.0占比9.56%
-    card4----[visa,mastercard,american express,discover]:588963/590540,visa占比65.3%,mastercard占比32.1%
-    card5----[100.0,237.0]:586281/590540,取值120种,226.0占比50.5%
-    card6----[debit,credit,debit or credit,charge card]: 588969/590540,debit占比74.69%,credit占比25.29%
-    addr1----[100.0,540.0]:524834/590540,取值333种,类均匀分布
-    addr2----[10.0,102.0]:524834/590540,取值75种,87.0占比99.1%
-    P_emaildomain[.com,.net,.]:valid=84.00%,unique=60-->gmail.com=38.66%,yahoo.com=17.09%,null=15.99%
-    R_emaildomain[.com,.net,.]:valid=23.25%,unique=61-->gmail.com=9.67%,hotmail.com=4.65%,anonymous.com=3.47%,.
+    ProductCD[W,C,R,H,S]:valid=100.0%,unique=5----->W=74.45%,C=11.60%,R=6.38%,.
+    card1---[1000,18396]:valid=100.0%,unique=13553->类均匀分布,7919=2.52%,9500=2.39%,.
+    card2------[100,600]:valid=98.48%,unique=501--->类均匀分布,321=8.28%,111=7.65%,555=7.11%,.
+    card3------[100,231]:valid=99.73%,unique=115--->150=88.27%,185=9.54%,.-------------[corr>0.7: V15,V94,V16,V57,V79]
+    card4-------[visa,.]:valid=99.73%,unique=5----->visa=65.15%,mastercard=32.04%,.
+    card5------[100,237]:valid=99.27%,unique=120--->226=50.21%,224=13.80%,166=9.67%,.
+    card6------[debit,.]:valid=99.73%,unique=5----->debit=74.49%,credit=25.22%,.
+    addr1------[100,540]:valid=88.87%,unique=333--->类均匀分布,null=11.12%,299=7.84%,.
+    addr2-------[10,102]:valid=88.87%,unique=75---->87=88.13%,null=11.12%,.
+    P_emaildomain[.com,]:valid=84.00%,unique=60---->gmail.com=38.66%,yahoo.com=17.09%,null=15.99%,.
+    R_emaildomain[.com,]:valid=23.25%,unique=61---->gmail.com=9.67%,hotmail.com=4.65%,anonymous.com=3.47%,.---[不使用]
+    M1-------------[T,F]:valid=54.09%,unique=3----->T=54.08%,null=45.90%,.
+    M2-------------[T,F]:valid=54.09%,unique=3----->T=48.34%,null=45.90%,.
+    M3-------------[T,F]:valid=54.09%,unique=3----->null=45.90%,T=42.62%,.
+    M4--------[M0,M1,M2]:valid=52.34%,unique=4----->null=47.65%,M0=33.25%,M2=10.13%,.
+    M5-------------[T,F]:valid=54.09%,unique=3----->null=45.90%,T=42.62%,.
     """
 
     order = ["isFraud", "TransactionAmt", "dist1", "dist2", "C1", "C2", "C3", "C4", "C5",
