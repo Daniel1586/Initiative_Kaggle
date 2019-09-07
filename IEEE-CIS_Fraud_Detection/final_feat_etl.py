@@ -68,8 +68,8 @@ def csv2txt(datain_dir, dataou_dir):
     order_ = order[1:]
     train_txt = train[order]
     infer_txt = infer[order_]
-    train_txt.to_csv(dataou_dir + "train_feat1.txt", sep='\t', index=False, header=0)
-    infer_txt.to_csv(dataou_dir + "infer_feat1.txt", sep='\t', index=False, header=0)
+    train_txt.to_csv(dataou_dir + "feat1_train.txt", sep='\t', index=False, header=0)
+    infer_txt.to_csv(dataou_dir + "feat1_infer.txt", sep='\t', index=False, header=0)
     infer_idx = infer["ProductCD"]
     infer_idx.to_csv(dataou_dir + "infer_idx.csv", index=True, header=True)
 
