@@ -50,10 +50,10 @@ def csv2txt(datain_dir, dataou_dir):
     # import data [index_col指定哪一列数据作为行索引,返回DataFrame]
     train_tran = pd.read_csv(datain_dir + "\\train_transaction.csv", index_col="TransactionID")
     train_iden = pd.read_csv(datain_dir + "\\train_identity.csv", index_col="TransactionID")
-    tests_tran = pd.read_csv(datain_dir + "\\test_transaction.csv", index_col="TransactionID")
-    tests_iden = pd.read_csv(datain_dir + "\\test_identity.csv", index_col="TransactionID")
+    infer_tran = pd.read_csv(datain_dir + "\\test_transaction.csv", index_col="TransactionID")
+    infer_iden = pd.read_csv(datain_dir + "\\test_identity.csv", index_col="TransactionID")
     train = train_tran.merge(train_iden, how="left", left_index=True, right_index=True)
-    tests = tests_tran.merge(tests_iden, how="left", left_index=True, right_index=True)
+    infer = infer_tran.merge(infer_iden, how="left", left_index=True, right_index=True)
 
     order = ["isFraud",
              "TransactionAmt", "dist1", "C1", "C3", "C5", "C13", "D1", "D3", "D4", "D5",
@@ -67,11 +67,11 @@ def csv2txt(datain_dir, dataou_dir):
              "V82", "V86", "V87", "V88", "V95"]
     order_ = order[1:]
     train_txt = train[order]
-    tests_txt = tests[order_]
-    train_txt.to_csv(dataou_dir + "train.txt", sep='\t', index=False, header=0)
-    tests_txt.to_csv(dataou_dir + "tests.txt", sep='\t', index=False, header=0)
-    tests_idx = tests["ProductCD"]
-    tests_idx.to_csv(dataou_dir + "index.csv", index=True, header=True)
+    infer_txt = infer[order_]
+    train_txt.to_csv(dataou_dir + "train_feat1.txt", sep='\t', index=False, header=0)
+    infer_txt.to_csv(dataou_dir + "infer_feat1.txt", sep='\t', index=False, header=0)
+    infer_idx = infer["ProductCD"]
+    infer_idx.to_csv(dataou_dir + "infer_idx.csv", index=True, header=True)
 
 
 def csv2csv(datain_dir, dataou_dir):
