@@ -75,11 +75,11 @@ def csv2txt(datain_dir, dataou_dir):
 
 
 def csv2csv(datain_dir, dataou_dir):
-    idx = pd.read_csv(datain_dir + "\\index.csv")
+    idx = pd.read_csv(datain_dir + "\\infer_idx.csv")
     res = pd.read_csv(dataou_dir + "\\infer.csv", header=None, names=["isFraud"])
     tests = idx.merge(res, how="left", left_index=True, right_index=True)
     tests_txt = tests.drop("ProductCD", axis=1)
-    tests_txt.to_csv(dataou_dir + "090101_DeepFM.csv", index=False, header=True)
+    tests_txt.to_csv(dataou_dir + "090801.csv", index=False, header=True)
 
 
 class CategoryDictGenerator:
@@ -246,7 +246,7 @@ if __name__ == "__main__":
     print("set_dir -------------- ", FLAGS.data_set)
     print("cutoff --------------- ", FLAGS.cut_off)
 
-    is_csv = 2
+    is_csv = 3
     if is_csv == 0:
         # 特征探索分析
         csv2txt_eda(FLAGS.data_csv)
@@ -258,5 +258,5 @@ if __name__ == "__main__":
         preprocess(FLAGS.data_txt, FLAGS.data_set)
     else:
         # 产生最终结果
-        csv2csv(FLAGS.data_txt, FLAGS.data_set)
+        csv2csv(FLAGS.data_txt, FLAGS.data_txt)
     pass
