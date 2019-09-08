@@ -28,15 +28,15 @@ flags.DEFINE_string("serve_dir", "", "Export servable model for TensorFlow Servi
 flags.DEFINE_string("clear_mod", "True", "{True, False},Clear existed model or not")
 flags.DEFINE_integer("log_steps", 2000, "Save summary every steps")
 # model parameters--模型参数设置
-flags.DEFINE_integer("train_size", 590540, "Number of train samples")
-flags.DEFINE_integer("feature_size", 4621, "Number of features[numeric + one-hot categorical_feature]")
-flags.DEFINE_integer("field_size", 81, "Number of fields")
+flags.DEFINE_integer("train_size", 236000, "Number of train samples")
+flags.DEFINE_integer("feature_size", 2367, "Number of features[numeric + one-hot categorical_feature]")
+flags.DEFINE_integer("field_size", 78, "Number of fields")
 flags.DEFINE_integer("embed_size", 10, "Embedding size[length of hidden vector of xi/xj]")
-flags.DEFINE_integer("num_epochs", 40, "Number of epochs")
-flags.DEFINE_integer("batch_size", 512, "Number of batch size")
+flags.DEFINE_integer("num_epochs", 20, "Number of epochs")
+flags.DEFINE_integer("batch_size", 256, "Number of batch size")
 flags.DEFINE_string("loss_mode", "log_loss", "{log_loss, square_loss}")
 flags.DEFINE_string("optimizer", "Adam", "{Adam, Adagrad, Momentum, Ftrl, GD}")
-flags.DEFINE_float("learning_rate", 0.0002, "Learning rate")
+flags.DEFINE_float("learning_rate", 0.0005, "Learning rate")
 flags.DEFINE_float("l2_reg_lambda", 0.0001, "L2 regularization")
 flags.DEFINE_string("deep_layers", "256,128,64", "Deep layers")
 flags.DEFINE_string("dropout", "0.5,0.5,0.5", "Dropout rate")
@@ -67,7 +67,7 @@ def input_fn(filenames, batch_size=64, num_epochs=1, perform_shuffle=True):
 
     # randomize the input data with a window of 256 elements (read into memory)
     if perform_shuffle:
-        dataset = dataset.shuffle(buffer_size=5120)
+        dataset = dataset.shuffle(buffer_size=2560)
 
     # epochs from blending together
     dataset = dataset.repeat(num_epochs)
@@ -85,7 +85,7 @@ def main(_):
     if FLAGS.serve_dir == "":       # 算法模型输出pb文件
         FLAGS.serve_dir = (date.today() + timedelta(-1)).strftime("%Y%m") + "_exp_" + FLAGS.algorithm
     if FLAGS.input_dir == "":       # windows环境测试
-        FLAGS.input_dir = os.getcwd() + "\\ieee-fraud-detection-set\\"
+        FLAGS.input_dir = os.getcwd() + "\\feat1\\" + "\\CV5\\"
 
     train_files = glob.glob("%s/train.set" % FLAGS.input_dir)       # 获取指定目录下train文件
     valid_files = glob.glob("%s/valid.set" % FLAGS.input_dir)       # 获取指定目录下valid文件
@@ -151,11 +151,11 @@ def main(_):
             input_fn=lambda: input_fn(train_files, FLAGS.batch_size, FLAGS.num_epochs, True),
             max_steps=train_step)
         eval_spec = estimator.EvalSpec(
-            input_fn=lambda: input_fn(train_files, FLAGS.batch_size, 1, False), steps=None,
+            input_fn=lambda: input_fn(valid_files, FLAGS.batch_size, 1, False), steps=None,
             start_delay_secs=50, throttle_secs=15)
         estimator.train_and_evaluate(ctr, train_spec, eval_spec)
     elif FLAGS.task_mode == "eval":
-        ctr.evaluate(input_fn=lambda: input_fn(tests_files, FLAGS.batch_size, 1, False))
+        ctr.evaluate(input_fn=lambda: input_fn(valid_files, FLAGS.batch_size, 1, False))
     elif FLAGS.task_mode == "infer":
         preds = ctr.predict(
             input_fn=lambda: input_fn(infer_files, FLAGS.batch_size, 1, False), predict_keys="prob")
