@@ -21,14 +21,14 @@ flags.DEFINE_integer("run_mode", 0, "{0-local, 1-single_distributed, 2-multi_dis
 flags.DEFINE_integer("num_thread", 4, "Number of threads")
 # global parameters--全局参数设置
 flags.DEFINE_string("algorithm", "DeepFM", "{LR,FM,DC,FNN,IPNN,OPNN,WD,DeepFM,DCN,NFM}")
-flags.DEFINE_string("task_mode", "train", "{train, eval, infer, export}")
+flags.DEFINE_string("task_mode", "infer", "{train, eval, infer, export}")
 flags.DEFINE_string("input_dir", "", "Input data dir")
 flags.DEFINE_string("model_dir", "", "Model check point file dir")
 flags.DEFINE_string("serve_dir", "", "Export servable model for TensorFlow Serving")
 flags.DEFINE_string("clear_mod", "True", "{True, False},Clear existed model or not")
 flags.DEFINE_integer("log_steps", 2000, "Save summary every steps")
 # model parameters--模型参数设置
-flags.DEFINE_integer("train_size", 236000, "Number of train samples")
+flags.DEFINE_integer("train_size", 590540, "Number of train samples")
 flags.DEFINE_integer("feature_size", 2367, "Number of features[numeric + one-hot categorical_feature]")
 flags.DEFINE_integer("field_size", 78, "Number of fields")
 flags.DEFINE_integer("embed_size", 10, "Embedding size[length of hidden vector of xi/xj]")
@@ -85,7 +85,7 @@ def main(_):
     if FLAGS.serve_dir == "":       # 算法模型输出pb文件
         FLAGS.serve_dir = (date.today() + timedelta(-1)).strftime("%Y%m") + "_exp_" + FLAGS.algorithm
     if FLAGS.input_dir == "":       # windows环境测试
-        FLAGS.input_dir = os.getcwd() + "\\feat1\\" + "\\CV5\\"
+        FLAGS.input_dir = os.getcwd() + "\\feat1\\" + "\\CV\\"
 
     train_files = glob.glob("%s/train.set" % FLAGS.input_dir)       # 获取指定目录下train文件
     valid_files = glob.glob("%s/valid.set" % FLAGS.input_dir)       # 获取指定目录下valid文件
@@ -151,7 +151,7 @@ def main(_):
             input_fn=lambda: input_fn(train_files, FLAGS.batch_size, FLAGS.num_epochs, True),
             max_steps=train_step)
         eval_spec = estimator.EvalSpec(
-            input_fn=lambda: input_fn(valid_files, FLAGS.batch_size, 1, False), steps=None,
+            input_fn=lambda: input_fn(train_files, FLAGS.batch_size, 1, False), steps=None,
             start_delay_secs=50, throttle_secs=15)
         estimator.train_and_evaluate(ctr, train_spec, eval_spec)
     elif FLAGS.task_mode == "eval":
