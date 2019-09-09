@@ -21,7 +21,7 @@ flags.DEFINE_integer("run_mode", 0, "{0-local, 1-single_distributed, 2-multi_dis
 flags.DEFINE_integer("num_thread", 4, "Number of threads")
 # global parameters--全局参数设置
 flags.DEFINE_string("algorithm", "DeepFM", "{LR,FM,DC,FNN,IPNN,OPNN,WD,DeepFM,DCN,NFM}")
-flags.DEFINE_string("task_mode", "infer", "{train, eval, infer, export}")
+flags.DEFINE_string("task_mode", "eval", "{train, eval, infer, export}")
 flags.DEFINE_string("input_dir", "", "Input data dir")
 flags.DEFINE_string("model_dir", "", "Model check point file dir")
 flags.DEFINE_string("serve_dir", "", "Export servable model for TensorFlow Serving")
@@ -31,9 +31,9 @@ flags.DEFINE_integer("log_steps", 2000, "Save summary every steps")
 flags.DEFINE_integer("train_size", 590540, "Number of train samples")
 flags.DEFINE_integer("feature_size", 2367, "Number of features[numeric + one-hot categorical_feature]")
 flags.DEFINE_integer("field_size", 78, "Number of fields")
-flags.DEFINE_integer("embed_size", 10, "Embedding size[length of hidden vector of xi/xj]")
+flags.DEFINE_integer("embed_size", 8, "Embedding size[length of hidden vector of xi/xj]")
 flags.DEFINE_integer("num_epochs", 20, "Number of epochs")
-flags.DEFINE_integer("batch_size", 256, "Number of batch size")
+flags.DEFINE_integer("batch_size", 512, "Number of batch size")
 flags.DEFINE_string("loss_mode", "log_loss", "{log_loss, square_loss}")
 flags.DEFINE_string("optimizer", "Adam", "{Adam, Adagrad, Momentum, Ftrl, GD}")
 flags.DEFINE_float("learning_rate", 0.0005, "Learning rate")
@@ -151,11 +151,11 @@ def main(_):
             input_fn=lambda: input_fn(train_files, FLAGS.batch_size, FLAGS.num_epochs, True),
             max_steps=train_step)
         eval_spec = estimator.EvalSpec(
-            input_fn=lambda: input_fn(train_files, FLAGS.batch_size, 1, False), steps=None,
+            input_fn=lambda: input_fn(valid_files, FLAGS.batch_size, 1, False), steps=None,
             start_delay_secs=50, throttle_secs=15)
         estimator.train_and_evaluate(ctr, train_spec, eval_spec)
     elif FLAGS.task_mode == "eval":
-        ctr.evaluate(input_fn=lambda: input_fn(valid_files, FLAGS.batch_size, 1, False))
+        ctr.evaluate(input_fn=lambda: input_fn(train_files, FLAGS.batch_size, 1, False))
     elif FLAGS.task_mode == "infer":
         preds = ctr.predict(
             input_fn=lambda: input_fn(infer_files, FLAGS.batch_size, 1, False), predict_keys="prob")
