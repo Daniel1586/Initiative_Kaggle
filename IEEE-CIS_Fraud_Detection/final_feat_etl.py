@@ -79,7 +79,7 @@ def csv2csv(datain_dir, dataou_dir):
     res = pd.read_csv(dataou_dir + "\\infer.csv", header=None, names=["isFraud"])
     tests = idx.merge(res, how="left", left_index=True, right_index=True)
     tests_txt = tests.drop("ProductCD", axis=1)
-    tests_txt.to_csv(dataou_dir + "090801.csv", index=False, header=True)
+    tests_txt.to_csv(dataou_dir + "090902.csv", index=False, header=True)
 
 
 class CategoryDictGenerator:
