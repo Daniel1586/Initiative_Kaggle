@@ -32,7 +32,7 @@ seed_everything(SEED)
 LOCAL_TEST = False
 TARGET = 'isFraud'
 print('Load Data')
-dir_data_pkl = os.getcwd() + "\\ieee-fraud-kernel\\"
+dir_data_pkl = os.getcwd() + "\\ieee-fraud-pkl\\"
 train_df = pd.read_pickle(dir_data_pkl + "\\train_transaction.pkl")
 
 if LOCAL_TEST:
@@ -182,7 +182,7 @@ else:
     lgb_params['learning_rate'] = 0.01
     lgb_params['n_estimators'] = 800
     lgb_params['early_stopping_rounds'] = 100
-    test_predictions = make_predictions(train_df, test_df, features_columns, TARGET, lgb_params, NFOLDS=2)
+    test_predictions = make_predictions(train_df, test_df, features_columns, TARGET, lgb_params, NFOLDS=3)
 ########################### Export
 if not LOCAL_TEST:
     test_predictions['isFraud'] = test_predictions['prediction']
