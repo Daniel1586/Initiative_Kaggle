@@ -18,25 +18,27 @@ from sklearn.preprocessing import LabelEncoder
 warnings.filterwarnings('ignore')
 
 
-# :seed to make all processes deterministic
-def seed_everything(seed=0):
+# make all processes deterministic/固定随机数生成器的种子
+# environ是一个字符串所对应环境的映像对象,PYTHONHASHSEED为其中的环境变量
+# Python会用一个随机的种子来生成str/bytes/datetime对象的hash值;
+# 如果该环境变量被设定为一个数字,它就被当作一个固定的种子来生成str/bytes/datetime对象的hash值
+def set_seed(seed=0):
     random.seed(seed)
-    os.environ['PYTHONHASHSEED'] = str(seed)
+    os.environ["PYTHONHASHSEED"] = str(seed)
     np.random.seed(seed)
 
 
-# Memory Reducer
-# :df pandas dataframe to reduce size             # type: pd.DataFrame()
-# :verbose                                        # type: bool
+# reduce memory for dataframe
 def reduce_mem_usage(df, verbose=True):
-    numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+    numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
     start_mem = df.memory_usage().sum() / 1024**2
     for col in df.columns:
         col_type = df[col].dtypes
         if col_type in numerics:
             c_min = df[col].min()
             c_max = df[col].max()
-            if str(col_type)[:3] == 'int':
+            # int8:-128~127; int16:-32768
+            if str(col_type)[:3] == "int":
                 if c_min > np.iinfo(np.int8).min and c_max < np.iinfo(np.int8).max:
                     df[col] = df[col].astype(np.int8)
                 elif c_min > np.iinfo(np.int16).min and c_max < np.iinfo(np.int16).max:
@@ -52,6 +54,7 @@ def reduce_mem_usage(df, verbose=True):
                     df[col] = df[col].astype(np.float32)
                 else:
                     df[col] = df[col].astype(np.float64)
+
     end_mem = df.memory_usage().sum() / 1024**2
     if verbose:
         print('Mem. usage decreased to {:5.2f} Mb ({:.1f}% reduction)'.format(end_mem, 100 * (start_mem - end_mem) / start_mem))
@@ -89,10 +92,12 @@ def minify_identity_df(df):
 
 
 if __name__ == "__main__":
+    print("========== 1.Set random seed ...")
     SEED = 42
-    seed_everything(SEED)
+    set_seed(SEED)
+
+    print("========== 2.Load csv data ...")
     LOCAL_TEST = False
-    print('Load Data')
     dir_data_csv = os.getcwd() + "\\ieee-fraud-detection\\"
     train_tran = pd.read_csv(dir_data_csv + "\\train_transaction.csv")
     train_iden = pd.read_csv(dir_data_csv + "\\train_identity.csv")
@@ -101,11 +106,11 @@ if __name__ == "__main__":
     infer_tran["isFraud"] = 0
 
     if LOCAL_TEST:
-        for df2 in [train_tran, infer_tran, train_iden, infer_iden]:
-            df = reduce_mem_usage(df2)
-            for col in list(df):
-                if not df[col].equals(df2[col]):
-                    print('Bad transformation', col)
+        for _df in [train_tran, infer_tran, train_iden, infer_iden]:
+            df1 = reduce_mem_usage(_df)
+            for col1 in list(df1):
+                if not df1[col1].equals(_df[col1]):
+                    print("Bad transformation!!!", col1)
 
     train_df = reduce_mem_usage(train_tran)
     test_df = reduce_mem_usage(infer_tran)
