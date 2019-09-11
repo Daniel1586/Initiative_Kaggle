@@ -28,7 +28,7 @@ def set_seed(seed=0):
     np.random.seed(seed)
 
 
-# reduce memory for dataframe
+# reduce memory for dataframe/优化dataframe数据格式,减少内存占用
 def reduce_mem_usage(df, verbose=True):
     numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
     start_mem = df.memory_usage().sum() / 1024**2
@@ -37,7 +37,6 @@ def reduce_mem_usage(df, verbose=True):
         if col_type in numerics:
             c_min = df[col].min()
             c_max = df[col].max()
-            # int8:-128~127; int16:-32768
             if str(col_type)[:3] == "int":
                 if c_min > np.iinfo(np.int8).min and c_max < np.iinfo(np.int8).max:
                     df[col] = df[col].astype(np.int8)
@@ -54,10 +53,11 @@ def reduce_mem_usage(df, verbose=True):
                     df[col] = df[col].astype(np.float32)
                 else:
                     df[col] = df[col].astype(np.float64)
-
     end_mem = df.memory_usage().sum() / 1024**2
+    reduction = 100*(start_mem-end_mem)/start_mem
     if verbose:
-        print('Mem. usage decreased to {:5.2f} Mb ({:.1f}% reduction)'.format(end_mem, 100 * (start_mem - end_mem) / start_mem))
+        print("Default Mem. {:.2f} Mb, Optimized Mem. {:.2f} Mb, Reduction {:.1f}%".
+              format(start_mem, end_mem, reduction))
     return df
 
 
@@ -104,7 +104,6 @@ if __name__ == "__main__":
     infer_tran = pd.read_csv(dir_data_csv + "\\test_transaction.csv")
     infer_iden = pd.read_csv(dir_data_csv + "\\test_identity.csv")
     infer_tran["isFraud"] = 0
-
     if LOCAL_TEST:
         for _df in [train_tran, infer_tran, train_iden, infer_iden]:
             df1 = reduce_mem_usage(_df)
@@ -112,53 +111,56 @@ if __name__ == "__main__":
                 if not df1[col1].equals(_df[col1]):
                     print("Bad transformation!!!", col1)
 
+    print("========== 3.Optimize dataframe memory ...")
     train_df = reduce_mem_usage(train_tran)
-    test_df = reduce_mem_usage(infer_tran)
-    train_identity = reduce_mem_usage(train_iden)
-    test_identity = reduce_mem_usage(infer_iden)
-    for col in ['card4', 'card6', 'ProductCD']:
-        print('Encoding', col)
-        temp_df = pd.concat([train_df[[col]], test_df[[col]]])
-        col_encoded = temp_df[col].value_counts().to_dict()
-        train_df[col] = train_df[col].map(col_encoded)
-        test_df[col] = test_df[col].map(col_encoded)
+    infer_df = reduce_mem_usage(infer_tran)
+    train_id_df = reduce_mem_usage(train_iden)
+    infer_id_df = reduce_mem_usage(infer_iden)
+    # [train+infer]离散字符串特征:按频率编码[未考虑NaN]
+    for col1 in ["card4", "card6", "ProductCD"]:
+        print("-----Encoding", col1)
+        temp_df = pd.concat([train_df[[col1]], infer_df[[col1]]])
+        col_encoded = temp_df[col1].value_counts().to_dict()
+        train_df[col1] = train_df[col1].map(col_encoded)
+        infer_df[col1] = infer_df[col1].map(col_encoded)
         print(col_encoded)
+        print(infer_df[col1].head(5))
 
-    for col in ['M1', 'M2', 'M3', 'M5', 'M6', 'M7', 'M8', 'M9']:
-        train_df[col] = train_df[col].map({'T': 1, 'F': 0})
-        test_df[col] = test_df[col].map({'T': 1, 'F': 0})
-
-    for col in ['M4']:
-        print('Encoding', col)
-        temp_df = pd.concat([train_df[[col]], test_df[[col]]])
-        col_encoded = temp_df[col].value_counts().to_dict()
-        train_df[col] = train_df[col].map(col_encoded)
-        test_df[col] = test_df[col].map(col_encoded)
-        print(col_encoded)
-
-    train_identity = minify_identity_df(train_identity)
-    test_identity = minify_identity_df(test_identity)
-
-    for col in ['id_33']:
-        train_identity[col] = train_identity[col].fillna('unseen_before_label')
-        test_identity[col] = test_identity[col].fillna('unseen_before_label')
-
-        le = LabelEncoder()
-        le.fit(list(train_identity[col]) + list(test_identity[col]))
-        train_identity[col] = le.transform(train_identity[col])
-        test_identity[col] = le.transform(test_identity[col])
-
-    train_df = reduce_mem_usage(train_df)
-    test_df = reduce_mem_usage(test_df)
-
-    train_identity = reduce_mem_usage(train_identity)
-    test_identity = reduce_mem_usage(test_identity)
-
-    train_df.to_pickle('train_transaction.pkl')
-    test_df.to_pickle('test_transaction.pkl')
-
-    train_identity.to_pickle('train_identity.pkl')
-    test_identity.to_pickle('test_identity.pkl')
+    # for col in ['M1', 'M2', 'M3', 'M5', 'M6', 'M7', 'M8', 'M9']:
+    #     train_df[col] = train_df[col].map({'T': 1, 'F': 0})
+    #     test_df[col] = test_df[col].map({'T': 1, 'F': 0})
+    #
+    # for col in ['M4']:
+    #     print('Encoding', col)
+    #     temp_df = pd.concat([train_df[[col]], test_df[[col]]])
+    #     col_encoded = temp_df[col].value_counts().to_dict()
+    #     train_df[col] = train_df[col].map(col_encoded)
+    #     test_df[col] = test_df[col].map(col_encoded)
+    #     print(col_encoded)
+    #
+    # train_identity = minify_identity_df(train_identity)
+    # test_identity = minify_identity_df(test_identity)
+    #
+    # for col in ['id_33']:
+    #     train_identity[col] = train_identity[col].fillna('unseen_before_label')
+    #     test_identity[col] = test_identity[col].fillna('unseen_before_label')
+    #
+    #     le = LabelEncoder()
+    #     le.fit(list(train_identity[col]) + list(test_identity[col]))
+    #     train_identity[col] = le.transform(train_identity[col])
+    #     test_identity[col] = le.transform(test_identity[col])
+    #
+    # train_df = reduce_mem_usage(train_df)
+    # test_df = reduce_mem_usage(test_df)
+    #
+    # train_identity = reduce_mem_usage(train_identity)
+    # test_identity = reduce_mem_usage(test_identity)
+    #
+    # train_df.to_pickle('train_transaction.pkl')
+    # test_df.to_pickle('test_transaction.pkl')
+    #
+    # train_identity.to_pickle('train_identity.pkl')
+    # test_identity.to_pickle('test_identity.pkl')
 
 
 
