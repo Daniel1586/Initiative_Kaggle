@@ -70,7 +70,6 @@ def minify_identity_df(df):
 
     df['id_27'] = df['id_27'].map({'Found': 1, 'NotFound': 0})
     df['id_28'] = df['id_28'].map({'New': 2, 'Found': 1})
-
     df['id_29'] = df['id_29'].map({'Found': 1, 'NotFound': 0})
 
     df['id_35'] = df['id_35'].map({'T': 1, 'F': 0})
@@ -116,31 +115,25 @@ if __name__ == "__main__":
     infer_df = reduce_mem_usage(infer_tran)
     train_id_df = reduce_mem_usage(train_iden)
     infer_id_df = reduce_mem_usage(infer_iden)
-    # [train+infer]离散字符串特征:按频率编码[未考虑NaN]
-    for col1 in ["card4", "card6", "ProductCD"]:
+
+    print("========== 4.ETL dataframe ...")
+    # [train+infer]离散特征(>2):按频率编码[NaN不编码]
+    for col1 in ["card4", "card6", "ProductCD", "M4"]:
         print("-----Encoding", col1)
         temp_df = pd.concat([train_df[[col1]], infer_df[[col1]]])
         col_encoded = temp_df[col1].value_counts().to_dict()
         train_df[col1] = train_df[col1].map(col_encoded)
         infer_df[col1] = infer_df[col1].map(col_encoded)
         print(col_encoded)
-        print(infer_df[col1].head(5))
 
-    # for col in ['M1', 'M2', 'M3', 'M5', 'M6', 'M7', 'M8', 'M9']:
-    #     train_df[col] = train_df[col].map({'T': 1, 'F': 0})
-    #     test_df[col] = test_df[col].map({'T': 1, 'F': 0})
-    #
-    # for col in ['M4']:
-    #     print('Encoding', col)
-    #     temp_df = pd.concat([train_df[[col]], test_df[[col]]])
-    #     col_encoded = temp_df[col].value_counts().to_dict()
-    #     train_df[col] = train_df[col].map(col_encoded)
-    #     test_df[col] = test_df[col].map(col_encoded)
-    #     print(col_encoded)
-    #
-    # train_identity = minify_identity_df(train_identity)
-    # test_identity = minify_identity_df(test_identity)
-    #
+    # [train+infer]离散特征(=2):按频率编码[NaN不编码]
+    for col1 in ["M1", "M2", "M3", "M5", "M6", "M7", "M8", "M9"]:
+        train_df[col1] = train_df[col1].map({"T": 1, "F": 0})
+        infer_df[col1] = infer_df[col1].map({"T": 1, "F": 0})
+
+    train_id_df = minify_identity_df(train_id_df)
+    infer_id_df = minify_identity_df(infer_id_df)
+
     # for col in ['id_33']:
     #     train_identity[col] = train_identity[col].fillna('unseen_before_label')
     #     test_identity[col] = test_identity[col].fillna('unseen_before_label')
