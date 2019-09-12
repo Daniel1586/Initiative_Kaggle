@@ -9,125 +9,27 @@ Test  shape:(506691,393),identity(141907,41)
 ############### TF Version: 1.13.1/Python Version: 3.7 ###############
 """
 
+import os
+import gc
+import random
+import warnings
 import numpy as np
 import pandas as pd
-import os, sys, gc, warnings, random
-
-from sklearn import metrics
-from sklearn.model_selection import train_test_split, KFold
-from sklearn.preprocessing import LabelEncoder
-
-from tqdm import tqdm
-
-import math
-warnings.filterwarnings('ignore')
-# :seed to make all processes deterministic     # type: int
-def seed_everything(seed=0):
-    random.seed(seed)
-    os.environ['PYTHONHASHSEED'] = str(seed)
-    np.random.seed(seed)
-
-SEED = 42
-seed_everything(SEED)
-LOCAL_TEST = False
-TARGET = 'isFraud'
-print('Load Data')
-dir_data_pkl = os.getcwd() + "\\ieee-fraud-pkl\\"
-train_df = pd.read_pickle(dir_data_pkl + "\\train_transaction.pkl")
-
-if LOCAL_TEST:
-    test_df = train_df.iloc[-100000:, ].reset_index(drop=True)
-    train_df = train_df.iloc[:400000, ].reset_index(drop=True)
-
-    train_identity = pd.read_pickle(dir_data_pkl + "\\train_identity.pkl")
-    test_identity = train_identity[train_identity['TransactionID'].isin(test_df['TransactionID'])].reset_index(
-        drop=True)
-    train_identity = train_identity[train_identity['TransactionID'].isin(train_df['TransactionID'])].reset_index(
-        drop=True)
-else:
-    test_df = pd.read_pickle(dir_data_pkl + "\\test_transaction.pkl")
-    test_identity = pd.read_pickle(dir_data_pkl + "\\test_identity.pkl")
-
-########################### Reset values for "noise" card1
-valid_card = train_df['card1'].value_counts()
-valid_card = valid_card[valid_card > 10]
-valid_card = list(valid_card.index)
-
-train_df['card1'] = np.where(train_df['card1'].isin(valid_card), train_df['card1'], np.nan)
-test_df['card1'] = np.where(test_df['card1'].isin(valid_card), test_df['card1'], np.nan)
-########################### Freq encoding
-i_cols = ['card1','card2','card3','card5',
-          'C1','C2','C3','C4','C5','C6','C7','C8','C9','C10','C11','C12','C13','C14',
-          'D1','D2','D3','D4','D5','D6','D7','D8','D9',
-          'addr1','addr2',
-          'dist1','dist2',
-          'P_emaildomain', 'R_emaildomain'
-         ]
-
-for col in i_cols:
-    temp_df = pd.concat([train_df[[col]], test_df[[col]]])
-    fq_encode = temp_df[col].value_counts().to_dict()
-    train_df[col+'_fq_enc'] = train_df[col].map(fq_encode)
-    test_df[col+'_fq_enc']  = test_df[col].map(fq_encode)
-########################### ProductCD and M4 Target mean
-for col in ['ProductCD','M4']:
-    temp_dict = train_df.groupby([col])[TARGET].agg(['mean']).reset_index().rename(
-                                                        columns={'mean': col+'_target_mean'})
-    temp_dict.index = temp_dict[col].values
-    temp_dict = temp_dict[col+'_target_mean'].to_dict()
-
-    train_df[col+'_target_mean'] = train_df[col].map(temp_dict)
-    test_df[col+'_target_mean']  = test_df[col].map(temp_dict)
-
-########################### Encode Str columns
-for col in list(train_df):
-    if train_df[col].dtype == 'O':
-        print(col)
-        train_df[col] = train_df[col].fillna('unseen_before_label')
-        test_df[col] = test_df[col].fillna('unseen_before_label')
-
-        train_df[col] = train_df[col].astype(str)
-        test_df[col] = test_df[col].astype(str)
-
-        le = LabelEncoder()
-        le.fit(list(train_df[col]) + list(test_df[col]))
-        train_df[col] = le.transform(train_df[col])
-        test_df[col] = le.transform(test_df[col])
-
-        train_df[col] = train_df[col].astype('category')
-        test_df[col] = test_df[col].astype('category')
-
-########################### Model Features
-## We can use set().difference() but order matters
-rm_cols = [
-    'TransactionID','TransactionDT',TARGET,
-]
-features_columns = list(train_df)
-for col in rm_cols:
-    if col in features_columns:
-        features_columns.remove(col)
-
-########################### Model params
-lgb_params = {
-                    'objective':'binary',
-                    'boosting_type':'gbdt',
-                    'metric':'auc',
-                    'n_jobs':-1,
-                    'learning_rate':0.01,
-                    'num_leaves': 2**8,
-                    'max_depth':-1,
-                    'tree_learner':'serial',
-                    'colsample_bytree': 0.7,
-                    'subsample_freq':1,
-                    'subsample':1,
-                    'n_estimators':800,
-                    'max_bin':255,
-                    'verbose':-1,
-                    'seed': SEED,
-                    'early_stopping_rounds':100,
-                }
-########################### Model
 import lightgbm as lgb
+from sklearn import metrics
+from sklearn.model_selection import KFold
+from sklearn.preprocessing import LabelEncoder
+warnings.filterwarnings('ignore')
+
+
+# make all processes deterministic/固定随机数生成器的种子
+# environ是一个字符串所对应环境的映像对象,PYTHONHASHSEED为其中的环境变量
+# Python会用一个随机的种子来生成str/bytes/datetime对象的hash值;
+# 如果该环境变量被设定为一个数字,它就被当作一个固定的种子来生成str/bytes/datetime对象的hash值
+def set_seed(seed=0):
+    random.seed(seed)
+    os.environ["PYTHONHASHSEED"] = str(seed)
+    np.random.seed(seed)
 
 
 def make_predictions(tr_df, tt_df, features_columns, target, lgb_params, NFOLDS=2):
@@ -174,16 +76,117 @@ def make_predictions(tr_df, tt_df, features_columns, target, lgb_params, NFOLDS=
 
     return tt_df
 
-########################### Model Train
-if LOCAL_TEST:
-    test_predictions = make_predictions(train_df, test_df, features_columns, TARGET, lgb_params)
-    print(metrics.roc_auc_score(test_predictions[TARGET], test_predictions['prediction']))
-else:
-    lgb_params['learning_rate'] = 0.01
-    lgb_params['n_estimators'] = 800
-    lgb_params['early_stopping_rounds'] = 100
-    test_predictions = make_predictions(train_df, test_df, features_columns, TARGET, lgb_params, NFOLDS=3)
-########################### Export
-if not LOCAL_TEST:
-    test_predictions['isFraud'] = test_predictions['prediction']
-    test_predictions[['TransactionID','isFraud']].to_csv('submission.csv', index=False)
+
+if __name__ == "__main__":
+    print("========== 1.Set random seed ...")
+    SEED = 42
+    set_seed(SEED)
+
+    print("========== 2.Load pkl data ...")
+    LOCAL_TEST = False
+    TARGET = "isFraud"
+    dir_data_pkl = os.getcwd() + "\\ieee-fraud-pkl\\"
+    train_df = pd.read_pickle(dir_data_pkl + "\\train_transaction.pkl")
+
+    if LOCAL_TEST:
+        infer_df = train_df.iloc[-100000:, ].reset_index(drop=True)
+        train_df = train_df.iloc[:400000, ].reset_index(drop=True)
+
+        train_identity = pd.read_pickle(dir_data_pkl + "\\train_identity.pkl")
+        test_identity = train_identity[train_identity['TransactionID'].isin(infer_df['TransactionID'])].reset_index(
+            drop=True)
+        train_identity = train_identity[train_identity['TransactionID'].isin(train_df['TransactionID'])].reset_index(
+            drop=True)
+    else:
+        infer_df = pd.read_pickle(dir_data_pkl + "\\infer_transaction.pkl")
+        infer_id_df = pd.read_pickle(dir_data_pkl + "\\infer_identity.pkl")
+
+    # Reset values for "noise" card1
+    valid_card = train_df["card1"].value_counts()
+    valid_card = valid_card[valid_card > 10]
+    valid_card = list(valid_card.index)
+    train_df['card1'] = np.where(train_df['card1'].isin(valid_card), train_df['card1'], np.nan)
+    infer_df['card1'] = np.where(infer_df['card1'].isin(valid_card), infer_df['card1'], np.nan)
+
+    # Freq encoding
+    i_cols = ['card1', 'card2', 'card3', 'card5',
+              'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C10', 'C11', 'C12', 'C13', 'C14',
+              'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9',
+              'addr1', 'addr2',
+              'dist1', 'dist2',
+              'P_emaildomain', 'R_emaildomain']
+
+    for col in i_cols:
+        temp_df = pd.concat([train_df[[col]], infer_df[[col]]])
+        fq_encode = temp_df[col].value_counts().to_dict()
+        train_df[col + '_fq_enc'] = train_df[col].map(fq_encode)
+        infer_df[col + '_fq_enc'] = infer_df[col].map(fq_encode)
+
+    # ProductCD and M4 Target mean
+    for col in ['ProductCD', 'M4']:
+        temp_dict = train_df.groupby([col])[TARGET].agg(['mean']).reset_index().rename(
+            columns={'mean': col + '_target_mean'})
+        temp_dict.index = temp_dict[col].values
+        temp_dict = temp_dict[col + '_target_mean'].to_dict()
+        train_df[col + '_target_mean'] = train_df[col].map(temp_dict)
+        infer_df[col + '_target_mean'] = infer_df[col].map(temp_dict)
+
+    # Encode Str columns
+    for col in list(train_df):
+        if train_df[col].dtype == 'O':
+            print(col)
+            train_df[col] = train_df[col].fillna('unseen_before_label')
+            infer_df[col] = infer_df[col].fillna('unseen_before_label')
+
+            train_df[col] = train_df[col].astype(str)
+            infer_df[col] = infer_df[col].astype(str)
+
+            le = LabelEncoder()
+            le.fit(list(train_df[col]) + list(infer_df[col]))
+            train_df[col] = le.transform(train_df[col])
+            infer_df[col] = le.transform(infer_df[col])
+
+            train_df[col] = train_df[col].astype('category')
+            infer_df[col] = infer_df[col].astype('category')
+
+    # Model Features
+    # We can use set().difference() but order matters
+    rm_cols = ['TransactionID', 'TransactionDT', TARGET]
+    features_columns = list(train_df)
+    for col in rm_cols:
+        if col in features_columns:
+            features_columns.remove(col)
+
+    # Model params
+    lgb_params = {
+        'objective': 'binary',
+        'boosting_type': 'gbdt',
+        'metric': 'auc',
+        'n_jobs': -1,
+        'learning_rate': 0.01,
+        'num_leaves': 2 ** 8,
+        'max_depth': -1,
+        'tree_learner': 'serial',
+        'colsample_bytree': 0.7,
+        'subsample_freq': 1,
+        'subsample': 1,
+        'n_estimators': 800,
+        'max_bin': 255,
+        'verbose': -1,
+        'seed': SEED,
+        'early_stopping_rounds': 100,
+    }
+
+    # Model Train
+    if LOCAL_TEST:
+        test_predictions = make_predictions(train_df, infer_df, features_columns, TARGET, lgb_params)
+        print(metrics.roc_auc_score(test_predictions[TARGET], test_predictions['prediction']))
+    else:
+        lgb_params['learning_rate'] = 0.01
+        lgb_params['n_estimators'] = 800
+        lgb_params['early_stopping_rounds'] = 100
+        test_predictions = make_predictions(train_df, infer_df, features_columns, TARGET, lgb_params, NFOLDS=2)
+    # Export
+    if not LOCAL_TEST:
+        test_predictions['isFraud'] = test_predictions['prediction']
+        test_predictions[['TransactionID', 'isFraud']].to_csv('091201.csv', index=False)
