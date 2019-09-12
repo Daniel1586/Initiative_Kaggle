@@ -124,8 +124,6 @@ if __name__ == "__main__":
         col_encoded = temp_df[col1].value_counts().to_dict()
         train_df[col1] = train_df[col1].map(col_encoded)
         infer_df[col1] = infer_df[col1].map(col_encoded)
-        train_df[col1] = train_df[col1].astype(np.int32)
-        infer_df[col1] = infer_df[col1].astype(np.int32)
         print(col_encoded)
 
     # [train+infer]离散特征(=2):二值编码[NaN不编码]
@@ -137,29 +135,23 @@ if __name__ == "__main__":
     train_id_df = minify_identity_df(train_id_df)
     infer_id_df = minify_identity_df(infer_id_df)
 
-    for col in ['id_33']:
-        train_identity[col] = train_identity[col].fillna('unseen_before_label')
-        test_identity[col] = test_identity[col].fillna('unseen_before_label')
+    # labelEncoder标准化标签
+    for col1 in ['id_33']:
+        train_id_df[col1] = train_id_df[col1].fillna('unseen_before_label')
+        infer_id_df[col1] = infer_id_df[col1].fillna('unseen_before_label')
 
         le = LabelEncoder()
-        le.fit(list(train_identity[col]) + list(test_identity[col]))
-        train_identity[col] = le.transform(train_identity[col])
-        test_identity[col] = le.transform(test_identity[col])
+        le.fit(list(train_id_df[col1]) + list(infer_id_df[col1]))
+        train_id_df[col1] = le.transform(train_id_df[col1])
+        infer_id_df[col1] = le.transform(infer_id_df[col1])
 
-    # train_df = reduce_mem_usage(train_df)
-    # test_df = reduce_mem_usage(test_df)
-    #
-    # train_identity = reduce_mem_usage(train_identity)
-    # test_identity = reduce_mem_usage(test_identity)
-    #
-    # train_df.to_pickle('train_transaction.pkl')
-    # test_df.to_pickle('test_transaction.pkl')
-    #
-    # train_identity.to_pickle('train_identity.pkl')
-    # test_identity.to_pickle('test_identity.pkl')
+    train_df = reduce_mem_usage(train_df)
+    infer_df = reduce_mem_usage(infer_df)
+    train_id_df = reduce_mem_usage(train_id_df)
+    infer_id_df = reduce_mem_usage(infer_id_df)
 
-
-
-
-
-
+    print("========== 5.Save pkl ...")
+    train_df.to_pickle("train_transaction.pkl")
+    infer_df.to_pickle("infer_transaction.pkl")
+    train_id_df.to_pickle("train_identity.pkl")
+    infer_id_df.to_pickle("infer_identity.pkl")
