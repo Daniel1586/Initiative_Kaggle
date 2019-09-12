@@ -61,12 +61,12 @@ def reduce_mem_usage(df, verbose=True):
     return df
 
 
+# [train+infer]离散特征编码:[NaN不编码]
 def minify_identity_df(df):
     df['id_12'] = df['id_12'].map({'Found': 1, 'NotFound': 0})
     df['id_15'] = df['id_15'].map({'New': 2, 'Found': 1, 'Unknown': 0})
     df['id_16'] = df['id_16'].map({'Found': 1, 'NotFound': 0})
-
-    df['id_23'] = df['id_23'].map({'TRANSPARENT': 4, 'IP_PROXY': 3, 'IP_PROXY:ANONYMOUS': 2, 'IP_PROXY:HIDDEN': 1})
+    df['id_23'] = df['id_23'].map({'IP_PROXY:TRANSPARENT': 3, 'IP_PROXY:ANONYMOUS': 2, 'IP_PROXY:HIDDEN': 1})
 
     df['id_27'] = df['id_27'].map({'Found': 1, 'NotFound': 0})
     df['id_28'] = df['id_28'].map({'New': 2, 'Found': 1})
@@ -124,13 +124,16 @@ if __name__ == "__main__":
         col_encoded = temp_df[col1].value_counts().to_dict()
         train_df[col1] = train_df[col1].map(col_encoded)
         infer_df[col1] = infer_df[col1].map(col_encoded)
+        train_df[col1] = train_df[col1].astype(np.int32)
+        infer_df[col1] = infer_df[col1].astype(np.int32)
         print(col_encoded)
 
-    # [train+infer]离散特征(=2):按频率编码[NaN不编码]
+    # [train+infer]离散特征(=2):二值编码[NaN不编码]
     for col1 in ["M1", "M2", "M3", "M5", "M6", "M7", "M8", "M9"]:
         train_df[col1] = train_df[col1].map({"T": 1, "F": 0})
         infer_df[col1] = infer_df[col1].map({"T": 1, "F": 0})
 
+    # [train+infer]离散特征编码:[NaN不编码]
     train_id_df = minify_identity_df(train_id_df)
     infer_id_df = minify_identity_df(infer_id_df)
 
