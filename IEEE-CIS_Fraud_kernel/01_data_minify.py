@@ -77,9 +77,9 @@ def minify_identity_df(df):
     df['id_37'] = df['id_37'].map({'T': 1, 'F': 0})
     df['id_38'] = df['id_38'].map({'T': 1, 'F': 0})
 
-    df['id_34'] = df['id_34'].fillna(':0')
+    df['id_34'] = df['id_34'].fillna(':3')
     df['id_34'] = df['id_34'].apply(lambda x: x.split(':')[1]).astype(np.int8)
-    df['id_34'] = np.where(df['id_34'] == 0, np.nan, df['id_34'])
+    df['id_34'] = np.where(df['id_34'] == 3, np.nan, df['id_34'])
 
     df['id_33'] = df['id_33'].fillna('0x0')
     df['id_33_0'] = df['id_33'].apply(lambda x: x.split('x')[0]).astype(int)
@@ -137,15 +137,15 @@ if __name__ == "__main__":
     train_id_df = minify_identity_df(train_id_df)
     infer_id_df = minify_identity_df(infer_id_df)
 
-    # for col in ['id_33']:
-    #     train_identity[col] = train_identity[col].fillna('unseen_before_label')
-    #     test_identity[col] = test_identity[col].fillna('unseen_before_label')
-    #
-    #     le = LabelEncoder()
-    #     le.fit(list(train_identity[col]) + list(test_identity[col]))
-    #     train_identity[col] = le.transform(train_identity[col])
-    #     test_identity[col] = le.transform(test_identity[col])
-    #
+    for col in ['id_33']:
+        train_identity[col] = train_identity[col].fillna('unseen_before_label')
+        test_identity[col] = test_identity[col].fillna('unseen_before_label')
+
+        le = LabelEncoder()
+        le.fit(list(train_identity[col]) + list(test_identity[col]))
+        train_identity[col] = le.transform(train_identity[col])
+        test_identity[col] = le.transform(test_identity[col])
+
     # train_df = reduce_mem_usage(train_df)
     # test_df = reduce_mem_usage(test_df)
     #
