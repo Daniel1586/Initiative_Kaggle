@@ -260,20 +260,48 @@ V38-[Vesta info:(0.0,54.0)]: 421571/590540,取值55种,极度不平衡,1.0占比
 
 def csv2txt_eda(datain_dir):
     # import data [index_col指定哪一列数据作为行索引,返回DataFrame]
-    train_tran = pd.read_csv(datain_dir + "\\train_transaction.csv", index_col="TransactionID")
+    # train_tran = pd.read_csv(datain_dir + "\\train_transaction.csv", index_col="TransactionID")
+    # train_iden = pd.read_csv(datain_dir + "\\train_identity.csv", index_col="TransactionID")
+    # train = train_tran.merge(train_iden, how="left", left_index=True, right_index=True)
+
     train_iden = pd.read_csv(datain_dir + "\\train_identity.csv", index_col="TransactionID")
-    train = train_tran.merge(train_iden, how="left", left_index=True, right_index=True)
-    df_v = train["V38"]
-    print(df_v.count())
-    print(df_v.value_counts())
-    print(df_v.value_counts()/df_v.count())
-    print(df_v.min(), df_v.max())
-    df_v1 = train[train["V38"] < 500]
-    df_vv = df_v1["V38"]
-    print(df_vv.count(), df_vv.count()/df_v.count())
-    df_v2 = train[train["isFraud"] == 1]
-    df_vvv = df_v2["V38"]
-    print(df_vvv.value_counts())
+    tests_iden = pd.read_csv(datain_dir + "\\test_identity.csv", index_col="TransactionID")
+    # df_v = train["V38"]
+    # print(df_v.count())
+    # print(df_v.value_counts())
+    print(train_iden["id_12"].value_counts())
+    print(tests_iden["id_12"].value_counts())
+    print(train_iden["id_15"].value_counts())
+    print(tests_iden["id_15"].value_counts())
+
+    print(train_iden["id_16"].value_counts())
+    print(tests_iden["id_16"].value_counts())
+    print(train_iden["id_23"].value_counts())
+    print(tests_iden["id_23"].value_counts())
+
+    print(train_iden["id_27"].value_counts())
+    print(tests_iden["id_27"].value_counts())
+    print(train_iden["id_28"].value_counts())
+    print(tests_iden["id_28"].value_counts())
+    print(train_iden["id_29"].value_counts())
+    print(tests_iden["id_29"].value_counts())
+    print(train_iden["id_33"].value_counts())
+    print(tests_iden["id_33"].value_counts())
+    print(train_iden["id_34"].value_counts())
+    print(tests_iden["id_34"].value_counts())
+
+    print(train_iden["DeviceType"].value_counts())
+    print(tests_iden["DeviceType"].value_counts())
+
+    # print(df_v.value_counts()/df_v.count())
+    # print(df_v.min(), df_v.max())
+    # df_v1 = train[train["V38"] < 500]
+    # df_vv = df_v1["V38"]
+    # print(df_vv.count(), df_vv.count()/df_v.count())
+    # df_v2 = train[train["isFraud"] == 1]
+    # df_vvv = df_v2["V38"]
+    # print(df_vvv.value_counts())
+    print(0)
     # print(0)
     # order = ["isFraud", "ProductCD", "card1", "card2", "card3", "card4", "card5", "card6",
     #          "addr1", "addr2", "P_emaildomain", "R_emaildomain", "M1", "M2", "M3", "M4",
