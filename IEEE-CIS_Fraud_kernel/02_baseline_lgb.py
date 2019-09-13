@@ -174,13 +174,13 @@ if __name__ == "__main__":
     # Model Train
     if LOCAL_TEST:
         test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params)
-        print(metrics.roc_auc_score(test_predictions[TARGET], test_predictions['prediction']))
+        print(metrics.roc_auc_score(test_predictions[TARGET], test_predictions["prediction"]))
     else:
-        lgb_params['learning_rate'] = 0.01
-        lgb_params['n_estimators'] = 800
-        lgb_params['early_stopping_rounds'] = 100
-        test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, NFOLDS=2)
+        lgb_params["learning_rate"] = 0.01
+        lgb_params["n_estimators"] = 800
+        lgb_params["early_stopping_rounds"] = 100
+        test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=2)
     # Export
     if not LOCAL_TEST:
-        test_predictions['isFraud'] = test_predictions['prediction']
-        test_predictions[['TransactionID', 'isFraud']].to_csv('091201.csv', index=False)
+        test_predictions["isFraud"] = test_predictions["prediction"]
+        test_predictions[["TransactionID", "isFraud"]].to_csv("091201.csv", index=False)
