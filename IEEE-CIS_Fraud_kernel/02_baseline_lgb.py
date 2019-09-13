@@ -32,47 +32,40 @@ def set_seed(seed=0):
     np.random.seed(seed)
 
 
-def make_predictions(tr_df, tt_df, features_columns, target, lgb_params, NFOLDS=2):
-    folds = KFold(n_splits=NFOLDS, shuffle=True, random_state=SEED)
+def make_predictions(tr_df, tt_df, features_columns, target, params, nfold=2):
+    # K折交叉验证
+    folds = KFold(n_splits=nfold, shuffle=True, random_state=SEED)
 
-    X, y = tr_df[features_columns], tr_df[target]
-    P, P_y = tt_df[features_columns], tt_df[target]
-
-    tt_df = tt_df[['TransactionID', target]]
+    # 数据集划分
+    train_x, train_y = tr_df[features_columns], tr_df[target]
+    infer_x, infer_y = tt_df[features_columns], tt_df[target]
+    tt_df = tt_df[["TransactionID", target]]
     predictions = np.zeros(len(tt_df))
 
-    for fold_, (trn_idx, val_idx) in enumerate(folds.split(X, y)):
-        print('Fold:', fold_)
-        tr_x, tr_y = X.iloc[trn_idx, :], y[trn_idx]
-        vl_x, vl_y = X.iloc[val_idx, :], y[val_idx]
-
-        print(len(tr_x), len(vl_x))
+    # 模型训练与预测
+    for fold_, (tra_idx, val_idx) in enumerate(folds.split(train_x, train_y)):
+        print("-----Fold:", fold_)
+        tr_x, tr_y = train_x.iloc[tra_idx, :], train_y[tra_idx]
+        vl_x, vl_y = train_x.iloc[val_idx, :], train_y[val_idx]
+        print("-----Train num:", len(tr_x), "Valid num:", len(vl_x))
         tr_data = lgb.Dataset(tr_x, label=tr_y)
 
         if LOCAL_TEST:
-            vl_data = lgb.Dataset(P, label=P_y)
+            vl_data = lgb.Dataset(infer_x, label=infer_y)
         else:
             vl_data = lgb.Dataset(vl_x, label=vl_y)
-
-        estimator = lgb.train(
-            lgb_params,
-            tr_data,
-            valid_sets=[tr_data, vl_data],
-            verbose_eval=200,
-        )
-
-        pp_p = estimator.predict(P)
-        predictions += pp_p / NFOLDS
+        estimator = lgb.train(params, tr_data, valid_sets=[tr_data, vl_data], verbose_eval=200)
+        infer_p = estimator.predict(infer_x)
+        predictions += infer_p / nfold
 
         if LOCAL_TEST:
-            feature_imp = pd.DataFrame(sorted(zip(estimator.feature_importance(), X.columns)),
+            feature_imp = pd.DataFrame(sorted(zip(estimator.feature_importance(), train_x.columns)),
                                        columns=['Value', 'Feature'])
             print(feature_imp)
-
         del tr_x, tr_y, vl_x, vl_y, tr_data, vl_data
         gc.collect()
 
-    tt_df['prediction'] = predictions
+    tt_df["prediction"] = predictions
 
     return tt_df
 
@@ -103,6 +96,7 @@ if __name__ == "__main__":
 
     # Reset values for "noise" card1
     valid_card = train_df["card1"].value_counts()
+    print(valid_card)
     valid_card = valid_card[valid_card > 10]
     valid_card = list(valid_card.index)
     train_df['card1'] = np.where(train_df['card1'].isin(valid_card), train_df['card1'], np.nan)
@@ -152,10 +146,10 @@ if __name__ == "__main__":
     # Model Features
     # We can use set().difference() but order matters
     rm_cols = ['TransactionID', 'TransactionDT', TARGET]
-    features_columns = list(train_df)
+    features_cols = list(train_df)
     for col in rm_cols:
-        if col in features_columns:
-            features_columns.remove(col)
+        if col in features_cols:
+            features_cols.remove(col)
 
     # Model params
     lgb_params = {
@@ -179,13 +173,13 @@ if __name__ == "__main__":
 
     # Model Train
     if LOCAL_TEST:
-        test_predictions = make_predictions(train_df, infer_df, features_columns, TARGET, lgb_params)
+        test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params)
         print(metrics.roc_auc_score(test_predictions[TARGET], test_predictions['prediction']))
     else:
         lgb_params['learning_rate'] = 0.01
         lgb_params['n_estimators'] = 800
         lgb_params['early_stopping_rounds'] = 100
-        test_predictions = make_predictions(train_df, infer_df, features_columns, TARGET, lgb_params, NFOLDS=2)
+        test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, NFOLDS=2)
     # Export
     if not LOCAL_TEST:
         test_predictions['isFraud'] = test_predictions['prediction']
