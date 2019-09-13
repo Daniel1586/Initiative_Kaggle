@@ -96,8 +96,8 @@ if __name__ == "__main__":
 
     # Reset values for "noise" card1
     valid_card = train_df["card1"].value_counts()
-    print(valid_card)
     valid_card = valid_card[valid_card > 10]
+    print(valid_card)
     valid_card = list(valid_card.index)
     train_df['card1'] = np.where(train_df['card1'].isin(valid_card), train_df['card1'], np.nan)
     infer_df['card1'] = np.where(infer_df['card1'].isin(valid_card), infer_df['card1'], np.nan)
@@ -154,7 +154,7 @@ if __name__ == "__main__":
     # Model params
     lgb_params = {
         'objective': 'binary',
-        'boosting_type': 'gbdt',
+        'boost': 'gbdt',
         'metric': 'auc',
         'n_jobs': -1,
         'learning_rate': 0.01,
@@ -183,4 +183,4 @@ if __name__ == "__main__":
     # Export
     if not LOCAL_TEST:
         test_predictions["isFraud"] = test_predictions["prediction"]
-        test_predictions[["TransactionID", "isFraud"]].to_csv("091201.csv", index=False)
+        test_predictions[["TransactionID", "isFraud"]].to_csv("091301.csv", index=False)
