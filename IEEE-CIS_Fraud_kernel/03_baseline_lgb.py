@@ -81,7 +81,7 @@ if __name__ == "__main__":
     LOCAL_TEST = False
     TARGET = "isFraud"
     START_DATE = datetime.datetime.strptime("2017-11-30", "%Y-%m-%d")
-    dir_data_pkl = os.getcwd() + "\\ieee-fraud-pkl\\"
+    dir_data_pkl = os.getcwd() + "\\ieee-fraud-ori\\"
     train_df = pd.read_pickle(dir_data_pkl + "\\train_transaction.pkl")
 
     if LOCAL_TEST:
@@ -335,10 +335,10 @@ if __name__ == "__main__":
     else:
         print("-----Shape control:", train_df.shape, infer_df.shape)
         lgb_params["learning_rate"] = 0.01
-        lgb_params["n_estimators"] = 800
+        lgb_params["n_estimators"] = 1000
         lgb_params["early_stopping_rounds"] = 100
-        test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=2)
+        test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=3)
     # Export
     if not LOCAL_TEST:
         test_predictions["isFraud"] = test_predictions["prediction"]
-        test_predictions[["TransactionID", "isFraud"]].to_csv("091402.csv", index=False)
+        test_predictions[["TransactionID", "isFraud"]].to_csv("091404.csv", index=False)
