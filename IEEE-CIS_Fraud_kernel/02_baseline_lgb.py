@@ -117,11 +117,17 @@ if __name__ == "__main__":
         df["D9"] = np.where(df["D9"].isna(), 0, 1)
 
     # Reset values for "noise" card1
-    valid_card = train_df["card1"].value_counts()
-    valid_card = valid_card[valid_card > 10]
-    valid_card = list(valid_card.index)
-    train_df["card1"] = np.where(train_df["card1"].isin(valid_card), train_df["card1"], np.nan)
-    infer_df["card1"] = np.where(infer_df["card1"].isin(valid_card), infer_df["card1"], np.nan)
+    i_cols = ["card1"]
+    for col in i_cols:
+        valid_card = pd.concat([train_df[[col]], infer_df[[col]]])
+        valid_card = valid_card[col].value_counts()
+        valid_card = valid_card[valid_card > 2]
+        valid_card = list(valid_card.index)
+
+        train_df[col] = np.where(train_df[col].isin(infer_df[col]), train_df[col], np.nan)
+        infer_df[col] = np.where(infer_df[col].isin(train_df[col]), infer_df[col], np.nan)
+        train_df[col] = np.where(train_df[col].isin(valid_card), train_df[col], np.nan)
+        infer_df[col] = np.where(infer_df[col].isin(valid_card), infer_df[col], np.nan)
 
     # Freq encoding
     i_cols = ['card1', 'card2', 'card3', 'card5',
