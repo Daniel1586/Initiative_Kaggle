@@ -18,6 +18,7 @@ import numpy as np
 import pandas as pd
 import lightgbm as lgb
 from sklearn import metrics
+from scipy.stats import ks_2samp
 from sklearn.model_selection import KFold
 from sklearn.preprocessing import LabelEncoder
 warnings.filterwarnings('ignore')
@@ -100,6 +101,8 @@ if __name__ == "__main__":
         infer_df = pd.read_pickle(dir_data_pkl + "\\infer_transaction.pkl")
         train_id_df = pd.read_pickle(dir_data_pkl + "\\train_identity.pkl")
         infer_id_df = pd.read_pickle(dir_data_pkl + "\\infer_identity.pkl")
+    base_columns = list(train_df) + list(train_id_df)
+    print("-----Shape control:", train_df.shape, infer_df.shape)
 
     # TransactionDT and D9
     # Also, seems that D9 column is an hour and it is the same as df['DT'].dt.hour
@@ -223,29 +226,51 @@ if __name__ == "__main__":
     temp_df = infer_df[["TransactionID"]]
     temp_df = temp_df.merge(infer_id_df, on=["TransactionID"], how="left")
     del temp_df["TransactionID"]
-    test_df = pd.concat([infer_df, temp_df], axis=1)
+    infer_df = pd.concat([infer_df, temp_df], axis=1)
 
     # Freq encoding
     i_cols = ['card1', 'card2', 'card3', 'card5',
               'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C10', 'C11', 'C12', 'C13', 'C14',
-              'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9',
+              'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8',
               'addr1', 'addr2',
               'dist1', 'dist2',
-              'P_emaildomain', 'R_emaildomain']
-
+              'P_emaildomain', 'R_emaildomain',
+              'DeviceInfo', 'DeviceInfo_device', 'DeviceInfo_version',
+              'id_30', 'id_30_device', 'id_30_version',
+              'id_31_device',
+              'id_33',
+              'uid', 'uid2', 'uid3'
+              ]
     for col in i_cols:
         temp_df = pd.concat([train_df[[col]], infer_df[[col]]])
         fq_encode = temp_df[col].value_counts().to_dict()
-        train_df[col + '_fq_enc'] = train_df[col].map(fq_encode)
-        infer_df[col + '_fq_enc'] = infer_df[col].map(fq_encode)
+        train_df[col + "_fq_enc"] = train_df[col].map(fq_encode)
+        infer_df[col + "_fq_enc"] = infer_df[col].map(fq_encode)
+
+    for col in ["DT_M", "DT_W", "DT_D"]:
+        temp_df = pd.concat([train_df[[col]], infer_df[[col]]])
+        fq_encode = temp_df[col].value_counts().to_dict()
+        train_df[col + "_total"] = train_df[col].map(fq_encode)
+        infer_df[col + "_total"] = infer_df[col].map(fq_encode)
+
+    for period in ["DT_M", "DT_W", "DT_D"]:
+        for col in ["uid"]:
+            new_column = col + "_" + period
+            temp_df = pd.concat([train_df[[col, period]], infer_df[[col, period]]])
+            temp_df[new_column] = temp_df[col].astype(str) + "_" + (temp_df[period]).astype(str)
+            fq_encode = temp_df[new_column].value_counts().to_dict()
+
+            train_df[new_column] = (train_df[col].astype(str) + "_" + train_df[period].astype(str)).map(fq_encode)
+            infer_df[new_column] = (infer_df[col].astype(str) + "_" + infer_df[period].astype(str)).map(fq_encode)
+            train_df[new_column] /= train_df[period + "_total"]
+            infer_df[new_column] /= infer_df[period + "_total"]
 
     # Encode Str columns
     for col in list(train_df):
         if train_df[col].dtype == 'O':
             print(col)
-            train_df[col] = train_df[col].fillna('unseen_before_label')
-            infer_df[col] = infer_df[col].fillna('unseen_before_label')
-
+            train_df[col] = train_df[col].fillna("unseen_before_label")
+            infer_df[col] = infer_df[col].fillna("unseen_before_label")
             train_df[col] = train_df[col].astype(str)
             infer_df[col] = infer_df[col].astype(str)
 
@@ -254,16 +279,34 @@ if __name__ == "__main__":
             train_df[col] = le.transform(train_df[col])
             infer_df[col] = le.transform(infer_df[col])
 
-            train_df[col] = train_df[col].astype('category')
-            infer_df[col] = infer_df[col].astype('category')
+            train_df[col] = train_df[col].astype("category")
+            infer_df[col] = infer_df[col].astype("category")
 
     # Model Features
-    # We can use set().difference() but order matters
-    rm_cols = ['TransactionID', 'TransactionDT', TARGET]
-    features_cols = list(train_df)
-    for col in rm_cols:
-        if col in features_cols:
-            features_cols.remove(col)
+    rm_cols = ["TransactionID", "TransactionDT",
+               "DT", "DT_M", "DT_W", "DT_D",
+               "DT_hour", "DT_day_week", "DT_day",
+               "uid", "uid2", "uid3",
+               "id_30", "id_31", "id_33",
+               "DT_D_total", "DT_W_total", "DT_M_total",
+               TARGET]
+
+    # Features elimination
+    features_check = []
+    columns_to_check = set(list(train_df)).difference(base_columns + rm_cols)
+    for i in columns_to_check:
+        features_check.append(ks_2samp(infer_df[i], train_df[i])[1])
+    features_check = pd.Series(features_check, index=columns_to_check).sort_values()
+    features_discard = list(features_check[features_check == 0].index)
+    print(features_discard)
+
+    # We will reset this list for now,
+    # Good dropping will be in other kernels
+    # with better checking
+    features_discard = []
+
+    # Final features list
+    features_cols = [col for col in list(train_df) if col not in rm_cols + features_discard]
 
     # Model params
     lgb_params = {
@@ -277,7 +320,7 @@ if __name__ == "__main__":
         'tree_learner': 'serial',
         'colsample_bytree': 0.7,
         'subsample_freq': 1,
-        'subsample': 1,
+        'subsample': 0.7,
         'n_estimators': 800,
         'max_bin': 255,
         'verbose': -1,
@@ -291,7 +334,7 @@ if __name__ == "__main__":
         print(metrics.roc_auc_score(test_predictions[TARGET], test_predictions["prediction"]))
     else:
         lgb_params["learning_rate"] = 0.01
-        lgb_params["n_estimators"] = 400
+        lgb_params["n_estimators"] = 800
         lgb_params["early_stopping_rounds"] = 100
         test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=2)
     # Export
