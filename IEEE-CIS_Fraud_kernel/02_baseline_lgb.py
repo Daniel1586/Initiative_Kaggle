@@ -152,31 +152,32 @@ if __name__ == "__main__":
     train_df["uid"] = train_df["card1"].astype(str) + "_" + train_df["card2"].astype(str)
     infer_df["uid"] = infer_df["card1"].astype(str) + "_" + infer_df["card2"].astype(str)
     train_df["uid2"] = train_df["uid"].astype(str) + "_" + train_df["card3"].\
-        astype(str) + "_" + train_df["card4"].astype(str)
+        astype(str) + "_" + train_df["card5"].astype(str)
     infer_df["uid2"] = infer_df["uid"].astype(str) + "_" + infer_df["card3"].\
-        astype(str) + "_" + infer_df["card4"].astype(str)
+        astype(str) + "_" + infer_df["card5"].astype(str)
     train_df["uid3"] = train_df["uid2"].astype(str) + "_" + train_df["addr1"].\
         astype(str) + "_" + train_df["addr2"].astype(str)
     infer_df["uid3"] = infer_df["uid2"].astype(str) + "_" + infer_df["addr1"].\
         astype(str) + "_" + infer_df["addr2"].astype(str)
 
+    # Check if the Transaction Amount is common or not (we can use freq encoding here)
+    # In our dialog with a model we are telling to trust or not to these values
+    train_df["TransactionAmt_check"] = np.where(train_df["TransactionAmt"].isin(infer_df["TransactionAmt"]), 1, 0)
+    infer_df["TransactionAmt_check"] = np.where(infer_df["TransactionAmt"].isin(train_df["TransactionAmt"]), 1, 0)
+
     # For our model current TransactionAmt is a noise
     # (even if features importance are telling contrariwise)
     # There are many unique values and model doesn't generalize well
-    # Lets do some aggregations
-    i_cols = ['card1', 'card2', 'card3', 'card5', 'uid', 'uid2', 'uid3']
-
+    i_cols = ["card1", "card2", "card3", "card5", "uid", "uid2", "uid3"]
     for col in i_cols:
-        for agg_type in ['mean', 'std']:
-            new_col_name = col + '_TransactionAmt_' + agg_type
-            temp_df = pd.concat([train_df[[col, 'TransactionAmt']], infer_df[[col, 'TransactionAmt']]])
-            # temp_df['TransactionAmt'] = temp_df['TransactionAmt'].astype(int)
-            temp_df = temp_df.groupby([col])['TransactionAmt'].agg([agg_type]).reset_index().rename(
+        for agg_type in ["mean", "std"]:
+            new_col_name = col + "_TransactionAmt_" + agg_type
+            temp_df = pd.concat([train_df[[col, "TransactionAmt"]], infer_df[[col, "TransactionAmt"]]])
+            temp_df = temp_df.groupby([col])["TransactionAmt"].agg([agg_type]).reset_index().rename(
                 columns={agg_type: new_col_name})
 
             temp_df.index = list(temp_df[col])
             temp_df = temp_df[new_col_name].to_dict()
-
             train_df[new_col_name] = train_df[col].map(temp_df)
             infer_df[new_col_name] = infer_df[col].map(temp_df)
 
@@ -184,14 +185,8 @@ if __name__ == "__main__":
     # (doesn't affect auc much, but I like it more)
     # please see how distribution transformation can boost your score
     # (not our case but related)
-    # https://scikit-learn.org/stable/auto_examples/compose/plot_transformed_target.html
-    train_df['TransactionAmt'] = np.log1p(train_df['TransactionAmt'])
-    infer_df['TransactionAmt'] = np.log1p(infer_df['TransactionAmt'])
-
-    # Check if the Transaction Amount is common or not (we can use freq encoding here)
-    # In our dialog with a model we are telling to trust or not to these values
-    train_df['TransactionAmt_check'] = np.where(train_df['TransactionAmt'].isin(infer_df['TransactionAmt']), 1, 0)
-    infer_df['TransactionAmt_check'] = np.where(infer_df['TransactionAmt'].isin(train_df['TransactionAmt']), 1, 0)
+    train_df["TransactionAmt"] = np.log1p(train_df["TransactionAmt"])
+    infer_df["TransactionAmt"] = np.log1p(infer_df["TransactionAmt"])
 
     # Freq encoding
     i_cols = ['card1', 'card2', 'card3', 'card5',
