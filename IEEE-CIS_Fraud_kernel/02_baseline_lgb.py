@@ -136,6 +136,15 @@ if __name__ == "__main__":
         df["M_sum"] = df[i_cols].sum(axis=1).astype(np.int8)
         df["M_nan"] = df[i_cols].isna().sum(axis=1).astype(np.int8)
 
+    # ProductCD and M4 Target mean
+    for col in ["ProductCD", "M4"]:
+        temp_df = train_df.groupby([col])[TARGET].agg(["mean"]).reset_index().rename(
+            columns={"mean": col + "_target_mean"})
+        temp_df.index = temp_df[col].values
+        temp_dict = temp_df[col + "_target_mean"].to_dict()
+        train_df[col + "_target_mean"] = train_df[col].map(temp_dict)
+        infer_df[col + "_target_mean"] = infer_df[col].map(temp_dict)
+
     # Freq encoding
     i_cols = ['card1', 'card2', 'card3', 'card5',
               'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C10', 'C11', 'C12', 'C13', 'C14',
@@ -149,15 +158,6 @@ if __name__ == "__main__":
         fq_encode = temp_df[col].value_counts().to_dict()
         train_df[col + '_fq_enc'] = train_df[col].map(fq_encode)
         infer_df[col + '_fq_enc'] = infer_df[col].map(fq_encode)
-
-    # ProductCD and M4 Target mean
-    for col in ['ProductCD', 'M4']:
-        temp_dict = train_df.groupby([col])[TARGET].agg(['mean']).reset_index().rename(
-            columns={'mean': col + '_target_mean'})
-        temp_dict.index = temp_dict[col].values
-        temp_dict = temp_dict[col + '_target_mean'].to_dict()
-        train_df[col + '_target_mean'] = train_df[col].map(temp_dict)
-        infer_df[col + '_target_mean'] = infer_df[col].map(temp_dict)
 
     # Encode Str columns
     for col in list(train_df):
@@ -211,9 +211,9 @@ if __name__ == "__main__":
         print(metrics.roc_auc_score(test_predictions[TARGET], test_predictions["prediction"]))
     else:
         lgb_params["learning_rate"] = 0.01
-        lgb_params["n_estimators"] = 800
+        lgb_params["n_estimators"] = 400
         lgb_params["early_stopping_rounds"] = 100
-        test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=5)
+        test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=2)
     # Export
     if not LOCAL_TEST:
         test_predictions["isFraud"] = test_predictions["prediction"]
