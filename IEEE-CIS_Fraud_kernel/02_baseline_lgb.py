@@ -101,6 +101,21 @@ if __name__ == "__main__":
         train_id_df = pd.read_pickle(dir_data_pkl + "\\train_identity.pkl")
         infer_id_df = pd.read_pickle(dir_data_pkl + "\\infer_identity.pkl")
 
+    # TransactionDT and D9
+    # Also, seems that D9 column is an hour and it is the same as df['DT'].dt.hour
+    for df in [train_df, infer_df]:
+        df["DT"] = df["TransactionDT"].apply(lambda x: (START_DATE + datetime.timedelta(seconds=x)))
+        df["DT_M"] = (df["DT"].dt.year - 2017) * 12 + df["DT"].dt.month
+        df["DT_W"] = (df["DT"].dt.year - 2017) * 52 + df["DT"].dt.weekofyear
+        df["DT_D"] = (df["DT"].dt.year - 2017) * 365 + df["DT"].dt.dayofyear
+
+        df["DT_hour"] = df["DT"].dt.hour
+        df["DT_day_week"] = df["DT"].dt.dayofweek
+        df["DT_day"] = df["DT"].dt.day
+
+        # D9 column
+        df["D9"] = np.where(df["D9"].isna(), 0, 1)
+
     # Reset values for "noise" card1
     valid_card = train_df["card1"].value_counts()
     valid_card = valid_card[valid_card > 10]
