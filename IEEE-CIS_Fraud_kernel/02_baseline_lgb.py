@@ -188,6 +188,43 @@ if __name__ == "__main__":
     train_df["TransactionAmt"] = np.log1p(train_df["TransactionAmt"])
     infer_df["TransactionAmt"] = np.log1p(infer_df["TransactionAmt"])
 
+    # P_emaildomain/R_emaildomain
+    p = "P_emaildomain"
+    r = "R_emaildomain"
+    ukn = "email_not_provided"
+    for df in [train_df, infer_df]:
+        df[p] = df[p].fillna(ukn)
+        df[r] = df[r].fillna(ukn)
+
+        # Check if P_emaildomain matches R_emaildomain
+        df["email_check"] = np.where((df[p] == df[r]) & (df[p] != ukn), 1, 0)
+        df[p + "_prefix"] = df[p].apply(lambda x: x.split('.')[0])
+        df[r + "_prefix"] = df[r].apply(lambda x: x.split('.')[0])
+
+    # Device info
+    for df in [train_id_df, infer_id_df]:
+        df["DeviceInfo"] = df["DeviceInfo"].fillna("unknown_device").str.lower()
+        df["DeviceInfo_device"] = df["DeviceInfo"].apply(lambda x: ''.join([i for i in x if i.isalpha()]))
+        df["DeviceInfo_version"] = df["DeviceInfo"].apply(lambda x: ''.join([i for i in x if i.isnumeric()]))
+
+        df["id_30"] = df["id_30"].fillna('unknown_device').str.lower()
+        df["id_30_device"] = df["id_30"].apply(lambda x: ''.join([i for i in x if i.isalpha()]))
+        df["id_30_version"] = df["id_30"].apply(lambda x: ''.join([i for i in x if i.isnumeric()]))
+
+        df["id_31"] = df["id_31"].fillna("unknown_device").str.lower()
+        df["id_31_device"] = df["id_31"].apply(lambda x: ''.join([i for i in x if i.isalpha()]))
+
+    # Merge Identity columns
+    temp_df = train_df[["TransactionID"]]
+    temp_df = temp_df.merge(train_id_df, on=["TransactionID"], how="left")
+    del temp_df["TransactionID"]
+    train_df = pd.concat([train_df, temp_df], axis=1)
+
+    temp_df = infer_df[["TransactionID"]]
+    temp_df = temp_df.merge(infer_id_df, on=["TransactionID"], how="left")
+    del temp_df["TransactionID"]
+    test_df = pd.concat([infer_df, temp_df], axis=1)
+
     # Freq encoding
     i_cols = ['card1', 'card2', 'card3', 'card5',
               'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C10', 'C11', 'C12', 'C13', 'C14',
