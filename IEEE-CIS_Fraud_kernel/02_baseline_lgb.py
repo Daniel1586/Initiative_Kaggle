@@ -13,6 +13,7 @@ import os
 import gc
 import random
 import warnings
+import datetime
 import numpy as np
 import pandas as pd
 import lightgbm as lgb
@@ -78,29 +79,34 @@ if __name__ == "__main__":
     print("========== 2.Load pkl data ...")
     LOCAL_TEST = False
     TARGET = "isFraud"
+    START_DATE = datetime.datetime.strptime("2017-11-30", "%Y-%m-%d")
     dir_data_pkl = os.getcwd() + "\\ieee-fraud-pkl\\"
     train_df = pd.read_pickle(dir_data_pkl + "\\train_transaction.pkl")
 
     if LOCAL_TEST:
-        infer_df = train_df.iloc[-100000:, ].reset_index(drop=True)
-        train_df = train_df.iloc[:400000, ].reset_index(drop=True)
+        # Convert TransactionDT to "Month" time-period.
+        # We will also drop penultimate block to "simulate" test set values difference
+        # TransactionDT时间属性划分,本地测试训练集最后一个月数据为测试集
+        train_df["DT_M"] = train_df["TransactionDT"].apply(lambda x: (START_DATE + datetime.timedelta(seconds=x)))
+        train_df["DT_M"] = (train_df["DT_M"].dt.year - 2017) * 12 + train_df["DT_M"].dt.month
+        infer_df = train_df[train_df["DT_M"] == train_df["DT_M"].max()].reset_index(drop=True)
+        train_df = train_df[train_df["DT_M"] < (train_df["DT_M"].max() - 1)].reset_index(drop=True)
 
-        train_identity = pd.read_pickle(dir_data_pkl + "\\train_identity.pkl")
-        test_identity = train_identity[train_identity['TransactionID'].isin(infer_df['TransactionID'])].reset_index(
-            drop=True)
-        train_identity = train_identity[train_identity['TransactionID'].isin(train_df['TransactionID'])].reset_index(
-            drop=True)
+        train_id_df = pd.read_pickle(dir_data_pkl + "\\train_identity.pkl")
+        infer_id_df = train_id_df[train_id_df["TransactionID"].isin(infer_df["TransactionID"])].reset_index(drop=True)
+        train_id_df = train_id_df[train_id_df["TransactionID"].isin(train_df["TransactionID"])].reset_index(drop=True)
+        del train_df["DT_M"], infer_df["DT_M"]
     else:
         infer_df = pd.read_pickle(dir_data_pkl + "\\infer_transaction.pkl")
+        train_id_df = pd.read_pickle(dir_data_pkl + "\\train_identity.pkl")
         infer_id_df = pd.read_pickle(dir_data_pkl + "\\infer_identity.pkl")
 
     # Reset values for "noise" card1
     valid_card = train_df["card1"].value_counts()
     valid_card = valid_card[valid_card > 10]
-    print(valid_card)
     valid_card = list(valid_card.index)
-    train_df['card1'] = np.where(train_df['card1'].isin(valid_card), train_df['card1'], np.nan)
-    infer_df['card1'] = np.where(infer_df['card1'].isin(valid_card), infer_df['card1'], np.nan)
+    train_df["card1"] = np.where(train_df["card1"].isin(valid_card), train_df["card1"], np.nan)
+    infer_df["card1"] = np.where(infer_df["card1"].isin(valid_card), infer_df["card1"], np.nan)
 
     # Freq encoding
     i_cols = ['card1', 'card2', 'card3', 'card5',
@@ -154,7 +160,7 @@ if __name__ == "__main__":
     # Model params
     lgb_params = {
         'objective': 'binary',
-        'boost': 'gbdt',
+        'boosting': 'gbdt',
         'metric': 'auc',
         'n_jobs': -1,
         'learning_rate': 0.01,
@@ -179,8 +185,8 @@ if __name__ == "__main__":
         lgb_params["learning_rate"] = 0.01
         lgb_params["n_estimators"] = 800
         lgb_params["early_stopping_rounds"] = 100
-        test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=2)
+        test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=5)
     # Export
     if not LOCAL_TEST:
         test_predictions["isFraud"] = test_predictions["prediction"]
-        test_predictions[["TransactionID", "isFraud"]].to_csv("091301.csv", index=False)
+        test_predictions[["TransactionID", "isFraud"]].to_csv("091303.csv", index=False)
