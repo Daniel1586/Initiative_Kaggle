@@ -10,10 +10,19 @@ Test  shape:(506691,393),identity(141907,41)
 """
 
 import os
+import gc
+import sys
+import math
 import random
+import datetime
 import warnings
 import numpy as np
 import pandas as pd
+import seaborn as sns
+from sklearn import metrics
+import matplotlib.pyplot as plt
+from sklearn.model_selection import KFold
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 warnings.filterwarnings('ignore')
 
