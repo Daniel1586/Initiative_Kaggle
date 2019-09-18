@@ -94,9 +94,9 @@ if __name__ == "__main__":
     print("========== 1.Set random seed ...")
     SEED = 42
     set_seed(SEED)
+    LOCAL_TEST = False
 
     print("========== 2.Load csv data ...")
-    LOCAL_TEST = False
     dir_data_csv = os.getcwd() + "\\ieee-fraud-detection\\"
     train_tran = pd.read_csv(dir_data_csv + "\\train_transaction.csv")
     train_iden = pd.read_csv(dir_data_csv + "\\train_identity.csv")
@@ -104,54 +104,64 @@ if __name__ == "__main__":
     infer_iden = pd.read_csv(dir_data_csv + "\\test_identity.csv")
     infer_tran["isFraud"] = 0
     if LOCAL_TEST:
-        for _df in [train_tran, infer_tran, train_iden, infer_iden]:
-            df1 = reduce_mem_usage(_df)
-            for col1 in list(df1):
-                if not df1[col1].equals(_df[col1]):
-                    print("Bad transformation!!!", col1)
+        for df1 in [train_tran, infer_tran, train_iden, infer_iden]:
+            df2 = reduce_mem_usage(df1)
+            print("-----col num: ", len(list(df2)))
+            for col1 in list(df2):
+                if not df2[col1].equals(df1[col1]):
+                    print("-----Bad transformation!!!", col1)
 
     print("========== 3.Optimize dataframe memory ...")
     train_df = reduce_mem_usage(train_tran)
     infer_df = reduce_mem_usage(infer_tran)
-    train_id_df = reduce_mem_usage(train_iden)
-    infer_id_df = reduce_mem_usage(infer_iden)
+    # train_id_df = reduce_mem_usage(train_iden)
+    # infer_id_df = reduce_mem_usage(infer_iden)
 
-    print("========== 4.ETL dataframe ...")
-    # [train+infer]离散特征(>2):按频率编码[NaN不编码]
-    for col1 in ["card4", "card6", "ProductCD", "M4"]:
-        print("-----Encoding", col1)
-        temp_df = pd.concat([train_df[[col1]], infer_df[[col1]]])
-        col_encoded = temp_df[col1].value_counts().to_dict()
-        train_df[col1] = train_df[col1].map(col_encoded)
-        infer_df[col1] = infer_df[col1].map(col_encoded)
-        print(col_encoded)
+    print("========== 4.ETL tran categorical feature [String] ...")
+    # [train+infer]离散特征(<=5): String->Int,字符串映射到数值[NaN不编码]-----num=12
+    # ProductCD[W,C,R,H,S]//card4[visa,..]//card6[debit,..]//M1[T,F]//M2[T,F]
+    # M3[T,F]//M4[M0,M1,M2]//M5[T,F]//M6[T,F]//M7[T,F]//M8[T,F]//M9[T,F]
+    for col1 in ["ProductCD", "card4", "card6", "M1"]:
+        total_df = pd.concat([train_df[[col1]], infer_df[[col1]]])
+        tol_cols = total_df[col1].value_counts()
+        print(tol_cols)
 
-    # [train+infer]离散特征(=2):二值编码[NaN不编码]
-    for col1 in ["M1", "M2", "M3", "M5", "M6", "M7", "M8", "M9"]:
-        train_df[col1] = train_df[col1].map({"T": 1, "F": 0})
-        infer_df[col1] = infer_df[col1].map({"T": 1, "F": 0})
-
-    # [train+infer]离散特征编码:[NaN不编码]
-    train_id_df = minify_identity_df(train_id_df)
-    infer_id_df = minify_identity_df(infer_id_df)
-
-    # labelEncoder标准化标签
-    for col1 in ['id_33']:
-        train_id_df[col1] = train_id_df[col1].fillna('unseen_before_label')
-        infer_id_df[col1] = infer_id_df[col1].fillna('unseen_before_label')
-
-        le = LabelEncoder()
-        le.fit(list(train_id_df[col1]) + list(infer_id_df[col1]))
-        train_id_df[col1] = le.transform(train_id_df[col1])
-        infer_id_df[col1] = le.transform(infer_id_df[col1])
-
-    train_df = reduce_mem_usage(train_df)
-    infer_df = reduce_mem_usage(infer_df)
-    train_id_df = reduce_mem_usage(train_id_df)
-    infer_id_df = reduce_mem_usage(infer_id_df)
-
-    print("========== 5.Save pkl ...")
-    train_df.to_pickle("train_transaction.pkl")
-    infer_df.to_pickle("infer_transaction.pkl")
-    train_id_df.to_pickle("train_identity.pkl")
-    infer_id_df.to_pickle("infer_identity.pkl")
+    # for col1 in ["card4", "card6", "ProductCD", "M4"]:
+    #     print("-----Encoding", col1)
+    #     print(train_df[col1].value_counts())
+    #     temp_df = pd.concat([train_df[[col1]], infer_df[[col1]]])
+    #     col_encoded = temp_df[col1].value_counts().to_dict()
+    #     train_df[col1] = train_df[col1].map(col_encoded)
+    #     infer_df[col1] = infer_df[col1].map(col_encoded)
+    #     print(train_df[col1].value_counts())
+    #     print(col_encoded)
+    #
+    # # [train+infer]离散特征(=2):二值编码[NaN不编码]
+    # for col1 in ["M1", "M2", "M3", "M5", "M6", "M7", "M8", "M9"]:
+    #     train_df[col1] = train_df[col1].map({"T": 1, "F": 0})
+    #     infer_df[col1] = infer_df[col1].map({"T": 1, "F": 0})
+    #
+    # # [train+infer]离散特征编码:[NaN不编码]
+    # train_id_df = minify_identity_df(train_id_df)
+    # infer_id_df = minify_identity_df(infer_id_df)
+    #
+    # # labelEncoder标准化标签
+    # for col1 in ['id_33']:
+    #     train_id_df[col1] = train_id_df[col1].fillna('unseen_before_label')
+    #     infer_id_df[col1] = infer_id_df[col1].fillna('unseen_before_label')
+    #
+    #     le = LabelEncoder()
+    #     le.fit(list(train_id_df[col1]) + list(infer_id_df[col1]))
+    #     train_id_df[col1] = le.transform(train_id_df[col1])
+    #     infer_id_df[col1] = le.transform(infer_id_df[col1])
+    #
+    # train_df = reduce_mem_usage(train_df)
+    # infer_df = reduce_mem_usage(infer_df)
+    # train_id_df = reduce_mem_usage(train_id_df)
+    # infer_id_df = reduce_mem_usage(infer_id_df)
+    #
+    # print("========== 5.Save pkl ...")
+    # train_df.to_pickle("train_transaction.pkl")
+    # infer_df.to_pickle("infer_transaction.pkl")
+    # train_id_df.to_pickle("train_identity.pkl")
+    # infer_id_df.to_pickle("infer_identity.pkl")
