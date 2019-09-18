@@ -337,7 +337,7 @@ if __name__ == "__main__":
         lgb_params["learning_rate"] = 0.01
         lgb_params["n_estimators"] = 1000
         lgb_params["early_stopping_rounds"] = 100
-        test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=3)
+        test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=2)
     # Export
     if not LOCAL_TEST:
         test_predictions["isFraud"] = test_predictions["prediction"]
