@@ -11,11 +11,9 @@ Test  shape:(506691,393),identity(141907,41)
 
 import os
 import random
-import operator
 import warnings
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder
 warnings.filterwarnings('ignore')
 
 
