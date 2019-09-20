@@ -19,7 +19,7 @@ import pandas as pd
 import lightgbm as lgb
 from sklearn import metrics
 from scipy.stats import ks_2samp
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, GroupKFold
 from sklearn.preprocessing import LabelEncoder
 warnings.filterwarnings('ignore')
 
@@ -36,16 +36,18 @@ def set_seed(seed=0):
 
 def make_predictions(tr_df, tt_df, features_columns, target, params, nfold=2):
     # K折交叉验证
-    folds = KFold(n_splits=nfold, shuffle=True, random_state=SEED)
+    folds = GroupKFold(n_splits=nfold)
 
     # 数据集划分
     train_x, train_y = tr_df[features_columns], tr_df[target]
     infer_x, infer_y = tt_df[features_columns], tt_df[target]
+    split_groups = tr_df['DT_M']
     tt_df = tt_df[["TransactionID", target]]
     predictions = np.zeros(len(tt_df))
+    oof = np.zeros(len(tr_df))
 
     # 模型训练与预测
-    for fold_, (tra_idx, val_idx) in enumerate(folds.split(train_x, train_y)):
+    for fold_, (tra_idx, val_idx) in enumerate(folds.split(train_x, train_y, groups=split_groups)):
         print("-----Fold:", fold_)
         tr_x, tr_y = train_x.iloc[tra_idx, :], train_y[tra_idx]
         vl_x, vl_y = train_x.iloc[val_idx, :], train_y[val_idx]
@@ -56,9 +58,11 @@ def make_predictions(tr_df, tt_df, features_columns, target, params, nfold=2):
             vl_data = lgb.Dataset(infer_x, label=infer_y)
         else:
             vl_data = lgb.Dataset(vl_x, label=vl_y)
-        estimator = lgb.train(params, tr_data, valid_sets=[tr_data, vl_data], verbose_eval=200)
+        estimator = lgb.train(params, tr_data, valid_sets=[tr_data, vl_data], verbose_eval=100)
         infer_p = estimator.predict(infer_x)
         predictions += infer_p / nfold
+        oof_preds = estimator.predict(vl_x)
+        oof[val_idx] = (oof_preds - oof_preds.min()) / (oof_preds.max() - oof_preds.min())
 
         if LOCAL_TEST:
             feature_imp = pd.DataFrame(sorted(zip(estimator.feature_importance(), train_x.columns)),
@@ -68,6 +72,7 @@ def make_predictions(tr_df, tt_df, features_columns, target, params, nfold=2):
         gc.collect()
 
     tt_df["prediction"] = predictions
+    print("OOF AUC:", metrics.roc_auc_score(train_y, oof))
 
     return tt_df
 
@@ -104,6 +109,19 @@ if __name__ == "__main__":
     base_columns = list(train_df) + list(train_id_df)
     print("-----Shape control:", train_df.shape, infer_df.shape)
 
+    print("========== 3.Feature Engineering ...")
+    ###############################################################################
+    # ================================ 增加新特征 ==================================
+    # ProductCD[W, C, R, H, S]/card4[visa,..]/card6[debit,..]/M4[M0,M1,M2]
+    # 上述特征按类别分组,增加_target_mean特征
+    for col in ["ProductCD", "card4", "card6", "M4"]:
+        temp_df = train_df.groupby([col])[TARGET].agg(["mean"]).reset_index().rename(
+            columns={"mean": col + "_target_mean"})
+        temp_df.index = temp_df[col].values
+        temp_dict = temp_df[col + "_target_mean"].to_dict()
+        train_df[col + "_target_mean"] = train_df[col].map(temp_dict)
+        infer_df[col + "_target_mean"] = infer_df[col].map(temp_dict)
+
     # TransactionDT and D9
     # Also, seems that D9 column is an hour and it is the same as df['DT'].dt.hour
     for df in [train_df, infer_df]:
@@ -120,33 +138,17 @@ if __name__ == "__main__":
         df["D9"] = np.where(df["D9"].isna(), 0, 1)
 
     # Reset values for "noise" card1
-    i_cols = ["card1"]
-    for col in i_cols:
-        valid_card = pd.concat([train_df[[col]], infer_df[[col]]])
-        valid_card = valid_card[col].value_counts()
-        valid_card = valid_card[valid_card > 2]
-        valid_card = list(valid_card.index)
-
-        train_df[col] = np.where(train_df[col].isin(infer_df[col]), train_df[col], np.nan)
-        infer_df[col] = np.where(infer_df[col].isin(train_df[col]), infer_df[col], np.nan)
-        train_df[col] = np.where(train_df[col].isin(valid_card), train_df[col], np.nan)
-        infer_df[col] = np.where(infer_df[col].isin(valid_card), infer_df[col], np.nan)
-
-    # M columns (except M4)
-    # All these columns are binary encoded 1/0
-    i_cols = ["M1", "M2", "M3", "M5", "M6", "M7", "M8", "M9"]
-    for df in [train_df, infer_df]:
-        df["M_sum"] = df[i_cols].sum(axis=1).astype(np.int8)
-        df["M_nan"] = df[i_cols].isna().sum(axis=1).astype(np.int8)
-
-    # ProductCD and M4 Target mean
-    for col in ["ProductCD", "M4"]:
-        temp_df = train_df.groupby([col])[TARGET].agg(["mean"]).reset_index().rename(
-            columns={"mean": col + "_target_mean"})
-        temp_df.index = temp_df[col].values
-        temp_dict = temp_df[col + "_target_mean"].to_dict()
-        train_df[col + "_target_mean"] = train_df[col].map(temp_dict)
-        infer_df[col + "_target_mean"] = infer_df[col].map(temp_dict)
+    # i_cols = ["card1"]
+    # for col in i_cols:
+    #     valid_card = pd.concat([train_df[[col]], infer_df[[col]]])
+    #     valid_card = valid_card[col].value_counts()
+    #     valid_card = valid_card[valid_card > 2]
+    #     valid_card = list(valid_card.index)
+    #
+    #     train_df[col] = np.where(train_df[col].isin(infer_df[col]), train_df[col], np.nan)
+    #     infer_df[col] = np.where(infer_df[col].isin(train_df[col]), infer_df[col], np.nan)
+    #     train_df[col] = np.where(train_df[col].isin(valid_card), train_df[col], np.nan)
+    #     infer_df[col] = np.where(infer_df[col].isin(valid_card), infer_df[col], np.nan)
 
     # TransactionAmt
     # Let's add some kind of client uID based on cardID ad addr columns
@@ -165,8 +167,8 @@ if __name__ == "__main__":
 
     # Check if the Transaction Amount is common or not (we can use freq encoding here)
     # In our dialog with a model we are telling to trust or not to these values
-    train_df["TransactionAmt_check"] = np.where(train_df["TransactionAmt"].isin(infer_df["TransactionAmt"]), 1, 0)
-    infer_df["TransactionAmt_check"] = np.where(infer_df["TransactionAmt"].isin(train_df["TransactionAmt"]), 1, 0)
+    # train_df["TransactionAmt_check"] = np.where(train_df["TransactionAmt"].isin(infer_df["TransactionAmt"]), 1, 0)
+    # infer_df["TransactionAmt_check"] = np.where(infer_df["TransactionAmt"].isin(train_df["TransactionAmt"]), 1, 0)
 
     # For our model current TransactionAmt is a noise
     # (even if features importance are telling contrariwise)
@@ -335,10 +337,10 @@ if __name__ == "__main__":
     else:
         print("-----Shape control:", train_df.shape, infer_df.shape)
         lgb_params["learning_rate"] = 0.01
-        lgb_params["n_estimators"] = 800
+        lgb_params["n_estimators"] = 500
         lgb_params["early_stopping_rounds"] = 100
-        test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=3)
+        test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=6)
     # Export
     if not LOCAL_TEST:
         test_predictions["isFraud"] = test_predictions["prediction"]
-        test_predictions[["TransactionID", "isFraud"]].to_csv("091902.csv", index=False)
+        test_predictions[["TransactionID", "isFraud"]].to_csv("092003.csv", index=False)
