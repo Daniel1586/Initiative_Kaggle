@@ -153,6 +153,28 @@ if __name__ == "__main__":
         df[p + "_prefix"] = df[p].apply(lambda x: x.split('.')[0])
         df[r + "_prefix"] = df[r].apply(lambda x: x.split('.')[0])
 
+    i_cols = ["ProductCD", "card1", "card2", "card3", "card4", "card5",
+              "card6", "addr1", "addr2", "C1", "C2", "C3", "C4", "C5",
+              "C6", "C7", "C8", "C9", "C10", "C11", "C12", "C13", "C14"]
+    for col in i_cols:
+        temp_df = pd.concat([train_df[[col, "TransactionDT"]], infer_df[[col, "TransactionDT"]]])
+        col_count = temp_df.groupby(col)["TransactionDT"].count()
+        train_df[col + "_count"] = train_df[col].map(col_count)
+        infer_df[col + "_count"] = infer_df[col].map(col_count)
+
+    i_cols = ["card1", "card2", "card3", "card5", "addr1", "addr2"]
+    for col in i_cols:
+        temp_df = pd.concat([train_df[[col, "TransactionAmt", "C5"]], infer_df[[col, "TransactionAmt", "C5"]]])
+        col_count = temp_df.groupby(col)['TransactionAmt'].mean()
+        train_df[col + "_amt_count"] = train_df[col].map(col_count)
+        infer_df[col + "_amt_count"] = infer_df[col].map(col_count)
+        col_count1 = temp_df[temp_df["C5"] == 0].groupby(col)["C5"].count()
+        col_count2 = temp_df[temp_df["C5"] != 0].groupby(col)["C5"].count()
+        train_df[col + "_C5_count"] = train_df[col].map(col_count2) / (
+                    train_df[col].map(col_count1) + 0.01)
+        infer_df[col + "_C5_count"] = infer_df[col].map(col_count2) / (
+                    infer_df[col].map(col_count1) + 0.01)
+
     # Let's add some kind of client uID based on cardID ad addr columns
     # The value will be very specific for each client so we need to remove it
     # from final feature. But we can use it for aggregations.
@@ -174,13 +196,6 @@ if __name__ == "__main__":
     # TransactionAmt[0.251, 31937.391]
     train_df["TransactionAmt"] = np.log1p(train_df["TransactionAmt"])
     infer_df["TransactionAmt"] = np.log1p(infer_df["TransactionAmt"])
-
-    # TransactionAmt
-
-    # Check if the Transaction Amount is common or not (we can use freq encoding here)
-    # In our dialog with a model we are telling to trust or not to these values
-    # train_df["TransactionAmt_check"] = np.where(train_df["TransactionAmt"].isin(infer_df["TransactionAmt"]), 1, 0)
-    # infer_df["TransactionAmt_check"] = np.where(infer_df["TransactionAmt"].isin(train_df["TransactionAmt"]), 1, 0)
 
     # For our model current TransactionAmt is a noise
     # (even if features importance are telling contrariwise)
@@ -243,21 +258,9 @@ if __name__ == "__main__":
         train_df[col + "_fq_enc"] = train_df[col].map(fq_encode)
         infer_df[col + "_fq_enc"] = infer_df[col].map(fq_encode)
 
-    # for period in ["DT_M", "DT_W", "DT_D"]:
-    #     for col in ["uid"]:
-    #         new_column = col + "_" + period
-    #         temp_df = pd.concat([train_df[[col, period]], infer_df[[col, period]]])
-    #         temp_df[new_column] = temp_df[col].astype(str) + "_" + (temp_df[period]).astype(str)
-    #         fq_encode = temp_df[new_column].value_counts().to_dict()
-    #
-    #         train_df[new_column] = (train_df[col].astype(str) + "_" + train_df[period].astype(str)).map(fq_encode)
-    #         infer_df[new_column] = (infer_df[col].astype(str) + "_" + infer_df[period].astype(str)).map(fq_encode)
-    #         train_df[new_column] /= train_df[period + "_total"]
-    #         infer_df[new_column] /= infer_df[period + "_total"]
-
     # Encode Str columns
     for col in list(train_df):
-        if train_df[col].dtype == 'O':
+        if train_df[col].dtype == 'O' or infer_df[col].dtype == 'O':
             print("-----category feature", col)
             train_df[col] = train_df[col].fillna("unseen_before_label")
             infer_df[col] = infer_df[col].fillna("unseen_before_label")
@@ -310,4 +313,4 @@ if __name__ == "__main__":
     # Export
     if not LOCAL_TEST:
         test_predictions["isFraud"] = test_predictions["prediction"]
-        test_predictions[["TransactionID", "isFraud"]].to_csv("092102.csv", index=False)
+        test_predictions[["TransactionID", "isFraud"]].to_csv("092101.csv", index=False)
