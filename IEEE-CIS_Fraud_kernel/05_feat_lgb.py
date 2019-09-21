@@ -18,8 +18,7 @@ import numpy as np
 import pandas as pd
 import lightgbm as lgb
 from sklearn import metrics
-from scipy.stats import ks_2samp
-from sklearn.model_selection import KFold, GroupKFold
+from sklearn.model_selection import GroupKFold
 from sklearn.preprocessing import LabelEncoder
 warnings.filterwarnings('ignore')
 
@@ -106,12 +105,32 @@ if __name__ == "__main__":
         infer_df = pd.read_pickle(dir_data_pkl + "\\infer_tran_no_fe.pkl")
         train_id_df = pd.read_pickle(dir_data_pkl + "\\train_iden_no_fe.pkl")
         infer_id_df = pd.read_pickle(dir_data_pkl + "\\infer_iden_no_fe.pkl")
-    base_columns = list(train_df) + list(train_id_df)
+
     print("-----Shape control:", train_df.shape, infer_df.shape)
+    rm_cols = ["TransactionID", "TransactionDT", TARGET]
+    base_columns = [col for col in list(train_df) if col not in rm_cols]
 
     print("========== 3.Feature Engineering ...")
     ###############################################################################
     # ================================ 增加新特征 ==================================
+    # TransactionDT[86400,15811131],START_DATE=2017-11-30
+    for df in [train_df, infer_df]:
+        df["DT"] = df["TransactionDT"].apply(lambda x: (START_DATE + datetime.timedelta(seconds=x)))
+        df["DT_M"] = ((df["DT"].dt.year - 2017) * 12 + df["DT"].dt.month).astype(np.int8)
+        df["DT_W"] = ((df["DT"].dt.year - 2017) * 52 + df["DT"].dt.weekofyear).astype(np.int8)
+        df["DT_D"] = ((df["DT"].dt.year - 2017) * 365 + df["DT"].dt.dayofyear).astype(np.int16)
+        df["DT_day_month"] = df["DT"].dt.day.astype(np.int8)
+        df["DT_day_week"] = df["DT"].dt.dayofweek.astype(np.int8)
+        df["DT_day_hour"] = df["DT"].dt.hour.astype(np.int8)
+        df["Is_december"] = df["DT"].dt.month
+        df["Is_december"] = (df["Is_december"] == 12).astype(np.int8)
+    # Total transactions per timeblock
+    for col in ["DT_M", "DT_W", "DT_D"]:
+        temp_df = pd.concat([train_df[[col]], infer_df[[col]]])
+        fq_encode = temp_df[col].value_counts().to_dict()
+        train_df[col + "_fq_enc"] = train_df[col].map(fq_encode)
+        infer_df[col + "_fq_enc"] = infer_df[col].map(fq_encode)
+
     # ProductCD[W, C, R, H, S]/card4[visa,..]/card6[debit,..]/M4[M0,M1,M2]
     # 上述特征按类别分组,增加_target_mean特征
     for col in ["ProductCD", "card4", "card6", "M4"]:
@@ -122,16 +141,6 @@ if __name__ == "__main__":
         train_df[col + "_target_mean"] = train_df[col].map(temp_dict)
         infer_df[col + "_target_mean"] = infer_df[col].map(temp_dict)
 
-    # TransactionDT[86400,15811131],START_DATE=2017-11-30
-    for df in [train_df, infer_df]:
-        df["DT"] = df["TransactionDT"].apply(lambda x: (START_DATE + datetime.timedelta(seconds=x)))
-        df["DT_M"] = (df["DT"].dt.year - 2017) * 12 + df["DT"].dt.month
-        df["DT_W"] = (df["DT"].dt.year - 2017) * 52 + df["DT"].dt.weekofyear
-        df["DT_D"] = (df["DT"].dt.year - 2017) * 365 + df["DT"].dt.dayofyear
-        df["DT_day"] = df["DT"].dt.day
-        df["DT_day_week"] = df["DT"].dt.dayofweek
-        df["DT_hour"] = df["DT"].dt.hour
-
     # P_emaildomain/R_emaildomain
     p = "P_emaildomain"
     r = "R_emaildomain"
@@ -139,43 +148,34 @@ if __name__ == "__main__":
     for df in [train_df, infer_df]:
         df[p] = df[p].fillna(ukn)
         df[r] = df[r].fillna(ukn)
-
         # Check if P_emaildomain matches R_emaildomain
         df["email_check"] = np.where((df[p] == df[r]) & (df[p] != ukn), 1, 0)
         df[p + "_prefix"] = df[p].apply(lambda x: x.split('.')[0])
         df[r + "_prefix"] = df[r].apply(lambda x: x.split('.')[0])
 
+    # Let's add some kind of client uID based on cardID ad addr columns
+    # The value will be very specific for each client so we need to remove it
+    # from final feature. But we can use it for aggregations.
+    train_df["uid1"] = train_df["card1"].astype(str) + "_" + train_df["card2"].astype(str)
+    infer_df["uid1"] = infer_df["card1"].astype(str) + "_" + infer_df["card2"].astype(str)
+    train_df["uid2"] = train_df["uid1"].astype(str) + "_" + train_df["card3"].\
+        astype(str) + "_" + train_df["card5"].astype(str)
+    infer_df["uid2"] = infer_df["uid1"].astype(str) + "_" + infer_df["card3"].\
+        astype(str) + "_" + infer_df["card5"].astype(str)
+    train_df["uid3"] = train_df["uid2"].astype(str) + "_" + train_df["addr1"].\
+        astype(str) + "_" + train_df["addr2"].astype(str)
+    infer_df["uid3"] = infer_df["uid2"].astype(str) + "_" + infer_df["addr1"].\
+        astype(str) + "_" + infer_df["addr2"].astype(str)
+    train_df["uid4"] = train_df["uid3"].astype(str) + '_' + train_df['P_emaildomain'].astype(str)
+    infer_df["uid4"] = infer_df["uid3"].astype(str) + '_' + infer_df['P_emaildomain'].astype(str)
+    train_df["uid5"] = train_df["uid3"].astype(str) + '_' + train_df['R_emaildomain'].astype(str)
+    infer_df["uid5"] = infer_df["uid3"].astype(str) + '_' + infer_df['R_emaildomain'].astype(str)
+
     # TransactionAmt[0.251, 31937.391]
     train_df["TransactionAmt"] = np.log1p(train_df["TransactionAmt"])
     infer_df["TransactionAmt"] = np.log1p(infer_df["TransactionAmt"])
 
-    # Reset values for "noise" card1
-    # i_cols = ["card1"]
-    # for col in i_cols:
-    #     valid_card = pd.concat([train_df[[col]], infer_df[[col]]])
-    #     valid_card = valid_card[col].value_counts()
-    #     valid_card = valid_card[valid_card > 2]
-    #     valid_card = list(valid_card.index)
-    #
-    #     train_df[col] = np.where(train_df[col].isin(infer_df[col]), train_df[col], np.nan)
-    #     infer_df[col] = np.where(infer_df[col].isin(train_df[col]), infer_df[col], np.nan)
-    #     train_df[col] = np.where(train_df[col].isin(valid_card), train_df[col], np.nan)
-    #     infer_df[col] = np.where(infer_df[col].isin(valid_card), infer_df[col], np.nan)
-
     # TransactionAmt
-    # Let's add some kind of client uID based on cardID ad addr columns
-    # The value will be very specific for each client so we need to remove it
-    # from final feature. But we can use it for aggregations.
-    # train_df["uid"] = train_df["card1"].astype(str) + "_" + train_df["card2"].astype(str)
-    # infer_df["uid"] = infer_df["card1"].astype(str) + "_" + infer_df["card2"].astype(str)
-    # train_df["uid2"] = train_df["uid"].astype(str) + "_" + train_df["card3"].\
-    #     astype(str) + "_" + train_df["card5"].astype(str)
-    # infer_df["uid2"] = infer_df["uid"].astype(str) + "_" + infer_df["card3"].\
-    #     astype(str) + "_" + infer_df["card5"].astype(str)
-    # train_df["uid3"] = train_df["uid2"].astype(str) + "_" + train_df["addr1"].\
-    #     astype(str) + "_" + train_df["addr2"].astype(str)
-    # infer_df["uid3"] = infer_df["uid2"].astype(str) + "_" + infer_df["addr1"].\
-    #     astype(str) + "_" + infer_df["addr2"].astype(str)
 
     # Check if the Transaction Amount is common or not (we can use freq encoding here)
     # In our dialog with a model we are telling to trust or not to these values
@@ -202,9 +202,6 @@ if __name__ == "__main__":
     # (doesn't affect auc much, but I like it more)
     # please see how distribution transformation can boost your score
     # (not our case but related)
-
-
-
 
     # Device info
     # for df in [train_id_df, infer_id_df]:
@@ -246,12 +243,6 @@ if __name__ == "__main__":
         train_df[col + "_fq_enc"] = train_df[col].map(fq_encode)
         infer_df[col + "_fq_enc"] = infer_df[col].map(fq_encode)
 
-    for col in ["DT_M", "DT_W", "DT_D"]:
-        temp_df = pd.concat([train_df[[col]], infer_df[[col]]])
-        fq_encode = temp_df[col].value_counts().to_dict()
-        train_df[col + "_total"] = train_df[col].map(fq_encode)
-        infer_df[col + "_total"] = infer_df[col].map(fq_encode)
-
     # for period in ["DT_M", "DT_W", "DT_D"]:
     #     for col in ["uid"]:
     #         new_column = col + "_" + period
@@ -267,7 +258,7 @@ if __name__ == "__main__":
     # Encode Str columns
     for col in list(train_df):
         if train_df[col].dtype == 'O':
-            print(col)
+            print("-----category feature", col)
             train_df[col] = train_df[col].fillna("unseen_before_label")
             infer_df[col] = infer_df[col].fillna("unseen_before_label")
             train_df[col] = train_df[col].astype(str)
@@ -281,26 +272,8 @@ if __name__ == "__main__":
             train_df[col] = train_df[col].astype("category")
             infer_df[col] = infer_df[col].astype("category")
 
-    # Model Features
-    rm_cols = ["TransactionID", "TransactionDT",
-               "DT", "DT_M", "DT_W", "DT_D",
-               "DT_hour", "DT_day_week", "DT_day",
-               "uid", "uid2", "uid3",
-               "id_30", "id_31", "id_33",
-               "DT_D_total", "DT_W_total", "DT_M_total",
-               TARGET]
-
-    # Features elimination
-    features_check = []
-    columns_to_check = set(list(train_df)).difference(base_columns + rm_cols)
-    for i in columns_to_check:
-        features_check.append(ks_2samp(infer_df[i], train_df[i])[1])
-    features_check = pd.Series(features_check, index=columns_to_check).sort_values()
-    features_discard = list(features_check[features_check == 0].index)
-    print(features_discard)
-
     # Final features list
-    features_cols = [col for col in list(train_df) if col not in rm_cols + features_discard]
+    features_cols = [col for col in list(train_df) if col not in rm_cols]
 
     # Model params
     lgb_params = {
@@ -329,11 +302,12 @@ if __name__ == "__main__":
         print(metrics.roc_auc_score(test_predictions[TARGET], test_predictions["prediction"]))
     else:
         print("-----Shape control:", train_df.shape, infer_df.shape)
+        print("-----Used features:", len(features_cols))
         lgb_params["learning_rate"] = 0.01
-        lgb_params["n_estimators"] = 800
-        lgb_params["early_stopping_rounds"] = 100
+        lgb_params["num_iterations"] = 800
+        lgb_params["early_stopping_round"] = 100
         test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=6)
     # Export
     if not LOCAL_TEST:
         test_predictions["isFraud"] = test_predictions["prediction"]
-        test_predictions[["TransactionID", "isFraud"]].to_csv("092003.csv", index=False)
+        test_predictions[["TransactionID", "isFraud"]].to_csv("092102.csv", index=False)
