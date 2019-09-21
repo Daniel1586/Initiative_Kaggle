@@ -258,6 +258,7 @@ if __name__ == "__main__":
             infer_df[col] = infer_df[col].astype("category")
 
     # Final features list
+    rm_cols += ["DT", "DT_M", "DT_W", "DT_D", "DT_day_month"]
     features_cols = [col for col in list(train_df) if col not in rm_cols]
 
     # Model params
@@ -268,14 +269,14 @@ if __name__ == "__main__":
         'tree_learner': 'serial',
         'num_threads': 4,
         'seed': SEED,
-        'num_iterations': 600,      # number of boosting iterations
+        'num_iterations': 800,      # number of boosting iterations
         'learning_rate': 0.01,      # shrinkage rate
-        'num_leaves': 2 ** 9,       # max number of leaves in one tree
+        'num_leaves': 2 ** 8,       # max number of leaves in one tree
         'max_depth': -1,            # limit the max depth for tree model, -1 means no limit
-        'min_data_in_leaf': 20,     # minimal number of data in one leaf
-        'subsample': 0.9,           # randomly select part of data without resampling
+        'min_data_in_leaf': 100,    # minimal number of data in one leaf
+        'subsample': 0.8,           # randomly select part of data without resampling
         'subsample_freq': 1,        # subsample/subsample_freq 同时设置才有用
-        'colsample_bytree': 0.9,    # randomly select part of features on each iteration
+        'colsample_bytree': 0.8,    # randomly select part of features on each iteration
         'early_stopping_round': 100,
         'max_bin': 255,
         'verbose': -1,
@@ -288,9 +289,8 @@ if __name__ == "__main__":
     else:
         print("-----Shape control:", train_df.shape, infer_df.shape)
         print("-----Used features:", len(features_cols))
-        lgb_params["learning_rate"] = 0.01
-        lgb_params["num_iterations"] = 800
-        lgb_params["early_stopping_round"] = 100
+        lgb_params["num_leaves"] = 2 ** 8
+        lgb_params["min_data_in_leaf"] = 100
         test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=6)
     # Export
     if not LOCAL_TEST:
