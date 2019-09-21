@@ -316,18 +316,20 @@ if __name__ == "__main__":
         'boosting': 'gbdt',
         'metric': 'auc',
         'n_jobs': -1,
-        'learning_rate': 0.01,
-        'num_leaves': 2 ** 8,
-        'max_depth': -1,
         'tree_learner': 'serial',
-        'colsample_bytree': 0.7,
-        'subsample_freq': 1,
-        'subsample': 0.7,
-        'n_estimators': 800,
+        'num_threads': 4,
+        'seed': SEED,
+        'num_iterations': 800,      # number of boosting iterations
+        'learning_rate': 0.01,      # shrinkage rate
+        'num_leaves': 2 ** 8,       # max number of leaves in one tree
+        'max_depth': -1,            # limit the max depth for tree model, -1 means no limit
+        'min_data_in_leaf': 20,     # minimal number of data in one leaf
+        'subsample': 0.7,           # randomly select part of data without resampling
+        'subsample_freq': 1,        # subsample/subsample_freq 同时设置才有用
+        'colsample_bytree': 0.7,    # randomly select part of features on each iteration
+        'early_stopping_round': 100,
         'max_bin': 255,
         'verbose': -1,
-        'seed': SEED,
-        'early_stopping_rounds': 100,
     }
 
     # Model Train
@@ -337,7 +339,7 @@ if __name__ == "__main__":
     else:
         print("-----Shape control:", train_df.shape, infer_df.shape)
         lgb_params["learning_rate"] = 0.01
-        lgb_params["n_estimators"] = 500
+        lgb_params["n_estimators"] = 800
         lgb_params["early_stopping_rounds"] = 100
         test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=6)
     # Export
