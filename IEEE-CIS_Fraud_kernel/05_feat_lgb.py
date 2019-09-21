@@ -289,11 +289,12 @@ if __name__ == "__main__":
     else:
         print("-----Shape control:", train_df.shape, infer_df.shape)
         print("-----Used features:", len(features_cols))
-        lgb_params["min_data_in_leaf"] = 1000
+        lgb_params["learning_rate"] = 0.1
+        lgb_params["min_data_in_leaf"] = 2000
         lgb_params["subsample"] = 0.7
         lgb_params["colsample_bytree"] = 0.7
         test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=6)
     # Export
     if not LOCAL_TEST:
         test_predictions["isFraud"] = test_predictions["prediction"]
-        test_predictions[["TransactionID", "isFraud"]].to_csv("092103.csv", index=False)
+        test_predictions[["TransactionID", "isFraud"]].to_csv("092108.csv", index=False)
