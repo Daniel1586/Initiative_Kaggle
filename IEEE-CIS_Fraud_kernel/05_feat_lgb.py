@@ -193,43 +193,25 @@ if __name__ == "__main__":
     train_df["uid5"] = train_df["uid3"].astype(str) + '_' + train_df['R_emaildomain'].astype(str)
     infer_df["uid5"] = infer_df["uid3"].astype(str) + '_' + infer_df['R_emaildomain'].astype(str)
 
-    # TransactionAmt[0.251, 31937.391]
-    train_df["TransactionAmt"] = np.log1p(train_df["TransactionAmt"])
-    infer_df["TransactionAmt"] = np.log1p(infer_df["TransactionAmt"])
-
     # For our model current TransactionAmt is a noise
     # (even if features importance are telling contrariwise)
     # There are many unique values and model doesn't generalize well
-    # i_cols = ["card1", "card2", "card3", "card5", "uid", "uid2", "uid3"]
-    # for col in i_cols:
-    #     for agg_type in ["mean", "std"]:
-    #         new_col_name = col + "_TransactionAmt_" + agg_type
-    #         temp_df = pd.concat([train_df[[col, "TransactionAmt"]], infer_df[[col, "TransactionAmt"]]])
-    #         temp_df = temp_df.groupby([col])["TransactionAmt"].agg([agg_type]).reset_index().rename(
-    #             columns={agg_type: new_col_name})
-    #
-    #         temp_df.index = list(temp_df[col])
-    #         temp_df = temp_df[new_col_name].to_dict()
-    #         train_df[new_col_name] = train_df[col].map(temp_df)
-    #         infer_df[new_col_name] = infer_df[col].map(temp_df)
+    i_cols = ["card1", "card2", "card3", "card5", "uid1", "uid2", "uid3"]
+    for col in i_cols:
+        for agg_type in ["mean", "std"]:
+            new_col_name = col + "_TransactionAmt_" + agg_type
+            temp_df = pd.concat([train_df[[col, "TransactionAmt"]], infer_df[[col, "TransactionAmt"]]])
+            temp_df = temp_df.groupby([col])["TransactionAmt"].agg([agg_type]).reset_index().rename(
+                columns={agg_type: new_col_name})
 
-    # Small "hack" to transform distribution
-    # (doesn't affect auc much, but I like it more)
-    # please see how distribution transformation can boost your score
-    # (not our case but related)
+            temp_df.index = list(temp_df[col])
+            temp_df = temp_df[new_col_name].to_dict()
+            train_df[new_col_name] = train_df[col].map(temp_df)
+            infer_df[new_col_name] = infer_df[col].map(temp_df)
 
-    # Device info
-    # for df in [train_id_df, infer_id_df]:
-    #     df["DeviceInfo"] = df["DeviceInfo"].fillna("unknown_device").str.lower()
-    #     df["DeviceInfo_device"] = df["DeviceInfo"].apply(lambda x: ''.join([i for i in x if i.isalpha()]))
-    #     df["DeviceInfo_version"] = df["DeviceInfo"].apply(lambda x: ''.join([i for i in x if i.isnumeric()]))
-    #
-    #     df["id_30"] = df["id_30"].fillna('unknown_device').str.lower()
-    #     df["id_30_device"] = df["id_30"].apply(lambda x: ''.join([i for i in x if i.isalpha()]))
-    #     df["id_30_version"] = df["id_30"].apply(lambda x: ''.join([i for i in x if i.isnumeric()]))
-    #
-    #     df["id_31"] = df["id_31"].fillna("unknown_device").str.lower()
-    #     df["id_31_device"] = df["id_31"].apply(lambda x: ''.join([i for i in x if i.isalpha()]))
+    # TransactionAmt[0.251, 31937.391]
+    train_df["TransactionAmt"] = np.log1p(train_df["TransactionAmt"])
+    infer_df["TransactionAmt"] = np.log1p(infer_df["TransactionAmt"])
 
     ###############################################################################
     # ========================= 合并transaction/identity ==========================
@@ -286,14 +268,14 @@ if __name__ == "__main__":
         'tree_learner': 'serial',
         'num_threads': 4,
         'seed': SEED,
-        'num_iterations': 800,      # number of boosting iterations
+        'num_iterations': 600,      # number of boosting iterations
         'learning_rate': 0.01,      # shrinkage rate
-        'num_leaves': 2 ** 8,       # max number of leaves in one tree
+        'num_leaves': 2 ** 9,       # max number of leaves in one tree
         'max_depth': -1,            # limit the max depth for tree model, -1 means no limit
         'min_data_in_leaf': 20,     # minimal number of data in one leaf
-        'subsample': 0.7,           # randomly select part of data without resampling
+        'subsample': 0.9,           # randomly select part of data without resampling
         'subsample_freq': 1,        # subsample/subsample_freq 同时设置才有用
-        'colsample_bytree': 0.7,    # randomly select part of features on each iteration
+        'colsample_bytree': 0.9,    # randomly select part of features on each iteration
         'early_stopping_round': 100,
         'max_bin': 255,
         'verbose': -1,
