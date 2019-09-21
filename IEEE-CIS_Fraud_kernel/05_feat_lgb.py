@@ -122,20 +122,32 @@ if __name__ == "__main__":
         train_df[col + "_target_mean"] = train_df[col].map(temp_dict)
         infer_df[col + "_target_mean"] = infer_df[col].map(temp_dict)
 
-    # TransactionDT and D9
-    # Also, seems that D9 column is an hour and it is the same as df['DT'].dt.hour
+    # TransactionDT[86400,15811131],START_DATE=2017-11-30
     for df in [train_df, infer_df]:
         df["DT"] = df["TransactionDT"].apply(lambda x: (START_DATE + datetime.timedelta(seconds=x)))
         df["DT_M"] = (df["DT"].dt.year - 2017) * 12 + df["DT"].dt.month
         df["DT_W"] = (df["DT"].dt.year - 2017) * 52 + df["DT"].dt.weekofyear
         df["DT_D"] = (df["DT"].dt.year - 2017) * 365 + df["DT"].dt.dayofyear
-
-        df["DT_hour"] = df["DT"].dt.hour
-        df["DT_day_week"] = df["DT"].dt.dayofweek
         df["DT_day"] = df["DT"].dt.day
+        df["DT_day_week"] = df["DT"].dt.dayofweek
+        df["DT_hour"] = df["DT"].dt.hour
 
-        # D9 column
-        df["D9"] = np.where(df["D9"].isna(), 0, 1)
+    # P_emaildomain/R_emaildomain
+    p = "P_emaildomain"
+    r = "R_emaildomain"
+    ukn = "email_unknown"
+    for df in [train_df, infer_df]:
+        df[p] = df[p].fillna(ukn)
+        df[r] = df[r].fillna(ukn)
+
+        # Check if P_emaildomain matches R_emaildomain
+        df["email_check"] = np.where((df[p] == df[r]) & (df[p] != ukn), 1, 0)
+        df[p + "_prefix"] = df[p].apply(lambda x: x.split('.')[0])
+        df[r + "_prefix"] = df[r].apply(lambda x: x.split('.')[0])
+
+    # TransactionAmt[0.251, 31937.391]
+    train_df["TransactionAmt"] = np.log1p(train_df["TransactionAmt"])
+    infer_df["TransactionAmt"] = np.log1p(infer_df["TransactionAmt"])
 
     # Reset values for "noise" card1
     # i_cols = ["card1"]
@@ -154,16 +166,16 @@ if __name__ == "__main__":
     # Let's add some kind of client uID based on cardID ad addr columns
     # The value will be very specific for each client so we need to remove it
     # from final feature. But we can use it for aggregations.
-    train_df["uid"] = train_df["card1"].astype(str) + "_" + train_df["card2"].astype(str)
-    infer_df["uid"] = infer_df["card1"].astype(str) + "_" + infer_df["card2"].astype(str)
-    train_df["uid2"] = train_df["uid"].astype(str) + "_" + train_df["card3"].\
-        astype(str) + "_" + train_df["card5"].astype(str)
-    infer_df["uid2"] = infer_df["uid"].astype(str) + "_" + infer_df["card3"].\
-        astype(str) + "_" + infer_df["card5"].astype(str)
-    train_df["uid3"] = train_df["uid2"].astype(str) + "_" + train_df["addr1"].\
-        astype(str) + "_" + train_df["addr2"].astype(str)
-    infer_df["uid3"] = infer_df["uid2"].astype(str) + "_" + infer_df["addr1"].\
-        astype(str) + "_" + infer_df["addr2"].astype(str)
+    # train_df["uid"] = train_df["card1"].astype(str) + "_" + train_df["card2"].astype(str)
+    # infer_df["uid"] = infer_df["card1"].astype(str) + "_" + infer_df["card2"].astype(str)
+    # train_df["uid2"] = train_df["uid"].astype(str) + "_" + train_df["card3"].\
+    #     astype(str) + "_" + train_df["card5"].astype(str)
+    # infer_df["uid2"] = infer_df["uid"].astype(str) + "_" + infer_df["card3"].\
+    #     astype(str) + "_" + infer_df["card5"].astype(str)
+    # train_df["uid3"] = train_df["uid2"].astype(str) + "_" + train_df["addr1"].\
+    #     astype(str) + "_" + train_df["addr2"].astype(str)
+    # infer_df["uid3"] = infer_df["uid2"].astype(str) + "_" + infer_df["addr1"].\
+    #     astype(str) + "_" + infer_df["addr2"].astype(str)
 
     # Check if the Transaction Amount is common or not (we can use freq encoding here)
     # In our dialog with a model we are telling to trust or not to these values
@@ -173,62 +185,51 @@ if __name__ == "__main__":
     # For our model current TransactionAmt is a noise
     # (even if features importance are telling contrariwise)
     # There are many unique values and model doesn't generalize well
-    i_cols = ["card1", "card2", "card3", "card5", "uid", "uid2", "uid3"]
-    for col in i_cols:
-        for agg_type in ["mean", "std"]:
-            new_col_name = col + "_TransactionAmt_" + agg_type
-            temp_df = pd.concat([train_df[[col, "TransactionAmt"]], infer_df[[col, "TransactionAmt"]]])
-            temp_df = temp_df.groupby([col])["TransactionAmt"].agg([agg_type]).reset_index().rename(
-                columns={agg_type: new_col_name})
-
-            temp_df.index = list(temp_df[col])
-            temp_df = temp_df[new_col_name].to_dict()
-            train_df[new_col_name] = train_df[col].map(temp_df)
-            infer_df[new_col_name] = infer_df[col].map(temp_df)
+    # i_cols = ["card1", "card2", "card3", "card5", "uid", "uid2", "uid3"]
+    # for col in i_cols:
+    #     for agg_type in ["mean", "std"]:
+    #         new_col_name = col + "_TransactionAmt_" + agg_type
+    #         temp_df = pd.concat([train_df[[col, "TransactionAmt"]], infer_df[[col, "TransactionAmt"]]])
+    #         temp_df = temp_df.groupby([col])["TransactionAmt"].agg([agg_type]).reset_index().rename(
+    #             columns={agg_type: new_col_name})
+    #
+    #         temp_df.index = list(temp_df[col])
+    #         temp_df = temp_df[new_col_name].to_dict()
+    #         train_df[new_col_name] = train_df[col].map(temp_df)
+    #         infer_df[new_col_name] = infer_df[col].map(temp_df)
 
     # Small "hack" to transform distribution
     # (doesn't affect auc much, but I like it more)
     # please see how distribution transformation can boost your score
     # (not our case but related)
-    train_df["TransactionAmt"] = np.log1p(train_df["TransactionAmt"])
-    infer_df["TransactionAmt"] = np.log1p(infer_df["TransactionAmt"])
 
-    # P_emaildomain/R_emaildomain
-    p = "P_emaildomain"
-    r = "R_emaildomain"
-    ukn = "email_not_provided"
-    for df in [train_df, infer_df]:
-        df[p] = df[p].fillna(ukn)
-        df[r] = df[r].fillna(ukn)
 
-        # Check if P_emaildomain matches R_emaildomain
-        df["email_check"] = np.where((df[p] == df[r]) & (df[p] != ukn), 1, 0)
-        df[p + "_prefix"] = df[p].apply(lambda x: x.split('.')[0])
-        df[r + "_prefix"] = df[r].apply(lambda x: x.split('.')[0])
+
 
     # Device info
-    for df in [train_id_df, infer_id_df]:
-        df["DeviceInfo"] = df["DeviceInfo"].fillna("unknown_device").str.lower()
-        df["DeviceInfo_device"] = df["DeviceInfo"].apply(lambda x: ''.join([i for i in x if i.isalpha()]))
-        df["DeviceInfo_version"] = df["DeviceInfo"].apply(lambda x: ''.join([i for i in x if i.isnumeric()]))
+    # for df in [train_id_df, infer_id_df]:
+    #     df["DeviceInfo"] = df["DeviceInfo"].fillna("unknown_device").str.lower()
+    #     df["DeviceInfo_device"] = df["DeviceInfo"].apply(lambda x: ''.join([i for i in x if i.isalpha()]))
+    #     df["DeviceInfo_version"] = df["DeviceInfo"].apply(lambda x: ''.join([i for i in x if i.isnumeric()]))
+    #
+    #     df["id_30"] = df["id_30"].fillna('unknown_device').str.lower()
+    #     df["id_30_device"] = df["id_30"].apply(lambda x: ''.join([i for i in x if i.isalpha()]))
+    #     df["id_30_version"] = df["id_30"].apply(lambda x: ''.join([i for i in x if i.isnumeric()]))
+    #
+    #     df["id_31"] = df["id_31"].fillna("unknown_device").str.lower()
+    #     df["id_31_device"] = df["id_31"].apply(lambda x: ''.join([i for i in x if i.isalpha()]))
 
-        df["id_30"] = df["id_30"].fillna('unknown_device').str.lower()
-        df["id_30_device"] = df["id_30"].apply(lambda x: ''.join([i for i in x if i.isalpha()]))
-        df["id_30_version"] = df["id_30"].apply(lambda x: ''.join([i for i in x if i.isnumeric()]))
+    ###############################################################################
+    # ========================= 合并transaction/identity ==========================
+    temp_df1 = train_df[["TransactionID"]]
+    temp_df1 = temp_df1.merge(train_id_df, on=["TransactionID"], how="left")
+    del temp_df1["TransactionID"]
+    train_df = pd.concat([train_df, temp_df1], axis=1)
 
-        df["id_31"] = df["id_31"].fillna("unknown_device").str.lower()
-        df["id_31_device"] = df["id_31"].apply(lambda x: ''.join([i for i in x if i.isalpha()]))
-
-    # Merge Identity columns
-    temp_df = train_df[["TransactionID"]]
-    temp_df = temp_df.merge(train_id_df, on=["TransactionID"], how="left")
-    del temp_df["TransactionID"]
-    train_df = pd.concat([train_df, temp_df], axis=1)
-
-    temp_df = infer_df[["TransactionID"]]
-    temp_df = temp_df.merge(infer_id_df, on=["TransactionID"], how="left")
-    del temp_df["TransactionID"]
-    infer_df = pd.concat([infer_df, temp_df], axis=1)
+    temp_df2 = infer_df[["TransactionID"]]
+    temp_df2 = temp_df2.merge(infer_id_df, on=["TransactionID"], how="left")
+    del temp_df2["TransactionID"]
+    infer_df = pd.concat([infer_df, temp_df2], axis=1)
 
     # Freq encoding
     i_cols = ['card1', 'card2', 'card3', 'card5',
@@ -237,11 +238,7 @@ if __name__ == "__main__":
               'addr1', 'addr2',
               'dist1', 'dist2',
               'P_emaildomain', 'R_emaildomain',
-              'DeviceInfo', 'DeviceInfo_device', 'DeviceInfo_version',
-              'id_30', 'id_30_device', 'id_30_version',
-              'id_31_device',
               'id_33',
-              'uid', 'uid2', 'uid3'
               ]
     for col in i_cols:
         temp_df = pd.concat([train_df[[col]], infer_df[[col]]])
@@ -255,17 +252,17 @@ if __name__ == "__main__":
         train_df[col + "_total"] = train_df[col].map(fq_encode)
         infer_df[col + "_total"] = infer_df[col].map(fq_encode)
 
-    for period in ["DT_M", "DT_W", "DT_D"]:
-        for col in ["uid"]:
-            new_column = col + "_" + period
-            temp_df = pd.concat([train_df[[col, period]], infer_df[[col, period]]])
-            temp_df[new_column] = temp_df[col].astype(str) + "_" + (temp_df[period]).astype(str)
-            fq_encode = temp_df[new_column].value_counts().to_dict()
-
-            train_df[new_column] = (train_df[col].astype(str) + "_" + train_df[period].astype(str)).map(fq_encode)
-            infer_df[new_column] = (infer_df[col].astype(str) + "_" + infer_df[period].astype(str)).map(fq_encode)
-            train_df[new_column] /= train_df[period + "_total"]
-            infer_df[new_column] /= infer_df[period + "_total"]
+    # for period in ["DT_M", "DT_W", "DT_D"]:
+    #     for col in ["uid"]:
+    #         new_column = col + "_" + period
+    #         temp_df = pd.concat([train_df[[col, period]], infer_df[[col, period]]])
+    #         temp_df[new_column] = temp_df[col].astype(str) + "_" + (temp_df[period]).astype(str)
+    #         fq_encode = temp_df[new_column].value_counts().to_dict()
+    #
+    #         train_df[new_column] = (train_df[col].astype(str) + "_" + train_df[period].astype(str)).map(fq_encode)
+    #         infer_df[new_column] = (infer_df[col].astype(str) + "_" + infer_df[period].astype(str)).map(fq_encode)
+    #         train_df[new_column] /= train_df[period + "_total"]
+    #         infer_df[new_column] /= infer_df[period + "_total"]
 
     # Encode Str columns
     for col in list(train_df):
@@ -302,11 +299,6 @@ if __name__ == "__main__":
     features_discard = list(features_check[features_check == 0].index)
     print(features_discard)
 
-    # We will reset this list for now,
-    # Good dropping will be in other kernels
-    # with better checking
-    features_discard = []
-
     # Final features list
     features_cols = [col for col in list(train_df) if col not in rm_cols + features_discard]
 
@@ -315,7 +307,6 @@ if __name__ == "__main__":
         'objective': 'binary',
         'boosting': 'gbdt',
         'metric': 'auc',
-        'n_jobs': -1,
         'tree_learner': 'serial',
         'num_threads': 4,
         'seed': SEED,
