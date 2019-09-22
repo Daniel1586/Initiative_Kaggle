@@ -271,14 +271,14 @@ if __name__ == "__main__":
         'tree_learner': 'serial',
         'num_threads': 4,
         'seed': SEED,
-        'num_iterations': 800,      # number of boosting iterations
-        'learning_rate': 0.01,      # shrinkage rate
+        'num_iterations': 1200,     # number of boosting iterations
+        'learning_rate': 0.025,     # shrinkage rate
         'num_leaves': 2 ** 9,       # max number of leaves in one tree
         'max_depth': -1,            # limit the max depth for tree model, -1 means no limit
         'min_data_in_leaf': 2000,   # minimal number of data in one leaf
-        'subsample': 0.7,           # randomly select part of data without resampling
+        'subsample': 0.75,          # randomly select part of data without resampling
         'subsample_freq': 1,        # subsample/subsample_freq 同时设置才有用
-        'colsample_bytree': 0.7,    # randomly select part of features on each iteration
+        'colsample_bytree': 0.75,   # randomly select part of features on each iteration
         'lambda_l1': 0.0,           # L1 regularization
         'lambda_l2': 0.0,           # L2 regularization
         'min_gain_to_split': 0.0,   # the minimal gain to perform split
@@ -294,12 +294,11 @@ if __name__ == "__main__":
     else:
         print("-----Shape control:", train_df.shape, infer_df.shape)
         print("-----Used features:", len(features_cols))
-        # lgb_params["learning_rate"] = 0.01
-        # lgb_params["min_data_in_leaf"] = 2000
-        # lgb_params["lambda_l1"] = 0.3
-        # lgb_params["lambda_l2"] = 0.1
+        # lgb_params["learning_rate"] = 0.025
+        # lgb_params["subsample"] = 0.8
+        # lgb_params["colsample_bytree"] = 0.8
         test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=6)
     # Export
     if not LOCAL_TEST:
         test_predictions["isFraud"] = test_predictions["prediction"]
-        test_predictions[["TransactionID", "isFraud"]].to_csv("092211.csv", index=False)
+        test_predictions[["TransactionID", "isFraud"]].to_csv("092301.csv", index=False)
