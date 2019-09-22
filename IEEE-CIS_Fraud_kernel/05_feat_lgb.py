@@ -124,6 +124,7 @@ if __name__ == "__main__":
         df["DT_day_hour"] = df["DT"].dt.hour.astype(np.int8)
         df["Is_december"] = df["DT"].dt.month
         df["Is_december"] = (df["Is_december"] == 12).astype(np.int8)
+        df["weekday"] = df["TransactionDT"].map(lambda x: (x // (3600 * 24)) % 7)
     # Total transactions per timeblock
     for col in ["DT_M", "DT_W", "DT_D"]:
         temp_df = pd.concat([train_df[[col]], infer_df[[col]]])
@@ -226,19 +227,19 @@ if __name__ == "__main__":
     infer_df = pd.concat([infer_df, temp_df2], axis=1)
 
     # Freq encoding
-    i_cols = ['card1', 'card2', 'card3', 'card5',
-              'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C10', 'C11', 'C12', 'C13', 'C14',
-              'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8',
-              'addr1', 'addr2',
-              'dist1', 'dist2',
-              'P_emaildomain', 'R_emaildomain',
-              'id_33',
-              ]
-    for col in i_cols:
-        temp_df = pd.concat([train_df[[col]], infer_df[[col]]])
-        fq_encode = temp_df[col].value_counts().to_dict()
-        train_df[col + "_fq_enc"] = train_df[col].map(fq_encode)
-        infer_df[col + "_fq_enc"] = infer_df[col].map(fq_encode)
+    # i_cols = ['card1', 'card2', 'card3', 'card5',
+    #           'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C10', 'C11', 'C12', 'C13', 'C14',
+    #           'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8',
+    #           'addr1', 'addr2',
+    #           'dist1', 'dist2',
+    #           'P_emaildomain', 'R_emaildomain',
+    #           'id_33',
+    #           ]
+    # for col in i_cols:
+    #     temp_df = pd.concat([train_df[[col]], infer_df[[col]]])
+    #     fq_encode = temp_df[col].value_counts().to_dict()
+    #     train_df[col + "_fq_enc"] = train_df[col].map(fq_encode)
+    #     infer_df[col + "_fq_enc"] = infer_df[col].map(fq_encode)
 
     # Encode Str columns
     for col in list(train_df):
@@ -258,7 +259,8 @@ if __name__ == "__main__":
             infer_df[col] = infer_df[col].astype("category")
 
     # Final features list
-    rm_cols += ["DT", "DT_M", "DT_W", "DT_D", "DT_day_month"]
+    rm_cols += ["DT", "DT_M", "DT_W", "DT_D", "DT_day_month",
+                "uid1", "uid2", "uid3", "uid4", "uid5"]
     features_cols = [col for col in list(train_df) if col not in rm_cols]
 
     # Model params
@@ -271,12 +273,15 @@ if __name__ == "__main__":
         'seed': SEED,
         'num_iterations': 800,      # number of boosting iterations
         'learning_rate': 0.01,      # shrinkage rate
-        'num_leaves': 2 ** 8,       # max number of leaves in one tree
+        'num_leaves': 2 ** 9,       # max number of leaves in one tree
         'max_depth': -1,            # limit the max depth for tree model, -1 means no limit
-        'min_data_in_leaf': 100,    # minimal number of data in one leaf
-        'subsample': 0.8,           # randomly select part of data without resampling
+        'min_data_in_leaf': 2000,   # minimal number of data in one leaf
+        'subsample': 0.7,           # randomly select part of data without resampling
         'subsample_freq': 1,        # subsample/subsample_freq 同时设置才有用
-        'colsample_bytree': 0.8,    # randomly select part of features on each iteration
+        'colsample_bytree': 0.7,    # randomly select part of features on each iteration
+        'lambda_l1': 0.0,           # L1 regularization
+        'lambda_l2': 0.0,           # L2 regularization
+        'min_gain_to_split': 0.0,   # the minimal gain to perform split
         'early_stopping_round': 100,
         'max_bin': 255,
         'verbose': -1,
@@ -289,12 +294,12 @@ if __name__ == "__main__":
     else:
         print("-----Shape control:", train_df.shape, infer_df.shape)
         print("-----Used features:", len(features_cols))
-        lgb_params["learning_rate"] = 0.1
-        lgb_params["min_data_in_leaf"] = 2000
-        lgb_params["subsample"] = 0.7
-        lgb_params["colsample_bytree"] = 0.7
+        # lgb_params["learning_rate"] = 0.01
+        # lgb_params["min_data_in_leaf"] = 2000
+        # lgb_params["lambda_l1"] = 0.3
+        # lgb_params["lambda_l2"] = 0.1
         test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=6)
     # Export
     if not LOCAL_TEST:
         test_predictions["isFraud"] = test_predictions["prediction"]
-        test_predictions[["TransactionID", "isFraud"]].to_csv("092108.csv", index=False)
+        test_predictions[["TransactionID", "isFraud"]].to_csv("092211.csv", index=False)
