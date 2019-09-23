@@ -226,21 +226,6 @@ if __name__ == "__main__":
     del temp_df2["TransactionID"]
     infer_df = pd.concat([infer_df, temp_df2], axis=1)
 
-    # Freq encoding
-    # i_cols = ['card1', 'card2', 'card3', 'card5',
-    #           'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C10', 'C11', 'C12', 'C13', 'C14',
-    #           'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8',
-    #           'addr1', 'addr2',
-    #           'dist1', 'dist2',
-    #           'P_emaildomain', 'R_emaildomain',
-    #           'id_33',
-    #           ]
-    # for col in i_cols:
-    #     temp_df = pd.concat([train_df[[col]], infer_df[[col]]])
-    #     fq_encode = temp_df[col].value_counts().to_dict()
-    #     train_df[col + "_fq_enc"] = train_df[col].map(fq_encode)
-    #     infer_df[col + "_fq_enc"] = infer_df[col].map(fq_encode)
-
     # Encode Str columns
     for col in list(train_df):
         if train_df[col].dtype == 'O' or infer_df[col].dtype == 'O':
@@ -271,7 +256,7 @@ if __name__ == "__main__":
         'tree_learner': 'serial',
         'num_threads': 4,
         'seed': SEED,
-        'num_iterations': 1200,     # number of boosting iterations
+        'num_iterations': 1000,     # number of boosting iterations
         'learning_rate': 0.025,     # shrinkage rate
         'num_leaves': 2 ** 9,       # max number of leaves in one tree
         'max_depth': -1,            # limit the max depth for tree model, -1 means no limit
@@ -294,11 +279,11 @@ if __name__ == "__main__":
     else:
         print("-----Shape control:", train_df.shape, infer_df.shape)
         print("-----Used features:", len(features_cols))
-        # lgb_params["learning_rate"] = 0.025
+        lgb_params["lambda_l1"] = 0.1
         # lgb_params["subsample"] = 0.8
         # lgb_params["colsample_bytree"] = 0.8
         test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=6)
     # Export
     if not LOCAL_TEST:
         test_predictions["isFraud"] = test_predictions["prediction"]
-        test_predictions[["TransactionID", "isFraud"]].to_csv("092301.csv", index=False)
+        test_predictions[["TransactionID", "isFraud"]].to_csv("092302.csv", index=False)
