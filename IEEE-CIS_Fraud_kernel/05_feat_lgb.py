@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 import lightgbm as lgb
 from sklearn import metrics
-from sklearn.model_selection import GroupKFold
+from sklearn.model_selection import KFold, GroupKFold
 from sklearn.preprocessing import LabelEncoder
 warnings.filterwarnings('ignore')
 
@@ -35,6 +35,7 @@ def set_seed(seed=0):
 
 def make_predictions(tr_df, tt_df, features_columns, target, params, nfold=2):
     # K折交叉验证
+    # folds = KFold(n_splits=nfold, shuffle=True, random_state=SEED)
     folds = GroupKFold(n_splits=nfold)
 
     # 数据集划分
@@ -245,7 +246,19 @@ if __name__ == "__main__":
 
     # Final features list
     rm_cols += ["DT", "DT_M", "DT_W", "DT_D", "DT_day_month",
-                "uid1", "uid2", "uid3", "uid4", "uid5"]
+                "uid1", "uid2", "uid3", "uid4", "uid5",
+                'V300', 'V309', 'V111', 'V124', 'V106', 'V125',
+                'V315', 'V134', 'V102', 'V123', 'V316', 'V113',
+                'V136', 'V305', 'V110', 'V299', 'V289', 'V286',
+                'V318', 'V304', 'V116', 'V284', 'V293', 'V137',
+                'V295', 'V301', 'V104', 'V311', 'V115', 'V109',
+                'V119', 'V321', 'V114', 'V133', 'V122', 'V319',
+                'V105', 'V112', 'V118', 'V117', 'V121', 'V108',
+                'V135', 'V320', 'V303', 'V297', 'V120',   'V1',
+                'V14', 'V41', 'V65', 'V88', 'V89', 'V107', 'V68',
+                'V28', 'V27', 'V29', 'V241', 'V269', 'V240', 'V325',
+                'V138', 'V154', 'V153', 'V330', 'V142', 'V195',
+                'V302', 'V328', 'V327', 'V198', 'V196', 'V155']
     features_cols = [col for col in list(train_df) if col not in rm_cols]
 
     # Model params
@@ -279,11 +292,11 @@ if __name__ == "__main__":
     else:
         print("-----Shape control:", train_df.shape, infer_df.shape)
         print("-----Used features:", len(features_cols))
-        lgb_params["lambda_l1"] = 0.1
-        # lgb_params["subsample"] = 0.8
-        # lgb_params["colsample_bytree"] = 0.8
+        lgb_params["lambda_l1"] = 0.3
+        lgb_params["subsample"] = 0.75
+        lgb_params["colsample_bytree"] = 0.5
         test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=6)
     # Export
     if not LOCAL_TEST:
         test_predictions["isFraud"] = test_predictions["prediction"]
-        test_predictions[["TransactionID", "isFraud"]].to_csv("092302.csv", index=False)
+        test_predictions[["TransactionID", "isFraud"]].to_csv("092304.csv", index=False)
