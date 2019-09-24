@@ -269,7 +269,7 @@ if __name__ == "__main__":
         'tree_learner': 'serial',
         'num_threads': 4,
         'seed': SEED,
-        'num_iterations': 400,              # 100,number of boosting iterations
+        'num_iterations': 500,              # 100,number of boosting iterations
         'learning_rate': 0.1,               # 0.1,shrinkage rate
         'num_leaves': 2 ** 9,               # 31,max number of leaves in one tree
         'max_depth': 6,                     # -1,limit the max depth for tree model, -1 means no limit
@@ -294,8 +294,9 @@ if __name__ == "__main__":
     else:
         print("-----Shape control:", train_df.shape, infer_df.shape)
         print("-----Used features:", len(features_cols))
+        lgb_params["learning_rate"] = 0.2
         test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=6)
     # Export
     if not LOCAL_TEST:
         test_predictions["isFraud"] = test_predictions["prediction"]
-        test_predictions[["TransactionID", "isFraud"]].to_csv("092401.csv", index=False)
+        test_predictions[["TransactionID", "isFraud"]].to_csv("092403.csv", index=False)
