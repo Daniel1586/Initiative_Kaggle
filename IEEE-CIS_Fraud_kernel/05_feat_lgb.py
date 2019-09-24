@@ -272,7 +272,7 @@ if __name__ == "__main__":
         'num_iterations': 400,              # 100,number of boosting iterations
         'learning_rate': 0.1,               # 0.1,shrinkage rate
         'num_leaves': 2 ** 9,               # 31,max number of leaves in one tree
-        'max_depth': -1,                    # -1,limit the max depth for tree model, -1 means no limit
+        'max_depth': 6,                     # -1,limit the max depth for tree model, -1 means no limit
         'min_data_in_leaf': 20,             # 20,minimal number of data in one leaf
         'min_child_weight': 1e-3,           # 1e-3,minimal sum hessian in one leaf
         'bagging_freq': 1,                  # 0,bagging_fraction/bagging_freq 同时设置才有用
