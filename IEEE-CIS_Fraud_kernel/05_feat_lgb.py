@@ -269,17 +269,19 @@ if __name__ == "__main__":
         'tree_learner': 'serial',
         'num_threads': 4,
         'seed': SEED,
-        'num_iterations': 1000,     # number of boosting iterations
-        'learning_rate': 0.025,     # shrinkage rate
-        'num_leaves': 2 ** 9,       # max number of leaves in one tree
-        'max_depth': -1,            # limit the max depth for tree model, -1 means no limit
-        'min_data_in_leaf': 2000,   # minimal number of data in one leaf
-        'subsample': 0.75,          # randomly select part of data without resampling
-        'subsample_freq': 1,        # subsample/subsample_freq 同时设置才有用
-        'colsample_bytree': 0.5,    # randomly select part of features on each iteration
-        'lambda_l1': 0.3,           # L1 regularization
-        'lambda_l2': 0.0,           # L2 regularization
-        'min_gain_to_split': 0.0,   # the minimal gain to perform split
+        'num_iterations': 400,              # 100,number of boosting iterations
+        'learning_rate': 0.1,               # 0.1,shrinkage rate
+        'num_leaves': 2 ** 9,               # 31,max number of leaves in one tree
+        'max_depth': -1,                    # -1,limit the max depth for tree model, -1 means no limit
+        'min_data_in_leaf': 20,             # 20,minimal number of data in one leaf
+        'min_child_weight': 1e-3,           # 1e-3,minimal sum hessian in one leaf
+        'bagging_freq': 1,                  # 0,bagging_fraction/bagging_freq 同时设置才有用
+        'bagging_fraction': 1.0,            # 1.0,randomly select part of data without resampling
+        'feature_fraction': 0.7,            # 1.0,randomly select part of features on each iteration
+        'lambda_l1': 0.1,                   # 0.0,L1 regularization
+        'lambda_l2': 1.0,                   # 0.0,L2 regularization
+        'min_gain_to_split': 0.0,           # 0.0,the minimal gain to perform split
+        'cat_smooth': 10.0,                 # 10.0,used for the categorical features
         'early_stopping_round': 100,
         'max_bin': 255,
         'verbose': -1,
