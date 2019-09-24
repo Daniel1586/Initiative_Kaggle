@@ -276,8 +276,8 @@ if __name__ == "__main__":
         'min_data_in_leaf': 2000,   # minimal number of data in one leaf
         'subsample': 0.75,          # randomly select part of data without resampling
         'subsample_freq': 1,        # subsample/subsample_freq 同时设置才有用
-        'colsample_bytree': 0.75,   # randomly select part of features on each iteration
-        'lambda_l1': 0.0,           # L1 regularization
+        'colsample_bytree': 0.5,    # randomly select part of features on each iteration
+        'lambda_l1': 0.3,           # L1 regularization
         'lambda_l2': 0.0,           # L2 regularization
         'min_gain_to_split': 0.0,   # the minimal gain to perform split
         'early_stopping_round': 100,
@@ -292,11 +292,8 @@ if __name__ == "__main__":
     else:
         print("-----Shape control:", train_df.shape, infer_df.shape)
         print("-----Used features:", len(features_cols))
-        lgb_params["lambda_l1"] = 0.3
-        lgb_params["subsample"] = 0.75
-        lgb_params["colsample_bytree"] = 0.5
         test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=6)
     # Export
     if not LOCAL_TEST:
         test_predictions["isFraud"] = test_predictions["prediction"]
-        test_predictions[["TransactionID", "isFraud"]].to_csv("092304.csv", index=False)
+        test_predictions[["TransactionID", "isFraud"]].to_csv("092401.csv", index=False)
