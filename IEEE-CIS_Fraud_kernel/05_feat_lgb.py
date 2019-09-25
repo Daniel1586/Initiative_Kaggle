@@ -294,10 +294,26 @@ if __name__ == "__main__":
     else:
         print("-----Shape control:", train_df.shape, infer_df.shape)
         print("-----Used features:", len(features_cols))
-        lgb_params["max_depth"] = 16
+        opt_leaves = [1024, 960, 720, 512, 360, 256]
+        opt_depth = [16, 14, 12, 10, 8, 6]
+        opt_lrate = [0.01, 0.02, 0.05, 0.08, 0.1]
+        for i1 in opt_leaves:
+            for i2 in opt_depth:
+                for i3 in opt_lrate:
+                    lgb_params["num_leaves"] = i1
+                    lgb_params["max_depth"] = i2
+                    lgb_params["learning_rate"] = i3
+                    print(lgb_params["num_leaves"], lgb_params["max_depth"])
+                    test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=6)
+                    # Export
+                    if not LOCAL_TEST:
+                        file_name = str(i1) + "_" + str(i2) + "_" + str(i3) + ".csv"
+                        print(file_name)
+                        print("===========================================================")
+                        test_predictions["isFraud"] = test_predictions["prediction"]
+                        test_predictions[["TransactionID", "isFraud"]].to_csv(file_name, index=False)
 
-        test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=6)
     # Export
-    if not LOCAL_TEST:
-        test_predictions["isFraud"] = test_predictions["prediction"]
-        test_predictions[["TransactionID", "isFraud"]].to_csv("092502.csv", index=False)
+    # if not LOCAL_TEST:
+    #     test_predictions["isFraud"] = test_predictions["prediction"]
+    #     test_predictions[["TransactionID", "isFraud"]].to_csv("092502.csv", index=False)
