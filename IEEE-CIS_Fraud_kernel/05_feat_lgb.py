@@ -294,9 +294,9 @@ if __name__ == "__main__":
     else:
         print("-----Shape control:", train_df.shape, infer_df.shape)
         print("-----Used features:", len(features_cols))
-        opt_leaves = [1024, 960, 720, 512, 360, 256]
-        opt_depth = [16, 14, 12, 10, 8, 6]
-        opt_lrate = [0.01, 0.02, 0.05, 0.08, 0.1]
+        opt_leaves = [960, 720, 640, 480]
+        opt_depth = [18, 16, 14]
+        opt_lrate = [0.01, 0.02, 0.03]
         for i1 in opt_leaves:
             for i2 in opt_depth:
                 for i3 in opt_lrate:
