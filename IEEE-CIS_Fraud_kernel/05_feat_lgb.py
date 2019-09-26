@@ -303,7 +303,7 @@ if __name__ == "__main__":
                     lgb_params["num_leaves"] = i1
                     lgb_params["max_depth"] = i2
                     lgb_params["learning_rate"] = i3
-                    print(lgb_params["num_leaves"], lgb_params["max_depth"])
+                    print(lgb_params["num_leaves"], lgb_params["max_depth"], lgb_params["learning_rate"])
                     test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=6)
                     # Export
                     if not LOCAL_TEST:
