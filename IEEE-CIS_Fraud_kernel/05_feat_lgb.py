@@ -295,7 +295,7 @@ if __name__ == "__main__":
         print("-----Shape control:", train_df.shape, infer_df.shape)
         print("-----Used features:", len(features_cols))
         opt_min_data = [50, 100, 500]
-        opt_min_child = [0.002, 0.003, 0.005]
+        opt_min_child = [0.01, 0.05]
         for i1 in opt_min_data:
             for i2 in opt_min_child:
                 lgb_params["min_data_in_leaf"] = i1
