@@ -269,12 +269,12 @@ if __name__ == "__main__":
         'tree_learner': 'serial',
         'num_threads': 4,
         'seed': SEED,
-        'num_iterations': 800,              # 100,number of boosting iterations
+        'num_iterations': 500,              # 100,number of boosting iterations
         'learning_rate': 0.015,             # 0.1,shrinkage rate
         'num_leaves': 720,                  # 31,max number of leaves in one tree
         'max_depth': 16,                    # -1,limit the max depth for tree model, -1 means no limit
-        'min_data_in_leaf': 20,             # 20,minimal number of data in one leaf
-        'min_child_weight': 1e-3,           # 1e-3,minimal sum hessian in one leaf
+        'min_data_in_leaf': 100,            # 20,minimal number of data in one leaf
+        'min_child_weight': 0.05,           # 1e-3,minimal sum hessian in one leaf
         'bagging_freq': 1,                  # 0,bagging_fraction/bagging_freq 同时设置才有用
         'bagging_fraction': 1.0,            # 1.0,randomly select part of data without resampling
         'feature_fraction': 0.7,            # 1.0,randomly select part of features on each iteration
@@ -295,7 +295,7 @@ if __name__ == "__main__":
         print("-----Shape control:", train_df.shape, infer_df.shape)
         print("-----Used features:", len(features_cols))
         opt_min_data = [50, 100, 500]
-        opt_min_child = [0.01, 0.05]
+        opt_min_child = [0.05, 0.1]
         for i1 in opt_min_data:
             for i2 in opt_min_child:
                 lgb_params["min_data_in_leaf"] = i1
