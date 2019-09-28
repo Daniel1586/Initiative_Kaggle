@@ -294,13 +294,13 @@ if __name__ == "__main__":
     else:
         print("-----Shape control:", train_df.shape, infer_df.shape)
         print("-----Used features:", len(features_cols))
-        opt_min_data = [50, 100, 500]
-        opt_min_child = [0.05, 0.1]
+        opt_min_data = [0.5, 0.6, 0.7]
+        opt_min_child = [0.5, 0.6, 0.8]
         for i1 in opt_min_data:
             for i2 in opt_min_child:
-                lgb_params["min_data_in_leaf"] = i1
-                lgb_params["min_child_weight"] = i2
-                print(lgb_params["min_data_in_leaf"], lgb_params["min_child_weight"])
+                lgb_params["bagging_fraction"] = i1
+                lgb_params["feature_fraction"] = i2
+                print(lgb_params["bagging_fraction"], lgb_params["feature_fraction"])
                 test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=6)
                 # Export
                 if not LOCAL_TEST:
