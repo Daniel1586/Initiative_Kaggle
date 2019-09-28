@@ -58,7 +58,7 @@ def make_predictions(tr_df, tt_df, features_columns, target, params, nfold=2):
             vl_data = lgb.Dataset(infer_x, label=infer_y)
         else:
             vl_data = lgb.Dataset(vl_x, label=vl_y)
-        estimator = lgb.train(params, tr_data, valid_sets=[tr_data, vl_data], verbose_eval=100)
+        estimator = lgb.train(params, tr_data, valid_sets=[tr_data, vl_data], verbose_eval=50)
         infer_p = estimator.predict(infer_x)
         predictions += infer_p / nfold
         oof_preds = estimator.predict(vl_x)
@@ -269,7 +269,7 @@ if __name__ == "__main__":
         'tree_learner': 'serial',
         'num_threads': 4,
         'seed': SEED,
-        'num_iterations': 500,              # 100,number of boosting iterations
+        'num_iterations': 800,              # 100,number of boosting iterations
         'learning_rate': 0.015,             # 0.1,shrinkage rate
         'num_leaves': 720,                  # 31,max number of leaves in one tree
         'max_depth': 16,                    # -1,limit the max depth for tree model, -1 means no limit
@@ -282,7 +282,7 @@ if __name__ == "__main__":
         'lambda_l2': 1.0,                   # 0.0,L2 regularization
         'min_gain_to_split': 0.0,           # 0.0,the minimal gain to perform split
         'cat_smooth': 10.0,                 # 10.0,used for the categorical features
-        'early_stopping_round': 100,
+        'early_stopping_round': 50,
         'max_bin': 255,
         'verbose': -1,
     }
