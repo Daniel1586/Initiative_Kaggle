@@ -270,13 +270,13 @@ if __name__ == "__main__":
         'num_threads': 4,
         'seed': SEED,
         'num_iterations': 800,              # 100,number of boosting iterations
-        'learning_rate': 0.015,             # 0.1,shrinkage rate
+        'learning_rate': 0.02,              # 0.1,shrinkage rate
         'num_leaves': 720,                  # 31,max number of leaves in one tree
         'max_depth': 16,                    # -1,limit the max depth for tree model, -1 means no limit
         'min_data_in_leaf': 100,            # 20,minimal number of data in one leaf
         'min_child_weight': 0.05,           # 1e-3,minimal sum hessian in one leaf
         'bagging_freq': 1,                  # 0,bagging_fraction/bagging_freq 同时设置才有用
-        'bagging_fraction': 1.0,            # 1.0,randomly select part of data without resampling
+        'bagging_fraction': 0.7,            # 1.0,randomly select part of data without resampling
         'feature_fraction': 0.7,            # 1.0,randomly select part of features on each iteration
         'lambda_l1': 0.1,                   # 0.0,L1 regularization
         'lambda_l2': 1.0,                   # 0.0,L2 regularization
@@ -294,13 +294,13 @@ if __name__ == "__main__":
     else:
         print("-----Shape control:", train_df.shape, infer_df.shape)
         print("-----Used features:", len(features_cols))
-        opt_min_data = [0.5, 0.6, 0.7]
-        opt_min_child = [0.5, 0.6, 0.8]
+        opt_min_data = [0.1, 0.5, 1.0]
+        opt_min_child = [1.0, 5.0, 8.0]
         for i1 in opt_min_data:
             for i2 in opt_min_child:
-                lgb_params["bagging_fraction"] = i1
-                lgb_params["feature_fraction"] = i2
-                print(lgb_params["bagging_fraction"], lgb_params["feature_fraction"])
+                lgb_params["lambda_l1"] = i1
+                lgb_params["lambda_l2"] = i2
+                print(lgb_params["lambda_l1"], lgb_params["lambda_l2"])
                 test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=6)
                 # Export
                 if not LOCAL_TEST:
