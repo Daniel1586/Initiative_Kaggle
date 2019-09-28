@@ -58,7 +58,7 @@ def make_predictions(tr_df, tt_df, features_columns, target, params, nfold=2):
             vl_data = lgb.Dataset(infer_x, label=infer_y)
         else:
             vl_data = lgb.Dataset(vl_x, label=vl_y)
-        estimator = lgb.train(params, tr_data, valid_sets=[tr_data, vl_data], verbose_eval=50)
+        estimator = lgb.train(params, tr_data, valid_sets=[tr_data, vl_data], verbose_eval=100)
         infer_p = estimator.predict(infer_x)
         predictions += infer_p / nfold
         oof_preds = estimator.predict(vl_x)
@@ -276,9 +276,9 @@ if __name__ == "__main__":
         'min_data_in_leaf': 100,            # 20,minimal number of data in one leaf
         'min_child_weight': 0.05,           # 1e-3,minimal sum hessian in one leaf
         'bagging_freq': 1,                  # 0,bagging_fraction/bagging_freq 同时设置才有用
-        'bagging_fraction': 0.7,            # 1.0,randomly select part of data without resampling
-        'feature_fraction': 0.7,            # 1.0,randomly select part of features on each iteration
-        'lambda_l1': 0.1,                   # 0.0,L1 regularization
+        'bagging_fraction': 0.6,            # 1.0,randomly select part of data without resampling
+        'feature_fraction': 0.5,            # 1.0,randomly select part of features on each iteration
+        'lambda_l1': 0.5,                   # 0.0,L1 regularization
         'lambda_l2': 1.0,                   # 0.0,L2 regularization
         'min_gain_to_split': 0.0,           # 0.0,the minimal gain to perform split
         'cat_smooth': 10.0,                 # 10.0,used for the categorical features
@@ -294,8 +294,8 @@ if __name__ == "__main__":
     else:
         print("-----Shape control:", train_df.shape, infer_df.shape)
         print("-----Used features:", len(features_cols))
-        opt_min_data = [0.1, 0.5, 1.0]
-        opt_min_child = [1.0, 5.0, 8.0]
+        opt_min_data = [0.5]
+        opt_min_child = [1.0]
         for i1 in opt_min_data:
             for i2 in opt_min_child:
                 lgb_params["lambda_l1"] = i1
