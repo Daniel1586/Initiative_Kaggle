@@ -269,8 +269,8 @@ if __name__ == "__main__":
         'tree_learner': 'serial',
         'num_threads': 4,
         'seed': SEED,
-        'num_iterations': 800,              # 100,number of boosting iterations
-        'learning_rate': 0.02,              # 0.1,shrinkage rate
+        'num_iterations': 1000,              # 100,number of boosting iterations
+        'learning_rate': 0.015,              # 0.1,shrinkage rate
         'num_leaves': 720,                  # 31,max number of leaves in one tree
         'max_depth': 16,                    # -1,limit the max depth for tree model, -1 means no limit
         'min_data_in_leaf': 100,            # 20,minimal number of data in one leaf
@@ -308,7 +308,7 @@ if __name__ == "__main__":
                     print(file_name)
                     print("===========================================================")
                     test_predictions["isFraud"] = test_predictions["prediction"]
-                    test_predictions[["TransactionID", "isFraud"]].to_csv(file_name, index=False)
+                    test_predictions[["TransactionID", "isFraud"]].to_csv("093001.csv", index=False)
 
     # Export
     # if not LOCAL_TEST:
