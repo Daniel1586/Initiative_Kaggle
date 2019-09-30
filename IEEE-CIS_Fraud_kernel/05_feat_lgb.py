@@ -35,8 +35,8 @@ def set_seed(seed=0):
 
 def make_predictions(tr_df, tt_df, features_columns, target, params, nfold=2):
     # K折交叉验证
-    # folds = KFold(n_splits=nfold, shuffle=True, random_state=SEED)
-    folds = GroupKFold(n_splits=nfold)
+    folds = KFold(n_splits=nfold, shuffle=True, random_state=SEED)
+    # folds = GroupKFold(n_splits=nfold)
 
     # 数据集划分
     train_x, train_y = tr_df[features_columns], tr_df[target]
@@ -47,7 +47,7 @@ def make_predictions(tr_df, tt_df, features_columns, target, params, nfold=2):
     oof = np.zeros(len(tr_df))
 
     # 模型训练与预测
-    for fold_, (tra_idx, val_idx) in enumerate(folds.split(train_x, train_y, groups=split_groups)):
+    for fold_, (tra_idx, val_idx) in enumerate(folds.split(train_x, train_y)):
         print("-----Fold:", fold_)
         tr_x, tr_y = train_x.iloc[tra_idx, :], train_y[tra_idx]
         vl_x, vl_y = train_x.iloc[val_idx, :], train_y[val_idx]
@@ -264,18 +264,18 @@ if __name__ == "__main__":
     # Model params
     lgb_params = {
         'objective': 'binary',
-        'boosting': 'gbdt',
+        'boosting': 'goss',
         'metric': 'auc',
         'tree_learner': 'serial',
         'num_threads': 4,
         'seed': SEED,
-        'num_iterations': 1000,              # 100,number of boosting iterations
-        'learning_rate': 0.015,              # 0.1,shrinkage rate
+        'num_iterations': 1200,              # 100,number of boosting iterations
+        'learning_rate': 0.03,              # 0.1,shrinkage rate
         'num_leaves': 720,                  # 31,max number of leaves in one tree
         'max_depth': 16,                    # -1,limit the max depth for tree model, -1 means no limit
         'min_data_in_leaf': 100,            # 20,minimal number of data in one leaf
         'min_child_weight': 0.05,           # 1e-3,minimal sum hessian in one leaf
-        'bagging_freq': 1,                  # 0,bagging_fraction/bagging_freq 同时设置才有用
+        'bagging_freq': 0,                  # 0,bagging_fraction/bagging_freq 同时设置才有用
         'bagging_fraction': 0.6,            # 1.0,randomly select part of data without resampling
         'feature_fraction': 0.5,            # 1.0,randomly select part of features on each iteration
         'lambda_l1': 0.5,                   # 0.0,L1 regularization
@@ -308,7 +308,7 @@ if __name__ == "__main__":
                     print(file_name)
                     print("===========================================================")
                     test_predictions["isFraud"] = test_predictions["prediction"]
-                    test_predictions[["TransactionID", "isFraud"]].to_csv("093001.csv", index=False)
+                    test_predictions[["TransactionID", "isFraud"]].to_csv("093005.csv", index=False)
 
     # Export
     # if not LOCAL_TEST:
