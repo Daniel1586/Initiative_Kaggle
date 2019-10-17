@@ -61,35 +61,6 @@ def reduce_mem_usage(df, verbose=True):
     return df
 
 
-# [train+infer]离散特征编码:[NaN不编码]
-def minify_identity_df(df):
-    df['id_12'] = df['id_12'].map({'Found': 1, 'NotFound': 0})
-    df['id_15'] = df['id_15'].map({'New': 2, 'Found': 1, 'Unknown': 0})
-    df['id_16'] = df['id_16'].map({'Found': 1, 'NotFound': 0})
-    df['id_23'] = df['id_23'].map({'IP_PROXY:TRANSPARENT': 3, 'IP_PROXY:ANONYMOUS': 2, 'IP_PROXY:HIDDEN': 1})
-
-    df['id_27'] = df['id_27'].map({'Found': 1, 'NotFound': 0})
-    df['id_28'] = df['id_28'].map({'New': 2, 'Found': 1})
-    df['id_29'] = df['id_29'].map({'Found': 1, 'NotFound': 0})
-
-    df['id_35'] = df['id_35'].map({'T': 1, 'F': 0})
-    df['id_36'] = df['id_36'].map({'T': 1, 'F': 0})
-    df['id_37'] = df['id_37'].map({'T': 1, 'F': 0})
-    df['id_38'] = df['id_38'].map({'T': 1, 'F': 0})
-
-    df['id_34'] = df['id_34'].fillna(':3')
-    df['id_34'] = df['id_34'].apply(lambda x: x.split(':')[1]).astype(np.int8)
-    df['id_34'] = np.where(df['id_34'] == 3, np.nan, df['id_34'])
-
-    df['id_33'] = df['id_33'].fillna('0x0')
-    df['id_33_0'] = df['id_33'].apply(lambda x: x.split('x')[0]).astype(int)
-    df['id_33_1'] = df['id_33'].apply(lambda x: x.split('x')[1]).astype(int)
-    df['id_33'] = np.where(df['id_33'] == '0x0', np.nan, df['id_33'])
-
-    df['DeviceType'].map({'desktop': 1, 'mobile': 0})
-    return df
-
-
 if __name__ == "__main__":
     print("========== 1.Set random seed ...")
     SEED = 42
