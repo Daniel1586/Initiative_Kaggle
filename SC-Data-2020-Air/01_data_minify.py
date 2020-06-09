@@ -91,7 +91,7 @@ if __name__ == "__main__":
     print("========== 1.Set random seed ... ==========")
     SEED = 42
     set_seed(SEED)
-    START_DATE = datetime.datetime.strptime("2017-11-30", "%Y-%m-%d")
+    START_DATE = datetime.datetime.strptime("2017-01-01", "%Y-%m-%d")
 
     print("========== 2.Load csv data ... ==========")
     dir_data_csv = os.getcwd() + "\\train\\"
@@ -118,9 +118,11 @@ if __name__ == "__main__":
     print(train_df.shape)
     print(train_df.columns.tolist())
 
+    # 时间格式变换 DATA_TIME_
+    train_df["DT"] = train_df["DATA_TIME_"].apply(lambda x: datetime.datetime.strptime(x, "%Y/%m/%d %H:%M:%S"))
+
     # DATA_TIME_ 监测时间
     for df in [train_df]:
-        df["DT"] = df["DATA_TIME_"].apply(lambda x: (START_DATE + datetime.timedelta(seconds=x)))
         df["DT_M"] = (df["DT"].dt.year - 2017) * 12 + df["DT"].dt.month
         df["DT_W"] = (df["DT"].dt.year - 2017) * 52 + df["DT"].dt.weekofyear
         df["DT_D"] = (df["DT"].dt.year - 2017) * 365 + df["DT"].dt.dayofyear
@@ -129,67 +131,6 @@ if __name__ == "__main__":
         df["DT_day_week"] = df["DT"].dt.dayofweek
         df["DT_day"] = df["DT"].dt.day
 
-        # D9 column
-        df["D9"] = np.where(df["D9"].isna(), 0, 1)
+    print(train_df.shape)
+    print(train_df.columns.tolist())
 
-    tmp_df = train_loc0.drop_duplicates(subset=["phone_no_m"], keep='first', inplace=False)
-    print(tmp_df.shape)
-
-    infer_tran = pd.read_csv(dir_data_csv + "\\test_transaction.csv")
-    infer_iden = pd.read_csv(dir_data_csv + "\\test_identity.csv")
-    infer_tran["isFraud"] = 0
-
-    print("========== 3.Optimize dataframe memory ...")
-    train_df = reduce_mem_usage(train_tran)
-    infer_df = reduce_mem_usage(infer_tran)
-    # train_id_df = reduce_mem_usage(train_iden)
-    # infer_id_df = reduce_mem_usage(infer_iden)
-
-    print("========== 4.ETL tran categorical feature [String] ...")
-    # [train+infer]离散特征(<=5): String->Int,字符串映射到数值[NaN不编码]-----num=12
-    # ProductCD[W,C,R,H,S]//card4[visa,..]//card6[debit,..]//M1[T,F]//M2[T,F]
-    # M3[T,F]//M4[M0,M1,M2]//M5[T,F]//M6[T,F]//M7[T,F]//M8[T,F]//M9[T,F]
-    for col1 in ["ProductCD", "card4", "card6", "M1"]:
-        total_df = pd.concat([train_df[[col1]], infer_df[[col1]]])
-        tol_cols = total_df[col1].value_counts()
-        print(tol_cols)
-
-    for col1 in ["card4", "card6", "ProductCD", "M4"]:
-        print("-----Encoding", col1)
-        print(train_df[col1].value_counts())
-        temp_df = pd.concat([train_df[[col1]], infer_df[[col1]]])
-        col_encoded = temp_df[col1].value_counts().to_dict()
-        train_df[col1] = train_df[col1].map(col_encoded)
-        infer_df[col1] = infer_df[col1].map(col_encoded)
-        print(train_df[col1].value_counts())
-        print(col_encoded)
-
-    # [train+infer]离散特征(=2):二值编码[NaN不编码]
-    for col1 in ["M1", "M2", "M3", "M5", "M6", "M7", "M8", "M9"]:
-        train_df[col1] = train_df[col1].map({"T": 1, "F": 0})
-        infer_df[col1] = infer_df[col1].map({"T": 1, "F": 0})
-
-    # [train+infer]离散特征编码:[NaN不编码]
-    train_id_df = minify_identity_df(train_id_df)
-    infer_id_df = minify_identity_df(infer_id_df)
-
-    # labelEncoder标准化标签
-    for col1 in ['id_33']:
-        train_id_df[col1] = train_id_df[col1].fillna('unseen_before_label')
-        infer_id_df[col1] = infer_id_df[col1].fillna('unseen_before_label')
-
-        le = LabelEncoder()
-        le.fit(list(train_id_df[col1]) + list(infer_id_df[col1]))
-        train_id_df[col1] = le.transform(train_id_df[col1])
-        infer_id_df[col1] = le.transform(infer_id_df[col1])
-
-    train_df = reduce_mem_usage(train_df)
-    infer_df = reduce_mem_usage(infer_df)
-    train_id_df = reduce_mem_usage(train_id_df)
-    infer_id_df = reduce_mem_usage(infer_id_df)
-
-    print("========== 5.Save pkl ...")
-    train_df.to_pickle("train_transaction.pkl")
-    infer_df.to_pickle("infer_transaction.pkl")
-    train_id_df.to_pickle("train_identity.pkl")
-    infer_id_df.to_pickle("infer_identity.pkl")
