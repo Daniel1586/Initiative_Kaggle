@@ -92,10 +92,10 @@ if __name__ == "__main__":
     set_seed(SEED)
 
     print("========== 2.Load csv data ... ==========")
-    dir_data_csv = os.getcwd() + "\\data_train_ori\\"
-    train_user = pd.read_csv(dir_data_csv + "\\train_user.csv")
-    print(train_user.shape)
-    tmp_df = train_user.drop_duplicates(subset=["phone_no_m"], keep='first', inplace=False)
+    dir_data_csv = os.getcwd() + "\\train\\"
+    train_loc0 = pd.read_csv(dir_data_csv + "\\train_大石西路.csv")
+    print(train_loc0.shape)
+    tmp_df = train_loc0.drop_duplicates(subset=["phone_no_m"], keep='first', inplace=False)
     print(tmp_df.shape)
     # train_voc_ = pd.read_csv(dir_data_csv + "\\train_voc.csv")
     # print(train_voc_.shape)
