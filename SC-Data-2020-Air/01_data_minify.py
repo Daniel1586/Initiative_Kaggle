@@ -7,6 +7,7 @@
 
 import os
 import random
+import datetime
 import warnings
 import numpy as np
 import pandas as pd
@@ -90,19 +91,49 @@ if __name__ == "__main__":
     print("========== 1.Set random seed ... ==========")
     SEED = 42
     set_seed(SEED)
+    START_DATE = datetime.datetime.strptime("2017-11-30", "%Y-%m-%d")
 
     print("========== 2.Load csv data ... ==========")
     dir_data_csv = os.getcwd() + "\\train\\"
+    train_location = pd.read_csv(dir_data_csv + "\\站点信息.csv", encoding="gbk")
+    train_loc = train_location.drop(labels=["UPDATE_TIME_", "SOURCE_"], axis=1)
+    print(train_loc.shape)
+    print(train_loc.columns.tolist())
+
     train_loc0 = pd.read_csv(dir_data_csv + "\\train_大石西路.csv")
-    print(train_loc0.shape)
+    train_loc1 = pd.read_csv(dir_data_csv + "\\train_金泉两河.csv")
+    train_loc2 = pd.read_csv(dir_data_csv + "\\train_君平街.csv")
+    train_loc3 = pd.read_csv(dir_data_csv + "\\train_灵岩寺.csv")
+    train_loc4 = pd.read_csv(dir_data_csv + "\\train_龙泉驿区政府.csv")
+    train_loc5 = pd.read_csv(dir_data_csv + "\\train_三瓦窑.csv")
+    train_loc6 = pd.read_csv(dir_data_csv + "\\train_沙河铺.csv")
+    train_loc7 = pd.read_csv(dir_data_csv + "\\train_十里店.csv")
+    train_total = pd.concat([train_loc0, train_loc1, train_loc2, train_loc3,
+                             train_loc4, train_loc5, train_loc6, train_loc7])
+    train_tol = train_total.drop(labels=["UPDATE_TIME_"], axis=1)
+    print(train_tol.shape)
+    print(train_tol.columns.tolist())
+
+    train_df = train_tol.merge(train_loc, on=["MN_"], how="left")
+    print(train_df.shape)
+    print(train_df.columns.tolist())
+
+    # DATA_TIME_ 监测时间
+    for df in [train_df]:
+        df["DT"] = df["DATA_TIME_"].apply(lambda x: (START_DATE + datetime.timedelta(seconds=x)))
+        df["DT_M"] = (df["DT"].dt.year - 2017) * 12 + df["DT"].dt.month
+        df["DT_W"] = (df["DT"].dt.year - 2017) * 52 + df["DT"].dt.weekofyear
+        df["DT_D"] = (df["DT"].dt.year - 2017) * 365 + df["DT"].dt.dayofyear
+
+        df["DT_hour"] = df["DT"].dt.hour
+        df["DT_day_week"] = df["DT"].dt.dayofweek
+        df["DT_day"] = df["DT"].dt.day
+
+        # D9 column
+        df["D9"] = np.where(df["D9"].isna(), 0, 1)
+
     tmp_df = train_loc0.drop_duplicates(subset=["phone_no_m"], keep='first', inplace=False)
     print(tmp_df.shape)
-    # train_voc_ = pd.read_csv(dir_data_csv + "\\train_voc.csv")
-    # print(train_voc_.shape)
-    # train_sms_ = pd.read_csv(dir_data_csv + "\\train_sms.csv")
-    # print(train_sms_.shape)
-    # train_app_ = pd.read_csv(dir_data_csv + "\\train_app.csv")
-    # print(train_app_.shape)
 
     infer_tran = pd.read_csv(dir_data_csv + "\\test_transaction.csv")
     infer_iden = pd.read_csv(dir_data_csv + "\\test_identity.csv")
