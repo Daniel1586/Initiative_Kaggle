@@ -133,4 +133,5 @@ if __name__ == "__main__":
 
     print(train_df.shape)
     print(train_df.columns.tolist())
+    train_df.to_csv("ori_data.csv", sep=",", header=True, index=False)
 
