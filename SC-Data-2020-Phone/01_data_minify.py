@@ -95,7 +95,9 @@ if __name__ == "__main__":
     print("========== 2.Load csv data ... ==========")
     dir_train = os.getcwd() + "\\train\\"
     dir_tests = os.getcwd() + "\\test\\"
-    # 基础资料-----train_user/test_user
+
+    # 基础资料表-----train_user/test_user
+    print("========== train_user/test_user ==========")
     train_user = pd.read_csv(dir_train + "\\train_user.csv")
     train_user__ = train_user.drop_duplicates(subset=["phone_no_m"], keep="first", inplace=False)
     print("----- train_user 大小:", train_user.shape)
@@ -129,9 +131,50 @@ if __name__ == "__main__":
         train_user[col1] = le.transform(train_user[col1])
         test_user[col1] = le.transform(test_user[col1])
 
-    # 基础资料-----train_user/test_user
-    # train_voc_ = pd.read_csv(dir_data_csv + "\\train_voc.csv")
-    # print(train_voc_.shape)
+    # 语音通话表-----train_voc/test_voc
+    print("========== train_voc/test_voc ==========")
+    train_voc = pd.read_csv(dir_train + "\\train_voc.csv")
+    train_voc["start_datetime"] = train_voc["start_datetime"].astype("datetime64")
+    print("----- train_voc 大小:", train_voc.shape)
+    print("----- train_voc 列名:", train_voc.columns.tolist())
+
+    test_voc = pd.read_csv(dir_tests + "\\test_voc.csv")
+    test_voc["start_datetime"] = test_voc["start_datetime"].astype("datetime64")
+    print("----- test_voc 大小:", test_voc.shape)
+    print("----- test_voc 列名:", test_voc.columns.tolist())
+
+    # train_voc选取最近一个月数据, 并丢弃多余月份数据
+    train_voc = train_voc[train_voc["start_datetime"] >= "2020-03-01 00:00:00"]
+    train_voc = train_voc.reset_index(drop=True)
+    print("----- train_voc过滤月份后, 大小:", train_voc.shape)
+
+    # start_datetime 通话日期
+    for df in [train_voc, test_voc]:
+        df["ST_day"] = df["start_datetime"].dt.day
+        df["ST_hour"] = df["start_datetime"].dt.hour
+        df["ST_day_week"] = df["start_datetime"].dt.dayofweek
+
+    i_cols = ["card1", "card2", "card3", "card5", "uid", "uid2", "uid3"]
+    for col in i_cols:
+        for agg_type in ["mean", "std"]:
+            new_col_name = col + "_TransactionAmt_" + agg_type
+            temp_df = pd.concat([train_df[[col, "TransactionAmt"]], infer_df[[col, "TransactionAmt"]]])
+            temp_df = temp_df.groupby([col])["TransactionAmt"].agg([agg_type]).reset_index().rename(
+                columns={agg_type: new_col_name})
+
+            temp_df.index = list(temp_df[col])
+            temp_df = temp_df[new_col_name].to_dict()
+            train_df[new_col_name] = train_df[col].map(temp_df)
+            infer_df[new_col_name] = infer_df[col].map(temp_df)
+
+    df_voc['voc_day_count'] = df_voc.groupby(['phone_no_m', 'voc_day'])['phone_no_m'].transform('count')
+    df_voc['voc_day_count_max'] = df_voc.groupby('phone_no_m')['voc_day_count'].transform('max')
+    df_voc['voc_day_count_min'] = df_voc.groupby('phone_no_m')['voc_day_count'].transform('min')
+    df_voc['voc_day_count_mean'] = df_voc.groupby('phone_no_m')['voc_day_count'].transform('mean')
+    df_voc['voc_day_count_std'] = df_voc.groupby('phone_no_m')['voc_day_count'].transform('std')
+
+    # df_voc = pd.concat([train_voc, test_voc])
+
     # train_sms_ = pd.read_csv(dir_data_csv + "\\train_sms.csv")
     # print(train_sms_.shape)
     # train_app_ = pd.read_csv(dir_data_csv + "\\train_app.csv")
