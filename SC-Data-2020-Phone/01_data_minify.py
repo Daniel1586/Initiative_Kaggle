@@ -6,6 +6,7 @@
 """
 
 import os
+import gc
 import random
 import warnings
 import numpy as np
@@ -94,21 +95,41 @@ if __name__ == "__main__":
     print("========== 2.Load csv data ... ==========")
     dir_train = os.getcwd() + "\\train\\"
     dir_tests = os.getcwd() + "\\test\\"
-    # train_user/test_user
+    # 基础资料-----train_user/test_user
     train_user = pd.read_csv(dir_train + "\\train_user.csv")
     train_user__ = train_user.drop_duplicates(subset=["phone_no_m"], keep="first", inplace=False)
-    print("----- train_user 大小", train_user.shape)
-    print("----- train_user 列名", train_user.columns.tolist())
-    print("----- train_user 字段 phone_no_m 无重复", train_user__.shape)
+    print("----- train_user 大小:", train_user.shape)
+    print("----- train_user 列名:", train_user.columns.tolist())
+    print("----- train_user 字段 phone_no_m 无重复!", train_user__.shape)
+    print("----- train_user 0/1标签数量\n", train_user.label.value_counts())
+    tr_user = set(list(train_user__.phone_no_m))
 
     test_user = pd.read_csv(dir_tests + "\\test_user.csv")
     test_user__ = test_user.drop_duplicates(subset=["phone_no_m"], keep="first", inplace=False)
-    print("----- test_user 大小", test_user.shape)
-    print("----- test_user 列名", test_user.columns.tolist())
-    print("----- test_user 字段 phone_no_m 无重复", test_user__.shape)
+    print("----- test_user 大小:", test_user.shape)
+    print("----- test_user 列名:", test_user.columns.tolist())
+    print("----- test_user 字段 phone_no_m 无重复!", test_user__.shape)
+    te_user = set(list(test_user__.phone_no_m))
+    print("----- train_user和test_user 字段phone_no_m相交的数量:", len(tr_user & te_user))
 
+    del train_user__, tr_user, test_user__, te_user
+    gc.collect()
 
+    # train_user选取最近一个月数据, 并丢弃多余月份数据
+    train_user["arpu_202004"] = train_user["arpu_202003"]
+    train_user.drop(["arpu_201908", "arpu_201909", "arpu_201910", "arpu_201911",
+                     "arpu_201912", "arpu_202001", "arpu_202002", "arpu_202003"], axis=1, inplace=True)
 
+    # labelEncoder标准化标签
+    for col1 in ["city_name", "county_name"]:
+        train_user[col1] = train_user[col1].fillna("UNK")
+        test_user[col1] = test_user[col1].fillna("UNK")
+        le = LabelEncoder()
+        le.fit(list(train_user[col1]) + list(test_user[col1]))
+        train_user[col1] = le.transform(train_user[col1])
+        test_user[col1] = le.transform(test_user[col1])
+
+    # 基础资料-----train_user/test_user
     # train_voc_ = pd.read_csv(dir_data_csv + "\\train_voc.csv")
     # print(train_voc_.shape)
     # train_sms_ = pd.read_csv(dir_data_csv + "\\train_sms.csv")
