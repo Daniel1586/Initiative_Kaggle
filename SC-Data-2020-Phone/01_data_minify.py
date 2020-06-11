@@ -92,11 +92,23 @@ if __name__ == "__main__":
     set_seed(SEED)
 
     print("========== 2.Load csv data ... ==========")
-    dir_data_csv = os.getcwd() + "\\data_train_ori\\"
-    train_user = pd.read_csv(dir_data_csv + "\\train_user.csv")
-    print(train_user.shape)
-    tmp_df = train_user.drop_duplicates(subset=["phone_no_m"], keep='first', inplace=False)
-    print(tmp_df.shape)
+    dir_train = os.getcwd() + "\\train\\"
+    dir_tests = os.getcwd() + "\\test\\"
+    # train_user/test_user
+    train_user = pd.read_csv(dir_train + "\\train_user.csv")
+    train_user__ = train_user.drop_duplicates(subset=["phone_no_m"], keep="first", inplace=False)
+    print("----- train_user 大小", train_user.shape)
+    print("----- train_user 列名", train_user.columns.tolist())
+    print("----- train_user 字段 phone_no_m 无重复", train_user__.shape)
+
+    test_user = pd.read_csv(dir_tests + "\\test_user.csv")
+    test_user__ = test_user.drop_duplicates(subset=["phone_no_m"], keep="first", inplace=False)
+    print("----- test_user 大小", test_user.shape)
+    print("----- test_user 列名", test_user.columns.tolist())
+    print("----- test_user 字段 phone_no_m 无重复", test_user__.shape)
+
+
+
     # train_voc_ = pd.read_csv(dir_data_csv + "\\train_voc.csv")
     # print(train_voc_.shape)
     # train_sms_ = pd.read_csv(dir_data_csv + "\\train_sms.csv")
