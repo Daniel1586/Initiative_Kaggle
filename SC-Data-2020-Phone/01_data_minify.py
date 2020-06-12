@@ -125,14 +125,12 @@ if __name__ == "__main__":
     tol_user = pd.concat([train_user, test_user])
     # labelEncoder标准化标签
     for col1 in ["city_name", "county_name"]:
-        train_user[col1] = train_user[col1].fillna("UNK")
-        test_user[col1] = test_user[col1].fillna("UNK")
+        tol_user[col1] = tol_user[col1].fillna("UNK")
         le = LabelEncoder()
-        le.fit(list(train_user[col1]) + list(test_user[col1]))
-        train_user[col1] = le.transform(train_user[col1])
-        test_user[col1] = le.transform(test_user[col1])
-    print("----- train_user 列名:", train_user.columns.tolist())
-    print("----- test_user 列名:", test_user.columns.tolist())
+        le.fit(list(tol_user[col1]))
+        tol_user[col1] = le.transform(tol_user[col1])
+    print("----- tol_user 大小:", tol_user.shape)
+    print("----- tol_user 列名:", tol_user.columns.tolist())
 
     # 语音通话表-----train_voc/test_voc
     print("\n========== train_voc/test_voc ==========\n")
@@ -240,57 +238,41 @@ if __name__ == "__main__":
     print("----- tol_app 大小:", tol_app.shape)
     print("----- tol_app 列名:", tol_app.columns.tolist())
 
-    print("========== 3.Optimize dataframe memory ...")
-    train_df = reduce_mem_usage(train_tran)
-    infer_df = reduce_mem_usage(infer_tran)
-    # train_id_df = reduce_mem_usage(train_iden)
-    # infer_id_df = reduce_mem_usage(infer_iden)
+    print("\n========== 3.Merge data ...\n")
+    # 取有效特征
+    tol_voc = tol_voc[["phone_no_m", "calltype_id", "call_dur", "voc_day", "voc_hour", "voc_week",
+                       "voc_phone_cnt", "voc_day_cnt", "voc_hour_cnt", "voc_week_cnt",
+                       "voc_day_cnt_mean", "voc_day_cnt_std", "voc_day_cnt_max", "voc_day_cnt_min",
+                       "voc_hour_cnt_mean", "voc_hour_cnt_std", "voc_hour_cnt_max", "voc_hour_cnt_min",
+                       "voc_week_cnt_mean", "voc_week_cnt_std", "voc_week_cnt_max", "voc_week_cnt_min"]]
+    vld_voc = tol_voc.drop_duplicates(["phone_no_m"], keep="first", inplace=False)
+    print("----- vld_voc 大小:", vld_voc.shape)
+    print("----- vld_voc 列名:", vld_voc.columns.tolist())
 
-    print("========== 4.ETL tran categorical feature [String] ...")
-    # [train+infer]离散特征(<=5): String->Int,字符串映射到数值[NaN不编码]-----num=12
-    # ProductCD[W,C,R,H,S]//card4[visa,..]//card6[debit,..]//M1[T,F]//M2[T,F]
-    # M3[T,F]//M4[M0,M1,M2]//M5[T,F]//M6[T,F]//M7[T,F]//M8[T,F]//M9[T,F]
-    for col1 in ["ProductCD", "card4", "card6", "M1"]:
-        total_df = pd.concat([train_df[[col1]], infer_df[[col1]]])
-        tol_cols = total_df[col1].value_counts()
-        print(tol_cols)
+    tol_sms = tol_sms[["phone_no_m", "calltype_id", "sms_day", "sms_hour", "sms_week", "sms_phone_cnt",
+                       "sms_day_cnt", "sms_hour_cnt", "sms_week_cnt",
+                       "sms_day_cnt_mean", "sms_day_cnt_std", "sms_day_cnt_max", "sms_day_cnt_min",
+                       "sms_hour_cnt_mean", "sms_hour_cnt_std", "sms_hour_cnt_max", "sms_hour_cnt_min",
+                       "sms_week_cnt_mean", "sms_week_cnt_std", "sms_week_cnt_max", "sms_week_cnt_min"]]
+    vld_sms = tol_sms.drop_duplicates(["phone_no_m"], keep="first", inplace=False)
+    print("----- vld_sms 大小:", vld_sms.shape)
+    print("----- vld_sms 列名:", vld_sms.columns.tolist())
 
-    for col1 in ["card4", "card6", "ProductCD", "M4"]:
-        print("-----Encoding", col1)
-        print(train_df[col1].value_counts())
-        temp_df = pd.concat([train_df[[col1]], infer_df[[col1]]])
-        col_encoded = temp_df[col1].value_counts().to_dict()
-        train_df[col1] = train_df[col1].map(col_encoded)
-        infer_df[col1] = infer_df[col1].map(col_encoded)
-        print(train_df[col1].value_counts())
-        print(col_encoded)
+    tol_app = tol_app[["phone_no_m", "app_phone_cnt", "flow_mean", "flow_std", "flow_max",
+                       "flow_min", "flow_sum"]]
+    vld_app = tol_app.drop_duplicates(["phone_no_m"], keep="first", inplace=False)
+    print("----- vld_app 大小:", vld_app.shape)
+    print("----- vld_app 列名:", vld_app.columns.tolist())
 
-    # [train+infer]离散特征(=2):二值编码[NaN不编码]
-    for col1 in ["M1", "M2", "M3", "M5", "M6", "M7", "M8", "M9"]:
-        train_df[col1] = train_df[col1].map({"T": 1, "F": 0})
-        infer_df[col1] = infer_df[col1].map({"T": 1, "F": 0})
+    df_tol = pd.merge(tol_user, vld_voc, how="left", on="phone_no_m")
+    df_tol = pd.merge(df_tol, vld_sms, how="left", on="phone_no_m")
+    df_tol = pd.merge(df_tol, vld_app, how="left", on="phone_no_m")
+    print("----- df_tol 大小:", df_tol.shape)
+    print("----- df_tol 列名:", df_tol.columns.tolist())
 
-    # [train+infer]离散特征编码:[NaN不编码]
-    train_id_df = minify_identity_df(train_id_df)
-    infer_id_df = minify_identity_df(infer_id_df)
-
-    # labelEncoder标准化标签
-    for col1 in ['id_33']:
-        train_id_df[col1] = train_id_df[col1].fillna('unseen_before_label')
-        infer_id_df[col1] = infer_id_df[col1].fillna('unseen_before_label')
-
-        le = LabelEncoder()
-        le.fit(list(train_id_df[col1]) + list(infer_id_df[col1]))
-        train_id_df[col1] = le.transform(train_id_df[col1])
-        infer_id_df[col1] = le.transform(infer_id_df[col1])
-
-    train_df = reduce_mem_usage(train_df)
-    infer_df = reduce_mem_usage(infer_df)
-    train_id_df = reduce_mem_usage(train_id_df)
-    infer_id_df = reduce_mem_usage(infer_id_df)
-
-    print("========== 5.Save pkl ...")
-    train_df.to_pickle("train_transaction.pkl")
-    infer_df.to_pickle("infer_transaction.pkl")
-    train_id_df.to_pickle("train_identity.pkl")
-    infer_id_df.to_pickle("infer_identity.pkl")
+    df_train = df_tol[df_tol["label"].notnull()]
+    df_tests = df_tol[df_tol["label"].isnull()]
+    print("----- df_train 大小:", df_train.shape)
+    print("----- df_tests 大小:", df_tests.shape)
+    df_train.to_csv("data_train.csv", sep=",", index=False, header=True)
+    df_tests.to_csv("data_tests.csv", sep=",", index=False, header=True)
