@@ -122,6 +122,7 @@ if __name__ == "__main__":
     train_user.drop(["arpu_201908", "arpu_201909", "arpu_201910", "arpu_201911",
                      "arpu_201912", "arpu_202001", "arpu_202002", "arpu_202003"], axis=1, inplace=True)
 
+    tol_user = pd.concat([train_user, test_user])
     # labelEncoder标准化标签
     for col1 in ["city_name", "county_name"]:
         train_user[col1] = train_user[col1].fillna("UNK")
@@ -130,6 +131,8 @@ if __name__ == "__main__":
         le.fit(list(train_user[col1]) + list(test_user[col1]))
         train_user[col1] = le.transform(train_user[col1])
         test_user[col1] = le.transform(test_user[col1])
+    print("----- train_user 列名:", train_user.columns.tolist())
+    print("----- test_user 列名:", test_user.columns.tolist())
 
     # 语音通话表-----train_voc/test_voc
     print("\n========== train_voc/test_voc ==========\n")
@@ -150,20 +153,20 @@ if __name__ == "__main__":
 
     # start_datetime 通话日期
     for df in [train_voc, test_voc]:
-        df["ST_day"] = df["start_datetime"].dt.day
-        df["ST_hour"] = df["start_datetime"].dt.hour
-        df["ST_day_week"] = df["start_datetime"].dt.dayofweek
+        df["voc_day"] = df["start_datetime"].dt.day
+        df["voc_hour"] = df["start_datetime"].dt.hour
+        df["voc_week"] = df["start_datetime"].dt.dayofweek
 
     # 按号码/天/小时/周统计通话次数
     tol_voc = pd.concat([train_voc, test_voc])
-    tol_voc["phone_cnt"] = tol_voc.groupby(["phone_no_m"])["phone_no_m"].transform("count")
-    tol_voc["ST_day_cnt"] = tol_voc.groupby(["phone_no_m", "ST_day"])["phone_no_m"].transform("count")
-    tol_voc["ST_hour_cnt"] = tol_voc.groupby(["phone_no_m", "ST_hour"])["phone_no_m"].transform("count")
-    tol_voc["ST_week_cnt"] = tol_voc.groupby(["phone_no_m", "ST_day_week"])["phone_no_m"].transform("count")
+    tol_voc["voc_phone_cnt"] = tol_voc.groupby(["phone_no_m"])["phone_no_m"].transform("count")
+    tol_voc["voc_day_cnt"] = tol_voc.groupby(["phone_no_m", "voc_day"])["phone_no_m"].transform("count")
+    tol_voc["voc_hour_cnt"] = tol_voc.groupby(["phone_no_m", "voc_hour"])["phone_no_m"].transform("count")
+    tol_voc["voc_week_cnt"] = tol_voc.groupby(["phone_no_m", "voc_week"])["phone_no_m"].transform("count")
     del train_voc, test_voc, df
     gc.collect()
 
-    i_cols = ["ST_day_cnt", "ST_hour_cnt", "ST_week_cnt"]
+    i_cols = ["voc_day_cnt", "voc_hour_cnt", "voc_week_cnt"]
     for col in i_cols:
         for agg_type in ["mean", "std", "max", "min"]:
             new_col_name = col + "_" + agg_type
@@ -188,9 +191,55 @@ if __name__ == "__main__":
     train_sms = train_sms.reset_index(drop=True)
     print("----- train_sms过滤月份后, 大小:", train_sms.shape)
 
-    infer_tran = pd.read_csv(dir_train + "\\test_transaction.csv")
-    infer_iden = pd.read_csv(dir_tests + "\\test_identity.csv")
-    infer_tran["isFraud"] = 0
+    # request_datetime 短信发送日期
+    for df in [train_sms, test_sms]:
+        df["sms_day"] = df["request_datetime"].dt.day
+        df["sms_hour"] = df["request_datetime"].dt.hour
+        df["sms_week"] = df["request_datetime"].dt.dayofweek
+
+    # 按号码/天/小时/周统计通话次数
+    tol_sms = pd.concat([train_sms, test_sms])
+    tol_sms["sms_phone_cnt"] = tol_sms.groupby(["phone_no_m"])["phone_no_m"].transform("count")
+    tol_sms["sms_day_cnt"] = tol_sms.groupby(["phone_no_m", "sms_day"])["phone_no_m"].transform("count")
+    tol_sms["sms_hour_cnt"] = tol_sms.groupby(["phone_no_m", "sms_hour"])["phone_no_m"].transform("count")
+    tol_sms["sms_week_cnt"] = tol_sms.groupby(["phone_no_m", "sms_week"])["phone_no_m"].transform("count")
+    del train_sms, test_sms, df
+    gc.collect()
+
+    i_cols = ["sms_day_cnt", "sms_hour_cnt", "sms_week_cnt"]
+    for col in i_cols:
+        for agg_type in ["mean", "std", "max", "min"]:
+            new_col_name = col + "_" + agg_type
+            tol_sms[new_col_name] = tol_sms.groupby(["phone_no_m"])[col].transform(agg_type)
+    print("----- tol_sms 大小:", tol_sms.shape)
+    print("----- tol_sms 列名:", tol_sms.columns.tolist())
+
+    # 上网行为表-----train_app/test_app
+    print("\n========== train_app/test_app ==========\n")
+    train_app = pd.read_csv(dir_train + "\\train_app.csv")
+    print("----- train_app 大小:", train_app.shape)
+    print("----- train_app 列名:", train_app.columns.tolist())
+
+    test_app = pd.read_csv(dir_tests + "\\test_app.csv")
+    print("----- test_app 大小:", test_app.shape)
+    print("----- test_app 列名:", test_app.columns.tolist())
+
+    # train_app选取最近一个月数据, 并丢弃多余月份数据
+    train_app = train_app[train_app["month_id"] == "2020-03"]
+    train_app = train_app.reset_index(drop=True)
+    print("----- train_app过滤月份后, 大小:", train_app.shape)
+
+    # 按号码统计流量
+    tol_app = pd.concat([train_app, test_app])
+    tol_app["app_phone_cnt"] = tol_app.groupby(["phone_no_m"])["phone_no_m"].transform("count")
+    i_cols = ["flow"]
+    for col in i_cols:
+        for agg_type in ["mean", "std", "max", "min", "sum"]:
+            new_col_name = col + "_" + agg_type
+            tol_app[new_col_name] = tol_app.groupby(["phone_no_m"])[col].transform(agg_type)
+    print("----- tol_app 大小:", tol_app.shape)
+    print("----- tol_app 列名:", tol_app.columns.tolist())
+
     print("========== 3.Optimize dataframe memory ...")
     train_df = reduce_mem_usage(train_tran)
     infer_df = reduce_mem_usage(infer_tran)
