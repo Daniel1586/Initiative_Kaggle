@@ -88,16 +88,16 @@ def minify_identity_df(df):
 
 
 if __name__ == "__main__":
-    print("========== 1.Set random seed ... ==========")
+    print("\n========== 1.Set random seed ... ==========\n")
     SEED = 42
     set_seed(SEED)
 
-    print("========== 2.Load csv data ... ==========")
+    print("\n========== 2.Load csv data ... ==========\n")
     dir_train = os.getcwd() + "\\train\\"
     dir_tests = os.getcwd() + "\\test\\"
 
     # 基础资料表-----train_user/test_user
-    print("========== train_user/test_user ==========")
+    print("\n========== train_user/test_user ==========\n")
     train_user = pd.read_csv(dir_train + "\\train_user.csv")
     train_user__ = train_user.drop_duplicates(subset=["phone_no_m"], keep="first", inplace=False)
     print("----- train_user 大小:", train_user.shape)
@@ -132,7 +132,7 @@ if __name__ == "__main__":
         test_user[col1] = le.transform(test_user[col1])
 
     # 语音通话表-----train_voc/test_voc
-    print("========== train_voc/test_voc ==========")
+    print("\n========== train_voc/test_voc ==========\n")
     train_voc = pd.read_csv(dir_train + "\\train_voc.csv")
     train_voc["start_datetime"] = train_voc["start_datetime"].astype("datetime64")
     print("----- train_voc 大小:", train_voc.shape)
@@ -154,36 +154,43 @@ if __name__ == "__main__":
         df["ST_hour"] = df["start_datetime"].dt.hour
         df["ST_day_week"] = df["start_datetime"].dt.dayofweek
 
-    i_cols = ["card1", "card2", "card3", "card5", "uid", "uid2", "uid3"]
+    # 按号码/天/小时/周统计通话次数
+    tol_voc = pd.concat([train_voc, test_voc])
+    tol_voc["phone_cnt"] = tol_voc.groupby(["phone_no_m"])["phone_no_m"].transform("count")
+    tol_voc["ST_day_cnt"] = tol_voc.groupby(["phone_no_m", "ST_day"])["phone_no_m"].transform("count")
+    tol_voc["ST_hour_cnt"] = tol_voc.groupby(["phone_no_m", "ST_hour"])["phone_no_m"].transform("count")
+    tol_voc["ST_week_cnt"] = tol_voc.groupby(["phone_no_m", "ST_day_week"])["phone_no_m"].transform("count")
+    del train_voc, test_voc, df
+    gc.collect()
+
+    i_cols = ["ST_day_cnt", "ST_hour_cnt", "ST_week_cnt"]
     for col in i_cols:
-        for agg_type in ["mean", "std"]:
-            new_col_name = col + "_TransactionAmt_" + agg_type
-            temp_df = pd.concat([train_df[[col, "TransactionAmt"]], infer_df[[col, "TransactionAmt"]]])
-            temp_df = temp_df.groupby([col])["TransactionAmt"].agg([agg_type]).reset_index().rename(
-                columns={agg_type: new_col_name})
+        for agg_type in ["mean", "std", "max", "min"]:
+            new_col_name = col + "_" + agg_type
+            tol_voc[new_col_name] = tol_voc.groupby(["phone_no_m"])[col].transform(agg_type)
+    print("----- tol_voc 大小:", tol_voc.shape)
+    print("----- tol_voc 列名:", tol_voc.columns.tolist())
 
-            temp_df.index = list(temp_df[col])
-            temp_df = temp_df[new_col_name].to_dict()
-            train_df[new_col_name] = train_df[col].map(temp_df)
-            infer_df[new_col_name] = infer_df[col].map(temp_df)
+    # 短信表-----train_sms/test_sms
+    print("\n========== train_sms/test_sms ==========\n")
+    train_sms = pd.read_csv(dir_train + "\\train_sms.csv")
+    train_sms["request_datetime"] = train_sms["request_datetime"].astype("datetime64")
+    print("----- train_sms 大小:", train_sms.shape)
+    print("----- train_sms 列名:", train_sms.columns.tolist())
 
-    df_voc['voc_day_count'] = df_voc.groupby(['phone_no_m', 'voc_day'])['phone_no_m'].transform('count')
-    df_voc['voc_day_count_max'] = df_voc.groupby('phone_no_m')['voc_day_count'].transform('max')
-    df_voc['voc_day_count_min'] = df_voc.groupby('phone_no_m')['voc_day_count'].transform('min')
-    df_voc['voc_day_count_mean'] = df_voc.groupby('phone_no_m')['voc_day_count'].transform('mean')
-    df_voc['voc_day_count_std'] = df_voc.groupby('phone_no_m')['voc_day_count'].transform('std')
+    test_sms = pd.read_csv(dir_tests + "\\test_sms.csv")
+    test_sms["request_datetime"] = test_sms["request_datetime"].astype("datetime64")
+    print("----- test_sms 大小:", test_sms.shape)
+    print("----- test_sms 列名:", test_sms.columns.tolist())
 
-    # df_voc = pd.concat([train_voc, test_voc])
+    # train_sms选取最近一个月数据, 并丢弃多余月份数据
+    train_sms = train_sms[train_sms["request_datetime"] >= "2020-03-01 00:00:00"]
+    train_sms = train_sms.reset_index(drop=True)
+    print("----- train_sms过滤月份后, 大小:", train_sms.shape)
 
-    # train_sms_ = pd.read_csv(dir_data_csv + "\\train_sms.csv")
-    # print(train_sms_.shape)
-    # train_app_ = pd.read_csv(dir_data_csv + "\\train_app.csv")
-    # print(train_app_.shape)
-
-    infer_tran = pd.read_csv(dir_data_csv + "\\test_transaction.csv")
-    infer_iden = pd.read_csv(dir_data_csv + "\\test_identity.csv")
+    infer_tran = pd.read_csv(dir_train + "\\test_transaction.csv")
+    infer_iden = pd.read_csv(dir_tests + "\\test_identity.csv")
     infer_tran["isFraud"] = 0
-
     print("========== 3.Optimize dataframe memory ...")
     train_df = reduce_mem_usage(train_tran)
     infer_df = reduce_mem_usage(infer_tran)
