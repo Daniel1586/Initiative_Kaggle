@@ -17,9 +17,10 @@ import datetime
 import numpy as np
 import pandas as pd
 import lightgbm as lgb
+from copy import deepcopy
 from sklearn import metrics
 from scipy.stats import ks_2samp
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold,StratifiedKFold
 from sklearn.preprocessing import LabelEncoder
 warnings.filterwarnings('ignore')
 
@@ -36,11 +37,14 @@ def set_seed(seed=0):
 
 def make_predictions(tr_df, tt_df, features_columns, target, params, nfold=2):
     # K折交叉验证
-    folds = KFold(n_splits=nfold, shuffle=True, random_state=SEED)
+    folds = StratifiedKFold(n_splits=nfold, shuffle=True, random_state=SEED)
 
     # 数据集划分
     train_x, train_y = tr_df[features_columns], tr_df[target]
     infer_x, infer_y = tt_df[features_columns], tt_df[target]
+
+    # 测试集和验证集处理
+    va_df = []
     tt_df = tt_df[["phone_no_m"]]
     predictions = np.zeros(len(tt_df))
 
@@ -52,16 +56,20 @@ def make_predictions(tr_df, tt_df, features_columns, target, params, nfold=2):
         print("-----Train num:", len(tr_x), "Valid num:", len(vl_x))
         tr_data = lgb.Dataset(tr_x, label=tr_y)
         vl_data = lgb.Dataset(vl_x, label=vl_y)
+        vl_fold = deepcopy(tr_df.iloc[val_idx, :][["phone_no_m", target]])
 
         estimator = lgb.train(params, tr_data, valid_sets=[tr_data, vl_data], verbose_eval=200)
+        valid_p = estimator.predict(vl_x)
         infer_p = estimator.predict(infer_x)
         predictions += infer_p / nfold
-        del tr_x, tr_y, vl_x, vl_y, tr_data, vl_data
+        vl_fold["pred"] = valid_p
+        va_df.append(vl_fold)
+        del tr_x, tr_y, vl_x, vl_y, tr_data, vl_data, vl_fold
         gc.collect()
 
     tt_df["label"] = predictions
 
-    return tt_df
+    return tt_df, va_df
 
 
 if __name__ == "__main__":
@@ -102,18 +110,20 @@ if __name__ == "__main__":
         'objective': 'binary',
         'boosting': 'gbdt',
         'metric': 'auc',
-        'n_jobs': -1,
-        'learning_rate': 0.01,
-        'num_leaves': 2 ** 8,
-        'max_depth': -1,
         'tree_learner': 'serial',
-        'colsample_bytree': 0.7,
-        'subsample_freq': 1,
-        'subsample': 0.7,
+        'seed': SEED,
         'n_estimators': 800,
+        'learning_rate': 0.01,
+        'max_depth': 5,
+        'num_leaves': 24,
+        'min_data_in_leaf': 24,
+        'bagging_freq': 1,
+        'bagging_fraction': 0.7,
+        'feature_fraction': 0.7,
+        'lambda_l1': 0.01,
+        'lambda_l2': 0.01,
         'max_bin': 255,
         'verbose': -1,
-        'seed': SEED,
         'early_stopping_rounds': 100,
     }
 
@@ -122,10 +132,12 @@ if __name__ == "__main__":
     TRAIN_IF = 1
     if TRAIN_CV:
         print("-----Shape control:", train_df.shape, infer_df.shape)
-        lgb_params["learning_rate"] = 0.01
-        lgb_params["n_estimators"] = 1000
-        lgb_params["early_stopping_rounds"] = 100
-        test_predictions = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=5)
+        infer_pred, valid_pred = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=5)
+        valid_df = pd.concat(valid_pred)
+        valid_df["pred"] = valid_df["pred"].map(lambda x: 1 if x >= 0.5 else 0)
+        valid_f1 = metrics.f1_score(valid_df[TARGET], valid_df["pred"], average="macro")
+        print("\nOOF Valid F1-Score: ", valid_f1)
     # Export
     if TRAIN_IF:
-        test_predictions[["phone_no_m", "label"]].to_csv("submit_0612.csv", index=False)
+        infer_pred["label"] = infer_pred["label"].map(lambda x: 1 if x >= 0.5 else 0)
+        infer_pred[["phone_no_m", "label"]].to_csv("submit_0612.csv", index=False)
