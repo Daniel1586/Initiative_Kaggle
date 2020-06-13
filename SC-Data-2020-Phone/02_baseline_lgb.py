@@ -20,6 +20,7 @@ import lightgbm as lgb
 from copy import deepcopy
 from sklearn import metrics
 from scipy.stats import ks_2samp
+from bayes_opt import BayesianOptimization
 from sklearn.model_selection import KFold,StratifiedKFold
 from sklearn.preprocessing import LabelEncoder
 warnings.filterwarnings('ignore')
@@ -112,32 +113,95 @@ if __name__ == "__main__":
         'metric': 'auc',
         'tree_learner': 'serial',
         'seed': SEED,
-        'n_estimators': 800,
-        'learning_rate': 0.01,
-        'max_depth': 5,
-        'num_leaves': 24,
-        'min_data_in_leaf': 24,
+        'n_estimators': 238,
+        'learning_rate': 0.116,
+        'max_depth': 4,
+        'num_leaves': 19,
+        'min_data_in_leaf': 16,
         'bagging_freq': 1,
-        'bagging_fraction': 0.7,
-        'feature_fraction': 0.7,
-        'lambda_l1': 0.01,
-        'lambda_l2': 0.01,
+        'bagging_fraction': 0.88,
+        'feature_fraction': 0.70,
+        'lambda_l1': 0.392,
+        'lambda_l2': 0.417,
         'max_bin': 255,
         'verbose': -1,
         'early_stopping_rounds': 100,
     }
 
-    # Model Train
+    # 模型训练
     TRAIN_CV = 1
     TRAIN_IF = 1
     if TRAIN_CV:
         print("-----Shape control:", train_df.shape, infer_df.shape)
         infer_pred, valid_pred = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=5)
         valid_df = pd.concat(valid_pred)
-        valid_df["pred"] = valid_df["pred"].map(lambda x: 1 if x >= 0.5 else 0)
+        valid_df["pred"] = valid_df["pred"].map(lambda x: 1 if x >= 0.25 else 0)
         valid_f1 = metrics.f1_score(valid_df[TARGET], valid_df["pred"], average="macro")
         print("\nOOF Valid F1-Score: ", valid_f1)
-    # Export
-    if TRAIN_IF:
-        infer_pred["label"] = infer_pred["label"].map(lambda x: 1 if x >= 0.5 else 0)
-        infer_pred[["phone_no_m", "label"]].to_csv("submit_0612.csv", index=False)
+        # Export
+        if TRAIN_IF:
+            infer_pred["label"] = infer_pred["label"].map(lambda x: 1 if x >= 0.25 else 0)
+            infer_pred[["phone_no_m", "label"]].to_csv("submit_0613.csv", index=False)
+
+    # 贝叶斯参数优化
+    Feature_Opt = 0
+    if Feature_Opt:
+        opt_lgb = {
+            "p1": (200, 1000),
+            "p2": (0.001, 0.5),
+            "p3": (4, 8),
+            "p4": (16, 64),
+            "p5": (16, 64),
+            "p6": (0.6, 0.9),
+            "p7": (0.6, 0.9),
+            "p8": (0.001, 0.5),
+            "p9": (0.001, 0.5),
+        }
+
+        def opt_lgb_para(p1, p2, p3, p4, p5, p6, p7, p8, p9):
+            folds = StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED)
+            train_x, train_y = train_df[features_cols], train_df[TARGET]
+            opt_params = {
+                'objective': 'binary',
+                'boosting': 'gbdt',
+                'metric': 'auc',
+                'tree_learner': 'serial',
+                'seed': SEED,
+                'n_estimators': int(p1),
+                'learning_rate': round(p2, 3),
+                'max_depth': int(p3),
+                'num_leaves': int(p4),
+                'min_data_in_leaf': int(p5),
+                'bagging_freq': 1,
+                'bagging_fraction': round(p6, 2),
+                'feature_fraction': round(p7, 2),
+                'lambda_l1': round(p8, 3),
+                'lambda_l2': round(p9, 3),
+                'max_bin': 255,
+                'verbose': -1,
+                'early_stopping_rounds': 100,
+            }
+
+            va_df = []
+            for fold_, (tra_idx, val_idx) in enumerate(folds.split(train_x, train_y)):
+                tr_x, tr_y = train_x.iloc[tra_idx, :], train_y[tra_idx]
+                vl_x, vl_y = train_x.iloc[val_idx, :], train_y[val_idx]
+                tr_data = lgb.Dataset(tr_x, label=tr_y)
+                vl_data = lgb.Dataset(vl_x, label=vl_y)
+                vl_fold = deepcopy(train_df.iloc[val_idx, :][[TARGET]])
+
+                estimator = lgb.train(opt_params, tr_data, valid_sets=[tr_data, vl_data], verbose_eval=200)
+                valid_p = estimator.predict(vl_x)
+                vl_fold["pred"] = valid_p
+                va_df.append(vl_fold)
+                del tr_x, tr_y, vl_x, vl_y, tr_data, vl_data, vl_fold
+                gc.collect()
+
+            val_pred = pd.concat(va_df)
+            val_pred["pred"] = val_pred["pred"].map(lambda x: 1 if x >= 0.5 else 0)
+            val_f1 = metrics.f1_score(val_pred[TARGET], val_pred["pred"], average="macro")
+
+            return val_f1
+
+        rf_bo = BayesianOptimization(f=opt_lgb_para, pbounds=opt_lgb)
+        rf_bo.maximize(n_iter=50, init_points=3)
