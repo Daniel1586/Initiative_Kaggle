@@ -25,39 +25,6 @@ def set_seed(seed=0):
     np.random.seed(seed)
 
 
-# reduce memory for dataframe/优化dataframe数据格式,减少内存占用
-def reduce_mem_usage(df, verbose=True):
-    numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
-    start_mem = df.memory_usage().sum() / 1024**2
-    for col in df.columns:
-        col_type = df[col].dtypes
-        if col_type in numerics:
-            c_min = df[col].min()
-            c_max = df[col].max()
-            if str(col_type)[:3] == "int":
-                if c_min > np.iinfo(np.int8).min and c_max < np.iinfo(np.int8).max:
-                    df[col] = df[col].astype(np.int8)
-                elif c_min > np.iinfo(np.int16).min and c_max < np.iinfo(np.int16).max:
-                    df[col] = df[col].astype(np.int16)
-                elif c_min > np.iinfo(np.int32).min and c_max < np.iinfo(np.int32).max:
-                    df[col] = df[col].astype(np.int32)
-                elif c_min > np.iinfo(np.int64).min and c_max < np.iinfo(np.int64).max:
-                    df[col] = df[col].astype(np.int64)
-            else:
-                if c_min > np.finfo(np.float16).min and c_max < np.finfo(np.float16).max:
-                    df[col] = df[col].astype(np.float16)
-                elif c_min > np.finfo(np.float32).min and c_max < np.finfo(np.float32).max:
-                    df[col] = df[col].astype(np.float32)
-                else:
-                    df[col] = df[col].astype(np.float64)
-    end_mem = df.memory_usage().sum() / 1024**2
-    reduction = 100*(start_mem-end_mem)/start_mem
-    if verbose:
-        print("Default Mem. {:.2f} Mb, Optimized Mem. {:.2f} Mb, Reduction {:.1f}%".
-              format(start_mem, end_mem, reduction))
-    return df
-
-
 # [train+infer]离散特征编码:[NaN不编码]
 def minify_identity_df(df):
     df['id_12'] = df['id_12'].map({'Found': 1, 'NotFound': 0})
@@ -87,18 +54,10 @@ def minify_identity_df(df):
     return df
 
 
-if __name__ == "__main__":
-    print("\n========== 1.Set random seed ... ==========\n")
-    SEED = 42
-    set_seed(SEED)
-
-    print("\n========== 2.Load csv data ... ==========\n")
-    dir_train = os.getcwd() + "\\train\\"
-    dir_tests = os.getcwd() + "\\test\\"
-
-    # 基础资料表-----train_user/test_user
+# 基础资料表-----train_user/test_user
+def etl_user(path_tr, path_te):
     print("\n========== train_user/test_user ==========\n")
-    train_user = pd.read_csv(dir_train + "\\train_user.csv")
+    train_user = pd.read_csv(path_tr + "\\train_user.csv")
     train_user__ = train_user.drop_duplicates(subset=["phone_no_m"], keep="first", inplace=False)
     print("----- train_user 大小:", train_user.shape)
     print("----- train_user 列名:", train_user.columns.tolist())
@@ -106,7 +65,7 @@ if __name__ == "__main__":
     print("----- train_user 0/1标签数量\n", train_user.label.value_counts())
     tr_user = set(list(train_user__.phone_no_m))
 
-    test_user = pd.read_csv(dir_tests + "\\test_user.csv")
+    test_user = pd.read_csv(path_te + "\\test_user.csv")
     test_user__ = test_user.drop_duplicates(subset=["phone_no_m"], keep="first", inplace=False)
     print("----- test_user 大小:", test_user.shape)
     print("----- test_user 列名:", test_user.columns.tolist())
@@ -123,14 +82,28 @@ if __name__ == "__main__":
                      "arpu_201912", "arpu_202001", "arpu_202002", "arpu_202003"], axis=1, inplace=True)
 
     tol_user = pd.concat([train_user, test_user])
-    # labelEncoder标准化标签
-    for col1 in ["city_name", "county_name"]:
-        tol_user[col1] = tol_user[col1].fillna("UNK")
-        le = LabelEncoder()
-        le.fit(list(tol_user[col1]))
-        tol_user[col1] = le.transform(tol_user[col1])
+    # # labelEncoder标准化标签
+    # for col1 in ["city_name", "county_name"]:
+    #     tol_user[col1] = tol_user[col1].fillna("UNK")
+    #     le = LabelEncoder()
+    #     le.fit(list(tol_user[col1]))
+    #     tol_user[col1] = le.transform(tol_user[col1])
     print("----- tol_user 大小:", tol_user.shape)
     print("----- tol_user 列名:", tol_user.columns.tolist())
+
+    return tol_user
+
+
+if __name__ == "__main__":
+    print("\n========== 1.Set random seed ... ==========\n")
+    SEED = 42
+    set_seed(SEED)
+
+    print("\n========== 2.Load csv data ... ==========\n")
+    dir_train = os.getcwd() + "\\train\\"
+    dir_tests = os.getcwd() + "\\test\\"
+
+    vld_user = etl_user(dir_train, dir_tests)
 
     # # 语音通话表-----train_voc/test_voc
     # print("\n========== train_voc/test_voc ==========\n")
