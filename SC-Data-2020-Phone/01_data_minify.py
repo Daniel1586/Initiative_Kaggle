@@ -118,16 +118,21 @@ def etl_voc(path_tr, path_te):
         df["voc_hour"] = df["start_datetime"].dt.hour
         df["voc_week"] = df["start_datetime"].dt.dayofweek
 
-    # 按号码/天/小时/周统计通话次数
+    # 按号码/天/小时/周/对端号码/通话类型--统计通话次数
     tol_voc = pd.concat([train_voc, test_voc])
     tol_voc["voc_phone_cnt"] = tol_voc.groupby(["phone_no_m"])["phone_no_m"].transform("count")
     tol_voc["voc_day_cnt"] = tol_voc.groupby(["phone_no_m", "voc_day"])["phone_no_m"].transform("count")
     tol_voc["voc_hour_cnt"] = tol_voc.groupby(["phone_no_m", "voc_hour"])["phone_no_m"].transform("count")
     tol_voc["voc_week_cnt"] = tol_voc.groupby(["phone_no_m", "voc_week"])["phone_no_m"].transform("count")
+    tol_voc["voc_oppo_cnt"] = tol_voc.groupby(["phone_no_m", "opposite_no_m"])["phone_no_m"].transform("count")
+    tol_voc["voc_type_cnt"] = tol_voc.groupby(["phone_no_m", "calltype_id"])["phone_no_m"].transform("count")
+    tol_voc["voc_city_cnt"] = tol_voc.groupby(["phone_no_m", "city_name"])["phone_no_m"].transform("count")
+    tol_voc["voc_county_cnt"] = tol_voc.groupby(["phone_no_m", "city_name"])["phone_no_m"].transform("count")
     del train_voc, test_voc, df
     gc.collect()
 
-    i_cols = ["voc_day_cnt", "voc_hour_cnt", "voc_week_cnt"]
+    i_cols = ["voc_day_cnt", "voc_hour_cnt", "voc_week_cnt", "voc_oppo_cnt",
+              "voc_type_cnt", "call_dur", "voc_city_cnt", "voc_county_cnt"]
     for col in i_cols:
         for agg_type in ["mean", "std", "max", "min"]:
             new_col_name = col + "_" + agg_type
@@ -220,7 +225,7 @@ if __name__ == "__main__":
     dir_tests = os.getcwd() + "\\test\\"
 
     # vld_user = etl_user(dir_train, dir_tests)
-    # vld_voc = etl_voc(dir_train, dir_tests)
+    vld_voc = etl_voc(dir_train, dir_tests)
     # vld_sms = etl_sms(dir_train, dir_tests)
     # vld_app = etl_app(dir_train, dir_tests)
 
