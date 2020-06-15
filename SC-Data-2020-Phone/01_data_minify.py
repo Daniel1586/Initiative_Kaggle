@@ -132,13 +132,14 @@ def etl_voc(path_tr, path_te):
     gc.collect()
 
     i_cols = ["voc_day_cnt", "voc_hour_cnt", "voc_week_cnt", "voc_oppo_cnt",
-              "voc_type_cnt", "call_dur", "voc_city_cnt", "voc_county_cnt"]
+              "voc_type_cnt", "voc_city_cnt", "voc_county_cnt", "call_dur"]
     for col in i_cols:
         for agg_type in ["mean", "std", "max", "min"]:
             new_col_name = col + "_" + agg_type
             tol_voc[new_col_name] = tol_voc.groupby(["phone_no_m"])[col].transform(agg_type)
     print("----- tol_voc 大小:", tol_voc.shape)
     print("----- tol_voc 列名:", tol_voc.columns.tolist())
+
     return tol_voc
 
 
@@ -172,16 +173,19 @@ def etl_sms(path_tr, path_te):
     tol_sms["sms_day_cnt"] = tol_sms.groupby(["phone_no_m", "sms_day"])["phone_no_m"].transform("count")
     tol_sms["sms_hour_cnt"] = tol_sms.groupby(["phone_no_m", "sms_hour"])["phone_no_m"].transform("count")
     tol_sms["sms_week_cnt"] = tol_sms.groupby(["phone_no_m", "sms_week"])["phone_no_m"].transform("count")
+    tol_sms["sms_oppo_cnt"] = tol_sms.groupby(["phone_no_m", "opposite_no_m"])["phone_no_m"].transform("count")
+    tol_sms["sms_type_cnt"] = tol_sms.groupby(["phone_no_m", "calltype_id"])["phone_no_m"].transform("count")
     del train_sms, test_sms, df
     gc.collect()
 
-    i_cols = ["sms_day_cnt", "sms_hour_cnt", "sms_week_cnt"]
+    i_cols = ["sms_day_cnt", "sms_hour_cnt", "sms_week_cnt", "sms_oppo_cnt", "sms_type_cnt"]
     for col in i_cols:
         for agg_type in ["mean", "std", "max", "min"]:
             new_col_name = col + "_" + agg_type
             tol_sms[new_col_name] = tol_sms.groupby(["phone_no_m"])[col].transform(agg_type)
     print("----- tol_sms 大小:", tol_sms.shape)
     print("----- tol_sms 列名:", tol_sms.columns.tolist())
+
     return tol_sms
 
 
@@ -204,15 +208,23 @@ def etl_app(path_tr, path_te):
     # 按号码统计流量
     tol_app = pd.concat([train_app, test_app])
     tol_app["app_phone_cnt"] = tol_app.groupby(["phone_no_m"])["phone_no_m"].transform("count")
+
+    # 最大流量的APP
+    srt_app = tol_app.sort_values(by=["phone_no_m", "flow"], ascending=False, inplace=False)
+    app_flow_max = srt_app.drop_duplicates(["phone_no_m"], keep="first", inplace=False)
+    app_flow_max = app_flow_max[["phone_no_m", "busi_name"]]
+    app_flow_max.rename(columns={"busi_name": "max_app"}, inplace=True)
+    max_app = pd.merge(tol_app, app_flow_max, how="left", on="phone_no_m")
+
     i_cols = ["flow"]
     for col in i_cols:
         for agg_type in ["mean", "std", "max", "min", "sum"]:
             new_col_name = col + "_" + agg_type
-            tol_app[new_col_name] = tol_app.groupby(["phone_no_m"])[col].transform(agg_type)
-    print("----- tol_app 大小:", tol_app.shape)
-    print("----- tol_app 列名:", tol_app.columns.tolist())
+            max_app[new_col_name] = max_app.groupby(["phone_no_m"])[col].transform(agg_type)
+    print("----- tol_app 大小:", max_app.shape)
+    print("----- tol_app 列名:", max_app.columns.tolist())
 
-    return tol_app
+    return max_app
 
 
 if __name__ == "__main__":
@@ -224,44 +236,53 @@ if __name__ == "__main__":
     dir_train = os.getcwd() + "\\train\\"
     dir_tests = os.getcwd() + "\\test\\"
 
-    # vld_user = etl_user(dir_train, dir_tests)
+    vld_user = etl_user(dir_train, dir_tests)
     vld_voc = etl_voc(dir_train, dir_tests)
-    # vld_sms = etl_sms(dir_train, dir_tests)
-    # vld_app = etl_app(dir_train, dir_tests)
+    vld_sms = etl_sms(dir_train, dir_tests)
+    vld_app = etl_app(dir_train, dir_tests)
 
-    # print("\n========== 3.Merge data ...\n")
-    # # 取有效特征
-    # tol_voc = tol_voc[["phone_no_m", "calltype_id", "call_dur", "voc_day", "voc_hour", "voc_week",
-    #                    "voc_phone_cnt", "voc_day_cnt", "voc_hour_cnt", "voc_week_cnt",
-    #                    "voc_day_cnt_mean", "voc_day_cnt_std", "voc_day_cnt_max", "voc_day_cnt_min",
-    #                    "voc_hour_cnt_mean", "voc_hour_cnt_std", "voc_hour_cnt_max", "voc_hour_cnt_min",
-    #                    "voc_week_cnt_mean", "voc_week_cnt_std", "voc_week_cnt_max", "voc_week_cnt_min"]]
-    # vld_voc = tol_voc.drop_duplicates(["phone_no_m"], keep="first", inplace=False)
-    # print("----- vld_voc 大小:", vld_voc.shape)
-    # print("----- vld_voc 列名:", vld_voc.columns.tolist())
-    #
-    # tol_sms = tol_sms[["phone_no_m", "calltype_id", "sms_day", "sms_hour", "sms_week", "sms_phone_cnt",
-    #                    "sms_day_cnt", "sms_hour_cnt", "sms_week_cnt",
-    #                    "sms_day_cnt_mean", "sms_day_cnt_std", "sms_day_cnt_max", "sms_day_cnt_min",
-    #                    "sms_hour_cnt_mean", "sms_hour_cnt_std", "sms_hour_cnt_max", "sms_hour_cnt_min",
-    #                    "sms_week_cnt_mean", "sms_week_cnt_std", "sms_week_cnt_max", "sms_week_cnt_min"]]
-    # vld_sms = tol_sms.drop_duplicates(["phone_no_m"], keep="first", inplace=False)
-    # print("----- vld_sms 大小:", vld_sms.shape)
-    # print("----- vld_sms 列名:", vld_sms.columns.tolist())
-    #
-    # tol_app = tol_app[["phone_no_m", "app_phone_cnt", "flow_mean", "flow_std", "flow_max",
-    #                    "flow_min", "flow_sum"]]
-    # vld_app = tol_app.drop_duplicates(["phone_no_m"], keep="first", inplace=False)
-    # print("----- vld_app 大小:", vld_app.shape)
-    # print("----- vld_app 列名:", vld_app.columns.tolist())
-    # df_tol = pd.merge(tol_user, vld_voc, how="left", on="phone_no_m")
-    # df_tol = pd.merge(df_tol, vld_sms, how="left", on="phone_no_m")
-    # df_tol = pd.merge(df_tol, vld_app, how="left", on="phone_no_m")
-    # print("----- df_tol 大小:", df_tol.shape)
-    # print("----- df_tol 列名:", df_tol.columns.tolist())
-    # df_train = df_tol[df_tol["label"].notnull()]
-    # df_tests = df_tol[df_tol["label"].isnull()]
-    # print("----- df_train 大小:", df_train.shape)
-    # print("----- df_tests 大小:", df_tests.shape)
-    # df_train.to_csv("data_train.csv", sep=",", index=False, header=True)
-    # df_tests.to_csv("data_tests.csv", sep=",", index=False, header=True)
+    print("\n========== 3.Merge data ...\n")
+    # 取有效特征
+    vld_voc = vld_voc[["phone_no_m", "voc_phone_cnt", "voc_day_cnt", "voc_hour_cnt", "voc_week_cnt",
+                       "voc_oppo_cnt", "voc_type_cnt", "voc_city_cnt", "voc_county_cnt",
+                       "voc_day_cnt_mean", "voc_day_cnt_std", "voc_day_cnt_max", "voc_day_cnt_min",
+                       "voc_hour_cnt_mean", "voc_hour_cnt_std", "voc_hour_cnt_max", "voc_hour_cnt_min",
+                       "voc_week_cnt_mean", "voc_week_cnt_std", "voc_week_cnt_max", "voc_week_cnt_min",
+                       "voc_oppo_cnt_mean", "voc_oppo_cnt_std", "voc_oppo_cnt_max", "voc_oppo_cnt_min",
+                       "voc_type_cnt_mean", "voc_type_cnt_std", "voc_type_cnt_max", "voc_type_cnt_min",
+                       "voc_city_cnt_mean", "voc_city_cnt_std", "voc_city_cnt_max", "voc_city_cnt_min",
+                       "voc_county_cnt_mean", "voc_county_cnt_std", "voc_county_cnt_max", "voc_county_cnt_min",
+                       "call_dur_mean", "call_dur_std", "call_dur_max", "call_dur_min"]]
+    final_voc = vld_voc.drop_duplicates(["phone_no_m"], keep="first", inplace=False)
+    print("----- final_voc 大小:", final_voc.shape)
+    print("----- final_voc 列名:", final_voc.columns.tolist())
+
+    vld_sms = vld_sms[["phone_no_m", "sms_phone_cnt", "sms_day_cnt", "sms_hour_cnt", "sms_week_cnt",
+                       "sms_oppo_cnt", "sms_type_cnt",
+                       "sms_day_cnt_mean", "sms_day_cnt_std", "sms_day_cnt_max", "sms_day_cnt_min",
+                       "sms_hour_cnt_mean", "sms_hour_cnt_std", "sms_hour_cnt_max", "sms_hour_cnt_min",
+                       "sms_week_cnt_mean", "sms_week_cnt_std", "sms_week_cnt_max", "sms_week_cnt_min",
+                       "sms_oppo_cnt_mean", "sms_oppo_cnt_std", "sms_oppo_cnt_max", "sms_oppo_cnt_min",
+                       "sms_type_cnt_mean", "sms_type_cnt_std", "sms_type_cnt_max", "sms_type_cnt_min"]]
+    final_sms = vld_sms.drop_duplicates(["phone_no_m"], keep="first", inplace=False)
+    print("----- final_sms 大小:", final_sms.shape)
+    print("----- final_sms 列名:", final_sms.columns.tolist())
+
+    vld_app = vld_app[["phone_no_m", "app_phone_cnt", "max_app",
+                       "flow_mean", "flow_std", "flow_max", "flow_min", "flow_sum"]]
+    final_app = vld_app.drop_duplicates(["phone_no_m"], keep="first", inplace=False)
+    print("----- final_app 大小:", final_app.shape)
+    print("----- final_app 列名:", final_app.columns.tolist())
+
+    df_tol = pd.merge(vld_user, final_voc, how="left", on="phone_no_m")
+    df_tol = pd.merge(df_tol, final_sms, how="left", on="phone_no_m")
+    df_tol = pd.merge(df_tol, final_app, how="left", on="phone_no_m")
+    print("----- df_tol 大小:", df_tol.shape)
+    print("----- df_tol 列名:", df_tol.columns.tolist())
+
+    df_train = df_tol[df_tol["label"].notnull()]
+    df_tests = df_tol[df_tol["label"].isnull()]
+    print("----- df_train 大小:", df_train.shape)
+    print("----- df_tests 大小:", df_tests.shape)
+    df_train.to_csv("data_train.csv", sep=",", index=False, header=True)
+    df_tests.to_csv("data_tests.csv", sep=",", index=False, header=True)
