@@ -86,21 +86,21 @@ if __name__ == "__main__":
     infer_df = pd.read_csv(tes_path, encoding="utf-8")
 
     # Encode Str columns
-    # for col in list(train_df):
-    #     if train_df[col].dtype == 'O':
-    #         print(col)
-    #         train_df[col] = train_df[col].fillna("unseen_before_label")
-    #         infer_df[col] = infer_df[col].fillna("unseen_before_label")
-    #         train_df[col] = train_df[col].astype(str)
-    #         infer_df[col] = infer_df[col].astype(str)
-    #
-    #         le = LabelEncoder()
-    #         le.fit(list(train_df[col]) + list(infer_df[col]))
-    #         train_df[col] = le.transform(train_df[col])
-    #         infer_df[col] = le.transform(infer_df[col])
-    #
-    #         train_df[col] = train_df[col].astype("category")
-    #         infer_df[col] = infer_df[col].astype("category")
+    for col in list(train_df):
+        if train_df[col].dtype == 'O':
+            print(col)
+            # train_df[col] = train_df[col].fillna("UNK")
+            # infer_df[col] = infer_df[col].fillna("UNK")
+            # train_df[col] = train_df[col].astype(str)
+            # infer_df[col] = infer_df[col].astype(str)
+            #
+            # le = LabelEncoder()
+            # le.fit(list(train_df[col]) + list(infer_df[col]))
+            # train_df[col] = le.transform(train_df[col])
+            # infer_df[col] = le.transform(infer_df[col])
+
+            train_df[col] = train_df[col].astype("category")
+            infer_df[col] = infer_df[col].astype("category")
 
     # Model Features
     rm_cols = ["phone_no_m", TARGET]
@@ -113,16 +113,16 @@ if __name__ == "__main__":
         'metric': 'auc',
         'tree_learner': 'serial',
         'seed': SEED,
-        'n_estimators': 238,
-        'learning_rate': 0.116,
-        'max_depth': 4,
-        'num_leaves': 19,
-        'min_data_in_leaf': 16,
+        'n_estimators': 210,
+        'learning_rate': 0.043,
+        'max_depth': 6,
+        'num_leaves': 17,
+        'min_data_in_leaf': 62,
         'bagging_freq': 1,
-        'bagging_fraction': 0.88,
-        'feature_fraction': 0.70,
-        'lambda_l1': 0.392,
-        'lambda_l2': 0.417,
+        'bagging_fraction': 0.83,
+        'feature_fraction': 0.90,
+        'lambda_l1': 0.072,
+        'lambda_l2': 0.454,
         'max_bin': 255,
         'verbose': -1,
         'early_stopping_rounds': 100,
@@ -141,7 +141,7 @@ if __name__ == "__main__":
         # Export
         if TRAIN_IF:
             infer_pred["label"] = infer_pred["label"].map(lambda x: 1 if x >= 0.25 else 0)
-            infer_pred[["phone_no_m", "label"]].to_csv("submit_0613.csv", index=False)
+            infer_pred[["phone_no_m", "label"]].to_csv("submit_0615.csv", index=False)
 
     # 贝叶斯参数优化
     Feature_Opt = 0
