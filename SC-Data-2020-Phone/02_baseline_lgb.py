@@ -113,16 +113,16 @@ if __name__ == "__main__":
         'metric': 'auc',
         'tree_learner': 'serial',
         'seed': SEED,
-        'n_estimators': 210,
-        'learning_rate': 0.043,
-        'max_depth': 6,
+        'n_estimators': 372,
+        'learning_rate': 0.057,
+        'max_depth': 8,
         'num_leaves': 17,
-        'min_data_in_leaf': 62,
+        'min_data_in_leaf': 42,
         'bagging_freq': 1,
-        'bagging_fraction': 0.83,
-        'feature_fraction': 0.90,
-        'lambda_l1': 0.072,
-        'lambda_l2': 0.454,
+        'bagging_fraction': 0.67,
+        'feature_fraction': 0.71,
+        'lambda_l1': 0.368,
+        'lambda_l2': 0.411,
         'max_bin': 255,
         'verbose': -1,
         'early_stopping_rounds': 100,
@@ -135,25 +135,25 @@ if __name__ == "__main__":
         print("-----Shape control:", train_df.shape, infer_df.shape)
         infer_pred, valid_pred = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=5)
         valid_df = pd.concat(valid_pred)
-        valid_df["pred"] = valid_df["pred"].map(lambda x: 1 if x >= 0.25 else 0)
+        valid_df["pred"] = valid_df["pred"].map(lambda x: 1 if x >= 0.28 else 0)
         valid_f1 = metrics.f1_score(valid_df[TARGET], valid_df["pred"], average="macro")
         print("\nOOF Valid F1-Score: ", valid_f1)
         # Export
         if TRAIN_IF:
-            infer_pred["label"] = infer_pred["label"].map(lambda x: 1 if x >= 0.25 else 0)
-            infer_pred[["phone_no_m", "label"]].to_csv("submit_0615.csv", index=False)
+            infer_pred["label"] = infer_pred["label"].map(lambda x: 1 if x >= 0.28 else 0)
+            infer_pred[["phone_no_m", "label"]].to_csv("submit_0617.csv", index=False)
 
     # 贝叶斯参数优化
     Feature_Opt = 0
     if Feature_Opt:
         opt_lgb = {
-            "p1": (200, 1000),
-            "p2": (0.001, 0.5),
+            "p1": (100, 400),
+            "p2": (0.001, 0.2),
             "p3": (4, 8),
             "p4": (16, 64),
             "p5": (16, 64),
-            "p6": (0.6, 0.9),
-            "p7": (0.6, 0.9),
+            "p6": (0.6, 0.8),
+            "p7": (0.6, 0.8),
             "p8": (0.001, 0.5),
             "p9": (0.001, 0.5),
         }
