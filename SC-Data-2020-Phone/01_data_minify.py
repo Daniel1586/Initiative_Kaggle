@@ -120,20 +120,94 @@ def etl_voc(path_tr, path_te):
 
     # 按号码/天/小时/周/对端号码/通话类型--统计通话次数
     tol_voc = pd.concat([train_voc, test_voc])
-    tol_voc["voc_phone_cnt"] = tol_voc.groupby(["phone_no_m"])["phone_no_m"].transform("count")
-    tol_voc["voc_day_cnt"] = tol_voc.groupby(["phone_no_m", "voc_day"])["phone_no_m"].transform("count")
+    del train_voc, test_voc, df
+    gc.collect()
+    phone_no_m = tol_voc[["phone_no_m"]].copy()
+    phone_no_m = phone_no_m.drop_duplicates(subset=["phone_no_m"], keep="first")
+
+    # 每个号码--通话次数/通话的人数(不重复)
+    tmp = tol_voc.groupby("phone_no_m")["opposite_no_m"].agg(phone_voc_cnt="count", oppo_voc_unique="nunique")
+    phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
+
+    # 每个号码--通话时长的max/min/sum/mean/median/var
+    tmp = tol_voc.groupby("phone_no_m")["call_dur"].agg(call_dur_max="max", call_dur_min="min",
+                                                        call_dur_sum="sum", call_dur_mean="mean",
+                                                        call_dur_median="median", call_dur_var="var")
+    phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
+
+    # 每个号码--每天[0-31]通话次数的max/min/sum/mean/median/var
+    tol_voc["voc_days_cnt"] = tol_voc.groupby(["phone_no_m", "voc_day"])["phone_no_m"].transform("count")
+    tmp_voc = tol_voc.drop_duplicates(subset=["phone_no_m", "voc_day"], keep="first")
+    tmp = tmp_voc.groupby("phone_no_m")["voc_days_cnt"].agg(voc_days_max="max", voc_days_min="min",
+                                                            voc_days_sum="sum", voc_days_mean="mean",
+                                                            voc_days_median="median", voc_days_var="var")
+    phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
+
+    # 每个号码--每天[0-31]通话时长的max/min/sum/mean/median/var
+    tol_voc["voc_days_dur"] = tol_voc.groupby(["phone_no_m", "voc_day"])["call_dur"].transform("sum")
+    tmp_voc = tol_voc.drop_duplicates(subset=["phone_no_m", "voc_day"], keep="first")
+    tmp = tmp_voc.groupby("phone_no_m")["voc_days_dur"].agg(voc_days_dur_max="max", voc_days_dur_min="min",
+                                                            voc_days_dur_sum="sum", voc_days_dur_mean="mean",
+                                                            voc_days_dur_median="median", voc_days_dur_var="var")
+    phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
+
+    # 每个号码--每小时[0-23]通话次数的max/min/sum/mean/median/var
     tol_voc["voc_hour_cnt"] = tol_voc.groupby(["phone_no_m", "voc_hour"])["phone_no_m"].transform("count")
+    tmp_voc = tol_voc.drop_duplicates(subset=["phone_no_m", "voc_hour"], keep="first")
+    tmp = tmp_voc.groupby("phone_no_m")["voc_hour_cnt"].agg(voc_hour_max="max", voc_hour_min="min",
+                                                            voc_hour_sum="sum", voc_hour_mean="mean",
+                                                            voc_hour_median="median", voc_hour_var="var")
+    phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
+
+    # 每个号码--每小时[0-23]通话时长的max/min/sum/mean/median/var
+    tol_voc["voc_hour_dur"] = tol_voc.groupby(["phone_no_m", "voc_hour"])["call_dur"].transform("sum")
+    tmp_voc = tol_voc.drop_duplicates(subset=["phone_no_m", "voc_hour"], keep="first")
+    tmp = tmp_voc.groupby("phone_no_m")["voc_hour_dur"].agg(voc_hour_dur_max="max", voc_hour_dur_min="min",
+                                                            voc_hour_dur_sum="sum", voc_hour_dur_mean="mean",
+                                                            voc_hour_dur_median="median", voc_hour_dur_var="var")
+    phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
+
+    # 每个号码--每天[0-6]通话次数的max/min/sum/mean/median/var
     tol_voc["voc_week_cnt"] = tol_voc.groupby(["phone_no_m", "voc_week"])["phone_no_m"].transform("count")
+    tmp_voc = tol_voc.drop_duplicates(subset=["phone_no_m", "voc_week"], keep="first")
+    tmp = tmp_voc.groupby("phone_no_m")["voc_week_cnt"].agg(voc_week_max="max", voc_week_min="min",
+                                                            voc_week_sum="sum", voc_week_mean="mean",
+                                                            voc_week_median="median", voc_week_var="var")
+    phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
+
+    # 每个号码--每天[0-6]通话时长的max/min/sum/mean/median/var
+    tol_voc["voc_week_dur"] = tol_voc.groupby(["phone_no_m", "voc_week"])["call_dur"].transform("sum")
+    tmp_voc = tol_voc.drop_duplicates(subset=["phone_no_m", "voc_week"], keep="first")
+    tmp = tmp_voc.groupby("phone_no_m")["voc_week_dur"].agg(voc_week_dur_max="max", voc_week_dur_min="min",
+                                                            voc_week_dur_sum="sum", voc_week_dur_mean="mean",
+                                                            voc_week_dur_median="median", voc_week_dur_var="var")
+    phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
+
+    # 每个号码--每个通话对象通话次数的max/min/sum/mean/median/var
     tol_voc["voc_oppo_cnt"] = tol_voc.groupby(["phone_no_m", "opposite_no_m"])["phone_no_m"].transform("count")
+    tmp_voc = tol_voc.drop_duplicates(subset=["phone_no_m", "opposite_no_m"], keep="first")
+    tmp = tmp_voc.groupby("phone_no_m")["voc_oppo_cnt"].agg(voc_oppo_max="max", voc_oppo_min="min",
+                                                            voc_oppo_sum="sum", voc_oppo_mean="mean",
+                                                            voc_oppo_median="median", voc_oppo_var="var")
+    phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
+
+    # 每个号码--每个通话对象通话时长的max/min/sum/mean/median/var
+    tol_voc["voc_oppo_dur"] = tol_voc.groupby(["phone_no_m", "opposite_no_m"])["call_dur"].transform("sum")
+    tmp_voc = tol_voc.drop_duplicates(subset=["phone_no_m", "opposite_no_m"], keep="first")
+    tmp = tmp_voc.groupby("phone_no_m")["voc_oppo_dur"].agg(voc_oppo_dur_max="max", voc_oppo_dur_min="min",
+                                                            voc_oppo_dur_sum="sum", voc_oppo_dur_mean="mean",
+                                                            voc_oppo_dur_median="median", voc_oppo_dur_var="var")
+    phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
+
+    print(0)
     tol_voc["voc_type_cnt"] = tol_voc.groupby(["phone_no_m", "calltype_id"])["phone_no_m"].transform("count")
     tol_voc["voc_city_cnt"] = tol_voc.groupby(["phone_no_m", "city_name"])["phone_no_m"].transform("count")
     tol_voc["voc_county_cnt"] = tol_voc.groupby(["phone_no_m", "county_name"])["phone_no_m"].transform("count")
-    del train_voc, test_voc, df
-    gc.collect()
 
-    i_cols = ["voc_day_cnt", "voc_hour_cnt", "voc_week_cnt", "voc_oppo_cnt",
+    print(0)
+    i_cols = ["", "", "", "",
               "voc_type_cnt", "voc_city_cnt", "voc_county_cnt"]
-    j_cols = ["voc_day", "voc_hour", "voc_week", "opposite_no_m",
+    j_cols = ["", "", "", "",
               "calltype_id", "city_name", "county_name"]
     for col1, col2 in zip(i_cols, j_cols):
         for agg_type in ["mean", "std", "max", "min", "sum", "median"]:
