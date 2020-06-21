@@ -21,7 +21,7 @@ from copy import deepcopy
 from sklearn import metrics
 from scipy.stats import ks_2samp
 from bayes_opt import BayesianOptimization
-from sklearn.model_selection import KFold,StratifiedKFold
+from sklearn.model_selection import KFold, StratifiedKFold
 from sklearn.preprocessing import LabelEncoder
 warnings.filterwarnings('ignore')
 
@@ -113,16 +113,17 @@ if __name__ == "__main__":
         'metric': 'auc',
         'tree_learner': 'serial',
         'seed': SEED,
-        'n_estimators': 372,
-        'learning_rate': 0.057,
-        'max_depth': 8,
-        'num_leaves': 17,
-        'min_data_in_leaf': 42,
+        'n_estimators': 348,
+        'learning_rate': 0.198,
+        'max_depth': 4,
+        'num_leaves': 62,
+        'min_data_in_leaf': 63,
         'bagging_freq': 1,
-        'bagging_fraction': 0.67,
-        'feature_fraction': 0.71,
-        'lambda_l1': 0.368,
-        'lambda_l2': 0.411,
+        'bagging_fraction': 0.68,
+        'feature_fraction': 0.66,
+        'lambda_l1': 0.266,
+        'lambda_l2': 0.414,
+        'min_gain_to_split': 0.0,
         'max_bin': 255,
         'verbose': -1,
         'early_stopping_rounds': 100,
@@ -135,16 +136,16 @@ if __name__ == "__main__":
         print("-----Shape control:", train_df.shape, infer_df.shape)
         infer_pred, valid_pred = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=5)
         valid_df = pd.concat(valid_pred)
-        valid_df["pred"] = valid_df["pred"].map(lambda x: 1 if x >= 0.28 else 0)
+        valid_df["pred"] = valid_df["pred"].map(lambda x: 1 if x >= 0.5 else 0)
         valid_f1 = metrics.f1_score(valid_df[TARGET], valid_df["pred"], average="macro")
         print("\nOOF Valid F1-Score: ", valid_f1)
         # Export
         if TRAIN_IF:
-            infer_pred["label"] = infer_pred["label"].map(lambda x: 1 if x >= 0.28 else 0)
-            infer_pred[["phone_no_m", "label"]].to_csv("submit_0617.csv", index=False)
+            infer_pred["label"] = infer_pred["label"].map(lambda x: 1 if x >= 0.5 else 0)
+            infer_pred[["phone_no_m", "label"]].to_csv("submit_0621.csv", index=False)
 
     # 贝叶斯参数优化
-    Feature_Opt = 0
+    Feature_Opt = 1
     if Feature_Opt:
         opt_lgb = {
             "p1": (100, 400),
@@ -159,7 +160,7 @@ if __name__ == "__main__":
         }
 
         def opt_lgb_para(p1, p2, p3, p4, p5, p6, p7, p8, p9):
-            folds = StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED)
+            folds = StratifiedKFold(n_splits=6, shuffle=True, random_state=SEED)
             train_x, train_y = train_df[features_cols], train_df[TARGET]
             opt_params = {
                 'objective': 'binary',
@@ -177,6 +178,7 @@ if __name__ == "__main__":
                 'feature_fraction': round(p7, 2),
                 'lambda_l1': round(p8, 3),
                 'lambda_l2': round(p9, 3),
+                'min_gain_to_split': 1.0,
                 'max_bin': 255,
                 'verbose': -1,
                 'early_stopping_rounds': 100,
@@ -190,7 +192,7 @@ if __name__ == "__main__":
                 vl_data = lgb.Dataset(vl_x, label=vl_y)
                 vl_fold = deepcopy(train_df.iloc[val_idx, :][[TARGET]])
 
-                estimator = lgb.train(opt_params, tr_data, valid_sets=[tr_data, vl_data], verbose_eval=200)
+                estimator = lgb.train(opt_params, tr_data, valid_sets=[tr_data, vl_data], verbose_eval=100)
                 valid_p = estimator.predict(vl_x)
                 vl_fold["pred"] = valid_p
                 va_df.append(vl_fold)
@@ -198,10 +200,12 @@ if __name__ == "__main__":
                 gc.collect()
 
             val_pred = pd.concat(va_df)
-            val_pred["pred"] = val_pred["pred"].map(lambda x: 1 if x >= 0.5 else 0)
-            val_f1 = metrics.f1_score(val_pred[TARGET], val_pred["pred"], average="macro")
+            # val_pred["pred"] = val_pred["pred"].map(lambda x: 1 if x >= 0.5 else 0)
+            # val_f1 = metrics.f1_score(val_pred[TARGET], val_pred["pred"], average="macro")
+            fpr, tpr, _ = metrics.roc_curve(val_pred[TARGET], val_pred["pred"])
+            val_auc = metrics.auc(fpr, tpr)
 
-            return val_f1
+            return val_auc
 
         rf_bo = BayesianOptimization(f=opt_lgb_para, pbounds=opt_lgb)
         rf_bo.maximize(n_iter=50, init_points=3)
