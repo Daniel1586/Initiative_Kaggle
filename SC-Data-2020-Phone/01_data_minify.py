@@ -305,26 +305,29 @@ def etl_app(path_tr, path_te):
     train_app = train_app.reset_index(drop=True)
     print("----- train_app过滤月份后, 大小:", train_app.shape)
 
-    # 按号码统计流量
     tol_app = pd.concat([train_app, test_app])
-    tol_app["app_phone_cnt"] = tol_app.groupby(["phone_no_m"])["phone_no_m"].transform("count")
+    phone_no_m = tol_app[["phone_no_m"]].copy()
+    phone_no_m = phone_no_m.drop_duplicates(subset=["phone_no_m"], keep="first")
 
-    # 最大流量的APP
-    srt_app = tol_app.sort_values(by=["phone_no_m", "flow"], ascending=False, inplace=False)
-    app_flow_max = srt_app.drop_duplicates(["phone_no_m"], keep="first", inplace=False)
+    # 每个号码--APP个数/APP个数(不重复)
+    tmp = tol_app.groupby("phone_no_m")["busi_name"].agg(phone_app_cnt="count", oppo_app_unique="nunique")
+    phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
+
+    # 每个号码--流量max/min/sum/mean/median/var
+    tmp = tol_app.groupby("phone_no_m")["flow"].agg(app_flow_max="max", app_flow_min="min",
+                                                    app_flow_sum="sum", app_flow_mean="mean",
+                                                    app_flow_median="median", app_flow_var="var")
+    phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
+
+    # 每个号码--最大流量的APP
+    flow = tol_app[["phone_no_m", "busi_name", "flow"]].copy()
+    srt_app = flow.sort_values(by=["phone_no_m", "flow"], ascending=False, inplace=False)
+    app_flow_max = srt_app.drop_duplicates(subset=["phone_no_m"], keep="first", inplace=False)
     app_flow_max = app_flow_max[["phone_no_m", "busi_name"]]
     app_flow_max.rename(columns={"busi_name": "max_app"}, inplace=True)
-    max_app = pd.merge(tol_app, app_flow_max, how="left", on="phone_no_m")
+    phone_no_m = phone_no_m.merge(app_flow_max, on="phone_no_m", how="left")
 
-    i_cols = ["flow"]
-    for col in i_cols:
-        for agg_type in ["mean", "std", "max", "min", "sum", "median"]:
-            new_col_name = col + "_" + agg_type
-            max_app[new_col_name] = max_app.groupby(["phone_no_m"])[col].transform(agg_type)
-    print("----- tol_app 大小:", max_app.shape)
-    print("----- tol_app 列名:", max_app.columns.tolist())
-
-    return max_app
+    return phone_no_m
 
 
 if __name__ == "__main__":
@@ -337,32 +340,28 @@ if __name__ == "__main__":
     dir_tests = os.getcwd() + "\\test\\"
 
     print("\n========== 3.Merge data ...\n")
-    # final_user = etl_user(dir_train, dir_tests)
-    # print("----- final_user 大小:", final_user.shape)
-    # print("----- final_user 列名:", final_user.columns.tolist())
-    # final_voc = etl_voc(dir_train, dir_tests)
-    # print("----- final_voc 大小:", final_voc.shape)
-    # print("----- final_voc 列名:", final_voc.columns.tolist())
-    # final_sms = etl_sms(dir_train, dir_tests)
-    # print("----- final_sms 大小:", final_sms.shape)
-    # print("----- final_sms 列名:", final_sms.columns.tolist())
+    final_user = etl_user(dir_train, dir_tests)
+    print("----- final_user 大小:", final_user.shape)
+    print("----- final_user 列名:", final_user.columns.tolist())
+    final_voc = etl_voc(dir_train, dir_tests)
+    print("----- final_voc 大小:", final_voc.shape)
+    print("----- final_voc 列名:", final_voc.columns.tolist())
+    final_sms = etl_sms(dir_train, dir_tests)
+    print("----- final_sms 大小:", final_sms.shape)
+    print("----- final_sms 列名:", final_sms.columns.tolist())
     final_app = etl_app(dir_train, dir_tests)
+    print("----- final_app 大小:", final_app.shape)
+    print("----- final_app 列名:", final_app.columns.tolist())
 
-    # vld_app = vld_app[["phone_no_m", "app_phone_cnt", "max_app",
-    #                    "flow_mean", "flow_std", "flow_max", "flow_min", "flow_sum"]]
-    # final_app = vld_app.drop_duplicates(["phone_no_m"], keep="first", inplace=False)
-    # print("----- final_app 大小:", final_app.shape)
-    # print("----- final_app 列名:", final_app.columns.tolist())
-    #
-    # df_tol = pd.merge(vld_user, final_voc, how="left", on="phone_no_m")
-    # df_tol = pd.merge(df_tol, final_sms, how="left", on="phone_no_m")
-    # df_tol = pd.merge(df_tol, final_app, how="left", on="phone_no_m")
-    # print("----- df_tol 大小:", df_tol.shape)
-    # print("----- df_tol 列名:", df_tol.columns.tolist())
-    #
-    # df_train = df_tol[df_tol["label"].notnull()]
-    # df_tests = df_tol[df_tol["label"].isnull()]
-    # print("----- df_train 大小:", df_train.shape)
-    # print("----- df_tests 大小:", df_tests.shape)
-    # df_train.to_csv("data_train.csv", sep=",", index=False, header=True)
-    # df_tests.to_csv("data_tests.csv", sep=",", index=False, header=True)
+    df_tol = pd.merge(final_user, final_voc, how="left", on="phone_no_m")
+    df_tol = pd.merge(df_tol, final_sms, how="left", on="phone_no_m")
+    df_tol = pd.merge(df_tol, final_app, how="left", on="phone_no_m")
+    print("----- df_tol 大小:", df_tol.shape)
+    print("----- df_tol 列名:", df_tol.columns.tolist())
+
+    df_train = df_tol[df_tol["label"].notnull()]
+    df_tests = df_tol[df_tol["label"].isnull()]
+    print("----- df_train 大小:", df_train.shape)
+    print("----- df_tests 大小:", df_tests.shape)
+    df_train.to_csv("data_train.csv", sep=",", index=False, header=True)
+    df_tests.to_csv("data_tests.csv", sep=",", index=False, header=True)
