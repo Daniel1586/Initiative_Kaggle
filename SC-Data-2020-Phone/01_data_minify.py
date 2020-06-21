@@ -88,8 +88,6 @@ def etl_user(path_tr, path_te):
     #     le = LabelEncoder()
     #     le.fit(list(tol_user[col1]))
     #     tol_user[col1] = le.transform(tol_user[col1])
-    print("----- tol_user 大小:", tol_user.shape)
-    print("----- tol_user 列名:", tol_user.columns.tolist())
 
     return tol_user
 
@@ -341,27 +339,27 @@ if __name__ == "__main__":
 
     print("\n========== 3.Merge data ...\n")
     final_user = etl_user(dir_train, dir_tests)
-    print("----- final_user 大小:", final_user.shape)
+    print("\n----- final_user 大小:", final_user.shape)
     print("----- final_user 列名:", final_user.columns.tolist())
     final_voc = etl_voc(dir_train, dir_tests)
-    print("----- final_voc 大小:", final_voc.shape)
+    print("\n----- final_voc 大小:", final_voc.shape)
     print("----- final_voc 列名:", final_voc.columns.tolist())
     final_sms = etl_sms(dir_train, dir_tests)
-    print("----- final_sms 大小:", final_sms.shape)
+    print("\n----- final_sms 大小:", final_sms.shape)
     print("----- final_sms 列名:", final_sms.columns.tolist())
     final_app = etl_app(dir_train, dir_tests)
-    print("----- final_app 大小:", final_app.shape)
+    print("\n----- final_app 大小:", final_app.shape)
     print("----- final_app 列名:", final_app.columns.tolist())
 
     df_tol = pd.merge(final_user, final_voc, how="left", on="phone_no_m")
     df_tol = pd.merge(df_tol, final_sms, how="left", on="phone_no_m")
     df_tol = pd.merge(df_tol, final_app, how="left", on="phone_no_m")
-    print("----- df_tol 大小:", df_tol.shape)
+    print("\n----- df_tol 大小:", df_tol.shape)
     print("----- df_tol 列名:", df_tol.columns.tolist())
 
     df_train = df_tol[df_tol["label"].notnull()]
     df_tests = df_tol[df_tol["label"].isnull()]
-    print("----- df_train 大小:", df_train.shape)
+    print("\n----- df_train 大小:", df_train.shape)
     print("----- df_tests 大小:", df_tests.shape)
     df_train.to_csv("data_train.csv", sep=",", index=False, header=True)
     df_tests.to_csv("data_tests.csv", sep=",", index=False, header=True)
