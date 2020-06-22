@@ -122,9 +122,10 @@ def etl_voc(path_tr, path_te):
     phone_no_m = tol_voc[["phone_no_m"]].copy()
     phone_no_m = phone_no_m.drop_duplicates(subset=["phone_no_m"], keep="first")
 
-    # 每个号码--通话次数/通话的人数(不重复)
-    tmp = tol_voc.groupby("phone_no_m")["opposite_no_m"].agg(phone_voc_cnt="count", oppo_voc_unique="nunique")
+    # 每个号码--通话次数/通话的人数(不重复)/占比
+    tmp = tol_voc.groupby("phone_no_m")["opposite_no_m"].agg(total_voc_cnt="count", oppo_voc_unique="nunique")
     phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
+    phone_no_m["voc_oppo_cntR"] = phone_no_m["oppo_voc_unique"]/phone_no_m["total_voc_cnt"]
 
     # 每个号码--通话时长的max/min/sum/mean/median/var
     tmp = tol_voc.groupby("phone_no_m")["call_dur"].agg(call_dur_max="max", call_dur_min="min",
@@ -208,7 +209,7 @@ def etl_voc(path_tr, path_te):
     df_01 = tol_voc[tol_voc["calltype_id"] == 1].copy()
     tmp = df_01.groupby("phone_no_m")["opposite_no_m"].agg(voc_01_cnt="count", voc_01_unique="nunique")
     phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
-    phone_no_m["voc_01_cntR"] = phone_no_m["voc_01_cnt"] / phone_no_m["phone_voc_cnt"]
+    phone_no_m["voc_01_cntR"] = phone_no_m["voc_01_cnt"] / phone_no_m["total_voc_cnt"]
     phone_no_m["voc_01_unqR"] = phone_no_m["voc_01_unique"] / phone_no_m["oppo_voc_unique"]
 
     tmp = df_01.groupby("phone_no_m")["city_name"].agg(city_01_unique="nunique")
@@ -249,9 +250,10 @@ def etl_sms(path_tr, path_te):
     phone_no_m = tol_sms[["phone_no_m"]].copy()
     phone_no_m = phone_no_m.drop_duplicates(subset=["phone_no_m"], keep="first")
 
-    # 每个号码--短信次数/短信的人数(不重复)
-    tmp = tol_sms.groupby("phone_no_m")["opposite_no_m"].agg(phone_sms_cnt="count", oppo_sms_unique="nunique")
+    # 每个号码--短信次数/短信的人数(不重复)/占比
+    tmp = tol_sms.groupby("phone_no_m")["opposite_no_m"].agg(total_sms_cnt="count", oppo_sms_unique="nunique")
     phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
+    phone_no_m["sms_oppo_cntR"] = phone_no_m["oppo_sms_unique"] / phone_no_m["total_sms_cnt"]
 
     # 每个号码--每天[0-31]短信次数的max/min/sum/mean/median/var
     tol_sms["sms_days_cnt"] = tol_sms.groupby(["phone_no_m", "sms_day"])["phone_no_m"].transform("count")
@@ -281,7 +283,7 @@ def etl_sms(path_tr, path_te):
     df_01 = tol_sms[tol_sms["calltype_id"] == 1].copy()
     tmp = df_01.groupby("phone_no_m")["opposite_no_m"].agg(sms_01_cnt="count", sms_01_unique="nunique")
     phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
-    phone_no_m["sms_01_cntR"] = phone_no_m["sms_01_cnt"] / phone_no_m["phone_sms_cnt"]
+    phone_no_m["sms_01_cntR"] = phone_no_m["sms_01_cnt"] / phone_no_m["total_sms_cnt"]
     phone_no_m["sms_01_unqR"] = phone_no_m["sms_01_unique"] / phone_no_m["oppo_sms_unique"]
 
     return phone_no_m
@@ -308,8 +310,9 @@ def etl_app(path_tr, path_te):
     phone_no_m = phone_no_m.drop_duplicates(subset=["phone_no_m"], keep="first")
 
     # 每个号码--APP个数/APP个数(不重复)
-    tmp = tol_app.groupby("phone_no_m")["busi_name"].agg(phone_app_cnt="count", oppo_app_unique="nunique")
+    tmp = tol_app.groupby("phone_no_m")["busi_name"].agg(total_app_cnt="count", oppo_app_unique="nunique")
     phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
+    phone_no_m["app_oppo_cntR"] = phone_no_m["oppo_app_unique"] / phone_no_m["total_app_cnt"]
 
     # 每个号码--流量max/min/sum/mean/median/var
     tmp = tol_app.groupby("phone_no_m")["flow"].agg(app_flow_max="max", app_flow_min="min",
