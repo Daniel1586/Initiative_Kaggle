@@ -68,7 +68,7 @@ def make_predictions(tr_df, tt_df, features_columns, target, params, nfold=2):
         del tr_x, tr_y, vl_x, vl_y, tr_data, vl_data, vl_fold
         gc.collect()
 
-    tt_df["pred"] = predictions
+    tt_df["label"] = predictions
 
     return tt_df, va_df
 
@@ -145,8 +145,8 @@ if __name__ == "__main__":
         print("\nOOF Valid F1-Score: ", valid_f1)
         # Export
         if TRAIN_IF:
-            infer_pred["pred"] = infer_pred["pred"].map(lambda x: 1 if x >= 0.2 else 0)
-            infer_pred[["phone_no_m", "pred"]].to_csv("submit_0622.csv", index=False)
+            infer_pred["label"] = infer_pred["label"].map(lambda x: 1 if x >= 0.2 else 0)
+            infer_pred[["phone_no_m", "label"]].to_csv("submit_0622.csv", index=False)
 
     # 贝叶斯参数优化
     Feature_Opt = 0
