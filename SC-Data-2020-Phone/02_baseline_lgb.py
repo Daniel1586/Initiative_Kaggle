@@ -68,7 +68,7 @@ def make_predictions(tr_df, tt_df, features_columns, target, params, nfold=2):
         del tr_x, tr_y, vl_x, vl_y, tr_data, vl_data, vl_fold
         gc.collect()
 
-    tt_df["label"] = predictions
+    tt_df["pred"] = predictions
 
     return tt_df, va_df
 
@@ -140,13 +140,13 @@ if __name__ == "__main__":
         valid_auc = metrics.auc(fpr, tpr)
         print("\nOOF Valid AUC: ", valid_auc)
 
-        valid_df["pred"] = valid_df["pred"].map(lambda x: 1 if x >= 0.25 else 0)
+        valid_df["pred"] = valid_df["pred"].map(lambda x: 1 if x >= 0.2 else 0)
         valid_f1 = metrics.f1_score(valid_df[TARGET], valid_df["pred"], average="macro")
         print("\nOOF Valid F1-Score: ", valid_f1)
         # Export
         if TRAIN_IF:
-            infer_pred["label"] = infer_pred["label"].map(lambda x: 1 if x >= 0.25 else 0)
-            infer_pred[["phone_no_m", "label"]].to_csv("submit_0622.csv", index=False)
+            infer_pred["pred"] = infer_pred["pred"].map(lambda x: 1 if x >= 0.2 else 0)
+            infer_pred[["phone_no_m", "pred"]].to_csv("submit_0622.csv", index=False)
 
     # 贝叶斯参数优化
     Feature_Opt = 0
