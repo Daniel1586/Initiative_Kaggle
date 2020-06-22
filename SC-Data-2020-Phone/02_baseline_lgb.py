@@ -59,7 +59,7 @@ def make_predictions(tr_df, tt_df, features_columns, target, params, nfold=2):
         vl_data = lgb.Dataset(vl_x, label=vl_y)
         vl_fold = deepcopy(tr_df.iloc[val_idx, :][["phone_no_m", target]])
 
-        estimator = lgb.train(params, tr_data, valid_sets=[tr_data, vl_data], verbose_eval=200)
+        estimator = lgb.train(params, tr_data, valid_sets=[tr_data, vl_data], verbose_eval=50)
         valid_p = estimator.predict(vl_x)
         infer_p = estimator.predict(infer_x)
         predictions += infer_p / nfold
@@ -113,17 +113,17 @@ if __name__ == "__main__":
         'metric': 'auc',
         'tree_learner': 'serial',
         'seed': SEED,
-        'n_estimators': 348,
-        'learning_rate': 0.198,
+        'n_estimators': 397,
+        'learning_rate': 0.07,
         'max_depth': 4,
-        'num_leaves': 62,
+        'num_leaves': 31,
         'min_data_in_leaf': 63,
         'bagging_freq': 1,
-        'bagging_fraction': 0.68,
-        'feature_fraction': 0.66,
-        'lambda_l1': 0.266,
-        'lambda_l2': 0.414,
-        'min_gain_to_split': 0.0,
+        'bagging_fraction': 0.59,
+        'feature_fraction': 0.60,
+        'lambda_l1': 0.35,
+        'lambda_l2': 0.54,
+        'min_gain_to_split': 10.0,
         'max_bin': 255,
         'verbose': -1,
         'early_stopping_rounds': 100,
@@ -136,31 +136,35 @@ if __name__ == "__main__":
         print("-----Shape control:", train_df.shape, infer_df.shape)
         infer_pred, valid_pred = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=5)
         valid_df = pd.concat(valid_pred)
-        valid_df["pred"] = valid_df["pred"].map(lambda x: 1 if x >= 0.5 else 0)
+        fpr, tpr, _ = metrics.roc_curve(valid_df[TARGET], valid_df["pred"])
+        valid_auc = metrics.auc(fpr, tpr)
+        print("\nOOF Valid AUC: ", valid_auc)
+
+        valid_df["pred"] = valid_df["pred"].map(lambda x: 1 if x >= 0.25 else 0)
         valid_f1 = metrics.f1_score(valid_df[TARGET], valid_df["pred"], average="macro")
         print("\nOOF Valid F1-Score: ", valid_f1)
         # Export
         if TRAIN_IF:
-            infer_pred["label"] = infer_pred["label"].map(lambda x: 1 if x >= 0.5 else 0)
-            infer_pred[["phone_no_m", "label"]].to_csv("submit_0621.csv", index=False)
+            infer_pred["label"] = infer_pred["label"].map(lambda x: 1 if x >= 0.25 else 0)
+            infer_pred[["phone_no_m", "label"]].to_csv("submit_0622.csv", index=False)
 
     # 贝叶斯参数优化
-    Feature_Opt = 1
+    Feature_Opt = 0
     if Feature_Opt:
         opt_lgb = {
             "p1": (100, 400),
-            "p2": (0.001, 0.2),
-            "p3": (4, 8),
-            "p4": (16, 64),
-            "p5": (16, 64),
-            "p6": (0.6, 0.8),
-            "p7": (0.6, 0.8),
-            "p8": (0.001, 0.5),
-            "p9": (0.001, 0.5),
+            "p2": (0.01, 0.2),
+            "p3": (4, 6),
+            "p4": (8, 32),
+            "p5": (32, 64),
+            "p6": (0.5, 0.8),
+            "p7": (0.5, 0.8),
+            "p8": (0.01, 0.8),
+            "p9": (0.01, 0.8),
         }
 
         def opt_lgb_para(p1, p2, p3, p4, p5, p6, p7, p8, p9):
-            folds = StratifiedKFold(n_splits=6, shuffle=True, random_state=SEED)
+            folds = StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED)
             train_x, train_y = train_df[features_cols], train_df[TARGET]
             opt_params = {
                 'objective': 'binary',
@@ -169,16 +173,16 @@ if __name__ == "__main__":
                 'tree_learner': 'serial',
                 'seed': SEED,
                 'n_estimators': int(p1),
-                'learning_rate': round(p2, 3),
+                'learning_rate': round(p2, 2),
                 'max_depth': int(p3),
                 'num_leaves': int(p4),
                 'min_data_in_leaf': int(p5),
                 'bagging_freq': 1,
                 'bagging_fraction': round(p6, 2),
                 'feature_fraction': round(p7, 2),
-                'lambda_l1': round(p8, 3),
-                'lambda_l2': round(p9, 3),
-                'min_gain_to_split': 1.0,
+                'lambda_l1': round(p8, 2),
+                'lambda_l2': round(p9, 2),
+                'min_gain_to_split': 10.0,
                 'max_bin': 255,
                 'verbose': -1,
                 'early_stopping_rounds': 100,
@@ -186,13 +190,16 @@ if __name__ == "__main__":
 
             va_df = []
             for fold_, (tra_idx, val_idx) in enumerate(folds.split(train_x, train_y)):
+                print("-----Fold:", fold_)
                 tr_x, tr_y = train_x.iloc[tra_idx, :], train_y[tra_idx]
                 vl_x, vl_y = train_x.iloc[val_idx, :], train_y[val_idx]
+                print("-----Train num:", len(tr_x), "Valid num:", len(vl_x))
+
                 tr_data = lgb.Dataset(tr_x, label=tr_y)
                 vl_data = lgb.Dataset(vl_x, label=vl_y)
                 vl_fold = deepcopy(train_df.iloc[val_idx, :][[TARGET]])
 
-                estimator = lgb.train(opt_params, tr_data, valid_sets=[tr_data, vl_data], verbose_eval=100)
+                estimator = lgb.train(opt_params, tr_data, valid_sets=[tr_data, vl_data], verbose_eval=50)
                 valid_p = estimator.predict(vl_x)
                 vl_fold["pred"] = valid_p
                 va_df.append(vl_fold)
