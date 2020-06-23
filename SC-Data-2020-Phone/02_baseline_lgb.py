@@ -113,17 +113,17 @@ if __name__ == "__main__":
         'metric': 'auc',
         'tree_learner': 'serial',
         'seed': SEED,
-        'n_estimators': 397,
-        'learning_rate': 0.07,
-        'max_depth': 4,
-        'num_leaves': 31,
-        'min_data_in_leaf': 63,
+        'n_estimators': 200,
+        'learning_rate': 0.02,
+        'max_depth': 5,
+        'num_leaves': 16,
+        'min_data_in_leaf': 32,
         'bagging_freq': 1,
-        'bagging_fraction': 0.59,
-        'feature_fraction': 0.60,
-        'lambda_l1': 0.35,
-        'lambda_l2': 0.54,
-        'min_gain_to_split': 10.0,
+        'bagging_fraction': 0.75,
+        'feature_fraction': 0.75,
+        'lambda_l1': 0.05,
+        'lambda_l2': 0.05,
+        'min_gain_to_split': 5.0,
         'max_bin': 255,
         'verbose': -1,
         'early_stopping_rounds': 100,
@@ -133,20 +133,21 @@ if __name__ == "__main__":
     TRAIN_CV = 1
     TRAIN_IF = 1
     if TRAIN_CV:
-        print("-----Shape control:", train_df.shape, infer_df.shape)
+        print("===== Used feature len:", len(features_cols))
+        print("===== Used feature list:", features_cols)
         infer_pred, valid_pred = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=5)
         valid_df = pd.concat(valid_pred)
         fpr, tpr, _ = metrics.roc_curve(valid_df[TARGET], valid_df["pred"])
         valid_auc = metrics.auc(fpr, tpr)
-        print("\nOOF Valid AUC: ", valid_auc)
+        print("\n===== OOF Valid AUC: ", valid_auc)
 
-        valid_df["pred"] = valid_df["pred"].map(lambda x: 1 if x >= 0.2 else 0)
+        valid_df["pred"] = valid_df["pred"].map(lambda x: 1 if x >= 0.35 else 0)
         valid_f1 = metrics.f1_score(valid_df[TARGET], valid_df["pred"], average="macro")
-        print("\nOOF Valid F1-Score: ", valid_f1)
+        print("\n===== OOF Valid F1-Score: ", valid_f1)
         # Export
         if TRAIN_IF:
-            infer_pred["label"] = infer_pred["label"].map(lambda x: 1 if x >= 0.2 else 0)
-            infer_pred[["phone_no_m", "label"]].to_csv("submit_0622.csv", index=False)
+            infer_pred["label"] = infer_pred["label"].map(lambda x: 1 if x >= 0.35 else 0)
+            infer_pred[["phone_no_m", "label"]].to_csv("submit_0623.csv", index=False)
 
     # 贝叶斯参数优化
     Feature_Opt = 0
@@ -156,7 +157,7 @@ if __name__ == "__main__":
             "p2": (0.01, 0.2),
             "p3": (4, 6),
             "p4": (8, 32),
-            "p5": (32, 64),
+            "p5": (16, 64),
             "p6": (0.5, 0.8),
             "p7": (0.5, 0.8),
             "p8": (0.01, 0.8),
