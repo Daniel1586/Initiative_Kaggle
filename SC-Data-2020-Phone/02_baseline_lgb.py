@@ -123,7 +123,7 @@ if __name__ == "__main__":
         'feature_fraction': 0.75,
         'lambda_l1': 0.05,
         'lambda_l2': 0.05,
-        'min_gain_to_split': 5.0,
+        'min_gain_to_split': 0.0,
         'max_bin': 255,
         'verbose': -1,
         'early_stopping_rounds': 100,
@@ -141,12 +141,12 @@ if __name__ == "__main__":
         valid_auc = metrics.auc(fpr, tpr)
         print("\n===== OOF Valid AUC: ", valid_auc)
 
-        valid_df["pred"] = valid_df["pred"].map(lambda x: 1 if x >= 0.35 else 0)
+        valid_df["pred"] = valid_df["pred"].map(lambda x: 1 if x >= 0.3 else 0)
         valid_f1 = metrics.f1_score(valid_df[TARGET], valid_df["pred"], average="macro")
         print("\n===== OOF Valid F1-Score: ", valid_f1)
         # Export
         if TRAIN_IF:
-            infer_pred["label"] = infer_pred["label"].map(lambda x: 1 if x >= 0.35 else 0)
+            infer_pred["label"] = infer_pred["label"].map(lambda x: 1 if x >= 0.3 else 0)
             infer_pred[["phone_no_m", "label"]].to_csv("submit_0623.csv", index=False)
 
     # 贝叶斯参数优化
