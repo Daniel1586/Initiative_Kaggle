@@ -103,7 +103,9 @@ if __name__ == "__main__":
             infer_df[col] = infer_df[col].astype("category")
 
     # Model Features
-    rm_cols = ["phone_no_m", TARGET]
+    # voc_days_mean/voc_01_cnt/sms_days_mean/county_name
+    rm_cols = ["phone_no_m", TARGET,
+               ]
     features_cols = [col for col in list(train_df) if col not in rm_cols]
 
     # Model params
@@ -114,20 +116,42 @@ if __name__ == "__main__":
         'tree_learner': 'serial',
         'seed': SEED,
         'n_estimators': 200,
-        'learning_rate': 0.02,
+        'learning_rate': 0.01,
         'max_depth': 5,
-        'num_leaves': 16,
-        'min_data_in_leaf': 32,
+        'num_leaves': 24,
+        'min_data_in_leaf': 24,
         'bagging_freq': 1,
         'bagging_fraction': 0.75,
         'feature_fraction': 0.75,
-        'lambda_l1': 0.05,
-        'lambda_l2': 0.05,
-        'min_gain_to_split': 0.0,
+        'lambda_l1': 0.01,
+        'lambda_l2': 0.01,
+        'min_gain_to_split': 1.0,
         'max_bin': 255,
         'verbose': -1,
         'early_stopping_rounds': 100,
     }
+
+    # 单特征筛选
+    Feature_Sel = 0
+    if Feature_Sel:
+        data_list = []
+        for i in range(len(features_cols)):
+            feat_eva = deepcopy(features_cols)
+            del feat_eva[i]
+            print(i, len(feat_eva))
+            _, valid_pred = make_predictions(train_df, infer_df, feat_eva, TARGET, lgb_params, nfold=6)
+            valid_df = pd.concat(valid_pred)
+            fpr, tpr, _ = metrics.roc_curve(valid_df[TARGET], valid_df["pred"])
+            valid_auc = metrics.auc(fpr, tpr)
+            print("\n===== OOF Valid AUC: ", valid_auc)
+            valid_df["pred"] = valid_df["pred"].map(lambda x: 1 if x >= 0.3 else 0)
+            valid_f1 = metrics.f1_score(valid_df[TARGET], valid_df["pred"], average="macro")
+            print("\n===== OOF Valid F1-Score: ", valid_f1)
+            data_list.append([i, features_cols[i], valid_auc, valid_f1])
+        data_name = ["idx", "feature", "OOF_AUC", "OOF_F1"]
+        data_res = pd.DataFrame(columns=data_name, data=data_list)
+        data_etl = data_res.sort_values(by=["OOF_AUC", "OOF_F1"], axis=0, ascending=False)
+        data_etl.round({"OOF_AUC": 3, "OOF_F1": 3}).to_csv("feat_eva.csv", sep=",", index=False, header=True)
 
     # 模型训练
     TRAIN_CV = 1
@@ -135,7 +159,7 @@ if __name__ == "__main__":
     if TRAIN_CV:
         print("===== Used feature len:", len(features_cols))
         print("===== Used feature list:", features_cols)
-        infer_pred, valid_pred = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=5)
+        infer_pred, valid_pred = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=6)
         valid_df = pd.concat(valid_pred)
         fpr, tpr, _ = metrics.roc_curve(valid_df[TARGET], valid_df["pred"])
         valid_auc = metrics.auc(fpr, tpr)
@@ -147,7 +171,7 @@ if __name__ == "__main__":
         # Export
         if TRAIN_IF:
             infer_pred["label"] = infer_pred["label"].map(lambda x: 1 if x >= 0.3 else 0)
-            infer_pred[["phone_no_m", "label"]].to_csv("submit_0623.csv", index=False)
+            infer_pred[["phone_no_m", "label"]].to_csv("submit_0624.csv", index=False)
 
     # 贝叶斯参数优化
     Feature_Opt = 0
