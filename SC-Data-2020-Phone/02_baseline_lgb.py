@@ -103,7 +103,9 @@ if __name__ == "__main__":
             infer_df[col] = infer_df[col].astype("category")
 
     # Model Features
-    # voc_days_mean/voc_01_cnt/sms_days_mean/county_name
+    # city_name/call_dur_median/call_dur_min/voc_oppo_cntR
+    # ---------/sms_days_max/sms_days_min/app_flow_median/voc_days_max
+    # ---------/------------/voc_days_dur_mean/sms_01_unique/sms_hour_min
     rm_cols = ["phone_no_m", TARGET,
                ]
     features_cols = [col for col in list(train_df) if col not in rm_cols]
@@ -116,7 +118,7 @@ if __name__ == "__main__":
         'tree_learner': 'serial',
         'seed': SEED,
         'n_estimators': 200,
-        'learning_rate': 0.01,
+        'learning_rate': 0.04,
         'max_depth': 5,
         'num_leaves': 24,
         'min_data_in_leaf': 24,
@@ -125,7 +127,7 @@ if __name__ == "__main__":
         'feature_fraction': 0.75,
         'lambda_l1': 0.01,
         'lambda_l2': 0.01,
-        'min_gain_to_split': 1.0,
+        'min_gain_to_split': 5.0,
         'max_bin': 255,
         'verbose': -1,
         'early_stopping_rounds': 100,
@@ -151,7 +153,7 @@ if __name__ == "__main__":
         data_name = ["idx", "feature", "OOF_AUC", "OOF_F1"]
         data_res = pd.DataFrame(columns=data_name, data=data_list)
         data_etl = data_res.sort_values(by=["OOF_AUC", "OOF_F1"], axis=0, ascending=False)
-        data_etl.round({"OOF_AUC": 3, "OOF_F1": 3}).to_csv("feat_eva.csv", sep=",", index=False, header=True)
+        data_etl.round({"OOF_AUC": 4, "OOF_F1": 4}).to_csv("feat_eva.csv", sep=",", index=False, header=True)
 
     # 模型训练
     TRAIN_CV = 1
@@ -171,7 +173,7 @@ if __name__ == "__main__":
         # Export
         if TRAIN_IF:
             infer_pred["label"] = infer_pred["label"].map(lambda x: 1 if x >= 0.3 else 0)
-            infer_pred[["phone_no_m", "label"]].to_csv("submit_0624.csv", index=False)
+            infer_pred[["phone_no_m", "label"]].to_csv("submit_0626.csv", index=False)
 
     # 贝叶斯参数优化
     Feature_Opt = 0
