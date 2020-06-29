@@ -117,17 +117,17 @@ if __name__ == "__main__":
         'metric': 'auc',
         'tree_learner': 'serial',
         'seed': SEED,
-        'n_estimators': 200,
-        'learning_rate': 0.01,
+        'n_estimators': 400,
+        'learning_rate': 0.02,
         'max_depth': 5,
         'num_leaves': 24,
         'min_data_in_leaf': 24,
         'bagging_freq': 1,
         'bagging_fraction': 0.75,
-        'feature_fraction': 0.75,
+        'feature_fraction': 0.7,
         'lambda_l1': 0.01,
         'lambda_l2': 0.01,
-        'min_gain_to_split': 1.0,
+        'min_gain_to_split': 4.0,
         'max_bin': 255,
         'verbose': -1,
         'early_stopping_rounds': 100,
@@ -173,7 +173,7 @@ if __name__ == "__main__":
         # Export
         if TRAIN_IF:
             infer_pred["label"] = infer_pred["label"].map(lambda x: 1 if x >= 0.3 else 0)
-            infer_pred[["phone_no_m", "label"]].to_csv("submit_0627.csv", index=False)
+            infer_pred[["phone_no_m", "label"]].to_csv("submit_0629.csv", index=False)
 
     # 贝叶斯参数优化
     Feature_Opt = 0
