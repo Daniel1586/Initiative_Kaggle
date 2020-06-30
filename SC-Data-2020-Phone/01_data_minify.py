@@ -363,11 +363,11 @@ if __name__ == "__main__":
     df_tests = df_tol[df_tol["label"].isnull()]
 
     print("\n========== 4.ETL train data ...\n")
-    # etl_train = df_train[(df_train["total_voc_cnt"].notnull()) |
-    #                      (df_train["total_sms_cnt"].notnull())]
-    # etl_tests = df_tests[(df_tests["total_voc_cnt"].notnull()) |
-    #                      (df_tests["total_sms_cnt"].notnull())]
-    print("\n----- df_train 大小:", df_train.shape)
-    print("----- df_tests 大小:", df_tests.shape)
-    df_train.to_csv("data_train.csv", sep=",", index=False, header=True)
-    df_tests.to_csv("data_tests.csv", sep=",", index=False, header=True)
+    etl_train = df_train[(df_train["total_voc_cnt"].notnull()) |
+                         (df_train["total_sms_cnt"].notnull())]
+    etl_tests = df_tests[(df_tests["total_voc_cnt"].notnull()) |
+                         (df_tests["total_sms_cnt"].notnull())]
+    print("\n----- df_train 大小:", etl_train.shape)
+    print("----- df_tests 大小:", etl_tests.shape)
+    etl_train.to_csv("data_train.csv", sep=",", index=False, header=True)
+    etl_tests.to_csv("data_tests.csv", sep=",", index=False, header=True)
