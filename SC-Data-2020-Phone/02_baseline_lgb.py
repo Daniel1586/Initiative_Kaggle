@@ -103,11 +103,15 @@ if __name__ == "__main__":
             infer_df[col] = infer_df[col].astype("category")
 
     # Model Features
-    # city_name/call_dur_median/call_dur_min/voc_oppo_cntR
-    # ---------/sms_days_max/sms_days_min/app_flow_median/voc_days_max
-    # ---------/------------/voc_days_dur_mean/sms_01_unique/sms_hour_min
-    rm_cols = ["phone_no_m", TARGET,
-               ]
+    # "call_dur_var", "voc_days_var", "voc_days_dur_var", "voc_hour_var",
+    # "voc_hour_dur_var", "voc_week_var", "voc_week_dur_var", "voc_oppo_var",
+    # "voc_oppo_dur_var", "sms_days_var", "sms_hour_var", "sms_week_var",
+    # "app_flow_var",
+    # "call_dur_median", "voc_days_median", "voc_days_dur_median", "voc_hour_median",
+    # "voc_hour_dur_median", "voc_week_median", "voc_week_dur_median", "voc_oppo_median",
+    # "voc_oppo_dur_median", "sms_days_median", "sms_hour_median", "sms_week_median",
+    # "app_flow_median"
+    rm_cols = ["phone_no_m", TARGET]
     features_cols = [col for col in list(train_df) if col not in rm_cols]
 
     # Model params
@@ -117,7 +121,7 @@ if __name__ == "__main__":
         'metric': 'auc',
         'tree_learner': 'serial',
         'seed': SEED,
-        'n_estimators': 400,
+        'n_estimators': 300,
         'learning_rate': 0.02,
         'max_depth': 5,
         'num_leaves': 24,
@@ -127,7 +131,7 @@ if __name__ == "__main__":
         'feature_fraction': 0.7,
         'lambda_l1': 0.01,
         'lambda_l2': 0.01,
-        'min_gain_to_split': 4.0,
+        'min_gain_to_split': 5.0,
         'max_bin': 255,
         'verbose': -1,
         'early_stopping_rounds': 100,
@@ -173,7 +177,7 @@ if __name__ == "__main__":
         # Export
         if TRAIN_IF:
             infer_pred["label"] = infer_pred["label"].map(lambda x: 1 if x >= 0.3 else 0)
-            infer_pred[["phone_no_m", "label"]].to_csv("submit_0629.csv", index=False)
+            infer_pred[["phone_no_m", "label"]].to_csv("submit_0630.csv", index=False)
 
     # 贝叶斯参数优化
     Feature_Opt = 0
