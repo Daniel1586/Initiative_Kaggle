@@ -75,7 +75,7 @@ def make_predictions(tr_df, tt_df, features_columns, target, params, nfold=2):
 
 if __name__ == "__main__":
     print("========== 1.Set random seed ...")
-    SEED = 42
+    SEED = 32
     set_seed(SEED)
 
     print("========== 2.Load csv data ...")
@@ -103,15 +103,12 @@ if __name__ == "__main__":
             infer_df[col] = infer_df[col].astype("category")
 
     # Model Features
-    # "call_dur_var", "voc_days_var", "voc_days_dur_var", "voc_hour_var",
-    # "voc_hour_dur_var", "voc_week_var", "voc_week_dur_var", "voc_oppo_var",
-    # "voc_oppo_dur_var", "sms_days_var", "sms_hour_var", "sms_week_var",
-    # "app_flow_var",
     # "call_dur_median", "voc_days_median", "voc_days_dur_median", "voc_hour_median",
     # "voc_hour_dur_median", "voc_week_median", "voc_week_dur_median", "voc_oppo_median",
     # "voc_oppo_dur_median", "sms_days_median", "sms_hour_median", "sms_week_median",
     # "app_flow_median"
-    rm_cols = ["phone_no_m", TARGET]
+    rm_cols = ["phone_no_m", TARGET,
+               ]
     features_cols = [col for col in list(train_df) if col not in rm_cols]
 
     # Model params
@@ -177,7 +174,7 @@ if __name__ == "__main__":
         # Export
         if TRAIN_IF:
             infer_pred["label"] = infer_pred["label"].map(lambda x: 1 if x >= 0.3 else 0)
-            infer_pred[["phone_no_m", "label"]].to_csv("submit_0630.csv", index=False)
+            infer_pred[["phone_no_m", "label"]].to_csv("submit_0701.csv", index=False)
 
     # 贝叶斯参数优化
     Feature_Opt = 0
@@ -213,7 +210,7 @@ if __name__ == "__main__":
                 'feature_fraction': round(p7, 2),
                 'lambda_l1': round(p8, 2),
                 'lambda_l2': round(p9, 2),
-                'min_gain_to_split': 10.0,
+                'min_gain_to_split': 5.0,
                 'max_bin': 255,
                 'verbose': -1,
                 'early_stopping_rounds': 100,
