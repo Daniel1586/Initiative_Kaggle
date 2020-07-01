@@ -130,7 +130,7 @@ def etl_voc(path_tr, path_te):
     # 每个号码--通话时长的max/min/sum/mean/median/var
     tmp = tol_voc.groupby("phone_no_m")["call_dur"].agg(call_dur_max="max", call_dur_min="min",
                                                         call_dur_sum="sum", call_dur_mean="mean",
-                                                        call_dur_median="median", call_dur_var="var")
+                                                        call_dur_median="median")
     phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
 
     # 每个号码--每天[0-31]通话次数的max/min/sum/mean/median/var
@@ -138,7 +138,7 @@ def etl_voc(path_tr, path_te):
     tmp_voc = tol_voc.drop_duplicates(subset=["phone_no_m", "voc_day"], keep="first")
     tmp = tmp_voc.groupby("phone_no_m")["voc_days_cnt"].agg(voc_days_max="max", voc_days_min="min",
                                                             voc_days_sum="sum", voc_days_mean="mean",
-                                                            voc_days_median="median", voc_days_var="var")
+                                                            voc_days_median="median")
     phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
 
     # 每个号码--每天[0-31]通话时长的max/min/sum/mean/median/var
@@ -146,7 +146,7 @@ def etl_voc(path_tr, path_te):
     tmp_voc = tol_voc.drop_duplicates(subset=["phone_no_m", "voc_day"], keep="first")
     tmp = tmp_voc.groupby("phone_no_m")["voc_days_dur"].agg(voc_days_dur_max="max", voc_days_dur_min="min",
                                                             voc_days_dur_sum="sum", voc_days_dur_mean="mean",
-                                                            voc_days_dur_median="median", voc_days_dur_var="var")
+                                                            voc_days_dur_median="median")
     phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
 
     # 每个号码--每小时[0-23]通话次数的max/min/sum/mean/median/var
@@ -154,7 +154,7 @@ def etl_voc(path_tr, path_te):
     tmp_voc = tol_voc.drop_duplicates(subset=["phone_no_m", "voc_hour"], keep="first")
     tmp = tmp_voc.groupby("phone_no_m")["voc_hour_cnt"].agg(voc_hour_max="max", voc_hour_min="min",
                                                             voc_hour_sum="sum", voc_hour_mean="mean",
-                                                            voc_hour_median="median", voc_hour_var="var")
+                                                            voc_hour_median="median")
     phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
 
     # 每个号码--每小时[0-23]通话时长的max/min/sum/mean/median/var
@@ -162,7 +162,7 @@ def etl_voc(path_tr, path_te):
     tmp_voc = tol_voc.drop_duplicates(subset=["phone_no_m", "voc_hour"], keep="first")
     tmp = tmp_voc.groupby("phone_no_m")["voc_hour_dur"].agg(voc_hour_dur_max="max", voc_hour_dur_min="min",
                                                             voc_hour_dur_sum="sum", voc_hour_dur_mean="mean",
-                                                            voc_hour_dur_median="median", voc_hour_dur_var="var")
+                                                            voc_hour_dur_median="median")
     phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
 
     # 每个号码--每天[0-6]通话次数的max/min/sum/mean/median/var
@@ -170,7 +170,7 @@ def etl_voc(path_tr, path_te):
     tmp_voc = tol_voc.drop_duplicates(subset=["phone_no_m", "voc_week"], keep="first")
     tmp = tmp_voc.groupby("phone_no_m")["voc_week_cnt"].agg(voc_week_max="max", voc_week_min="min",
                                                             voc_week_sum="sum", voc_week_mean="mean",
-                                                            voc_week_median="median", voc_week_var="var")
+                                                            voc_week_median="median")
     phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
 
     # 每个号码--每天[0-6]通话时长的max/min/sum/mean/median/var
@@ -178,7 +178,7 @@ def etl_voc(path_tr, path_te):
     tmp_voc = tol_voc.drop_duplicates(subset=["phone_no_m", "voc_week"], keep="first")
     tmp = tmp_voc.groupby("phone_no_m")["voc_week_dur"].agg(voc_week_dur_max="max", voc_week_dur_min="min",
                                                             voc_week_dur_sum="sum", voc_week_dur_mean="mean",
-                                                            voc_week_dur_median="median", voc_week_dur_var="var")
+                                                            voc_week_dur_median="median")
     phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
 
     # 每个号码--每个通话对象通话次数的max/min/sum/mean/median/var
@@ -186,7 +186,7 @@ def etl_voc(path_tr, path_te):
     tmp_voc = tol_voc.drop_duplicates(subset=["phone_no_m", "opposite_no_m"], keep="first")
     tmp = tmp_voc.groupby("phone_no_m")["voc_oppo_cnt"].agg(voc_oppo_max="max", voc_oppo_min="min",
                                                             voc_oppo_sum="sum", voc_oppo_mean="mean",
-                                                            voc_oppo_median="median", voc_oppo_var="var")
+                                                            voc_oppo_median="median")
     phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
 
     # 每个号码--每个通话对象通话时长的max/min/sum/mean/median/var
@@ -194,7 +194,7 @@ def etl_voc(path_tr, path_te):
     tmp_voc = tol_voc.drop_duplicates(subset=["phone_no_m", "opposite_no_m"], keep="first")
     tmp = tmp_voc.groupby("phone_no_m")["voc_oppo_dur"].agg(voc_oppo_dur_max="max", voc_oppo_dur_min="min",
                                                             voc_oppo_dur_sum="sum", voc_oppo_dur_mean="mean",
-                                                            voc_oppo_dur_median="median", voc_oppo_dur_var="var")
+                                                            voc_oppo_dur_median="median")
     phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
 
     # 每个号码--通话地市个数(不重复)
@@ -260,7 +260,7 @@ def etl_sms(path_tr, path_te):
     tmp_sms = tol_sms.drop_duplicates(subset=["phone_no_m", "sms_day"], keep="first")
     tmp = tmp_sms.groupby("phone_no_m")["sms_days_cnt"].agg(sms_days_max="max", sms_days_min="min",
                                                             sms_days_sum="sum", sms_days_mean="mean",
-                                                            sms_days_median="median", sms_days_var="var")
+                                                            sms_days_median="median")
     phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
 
     # 每个号码--每小时[0-23]短信次数的max/min/sum/mean/median/var
@@ -268,7 +268,7 @@ def etl_sms(path_tr, path_te):
     tmp_sms = tol_sms.drop_duplicates(subset=["phone_no_m", "sms_hour"], keep="first")
     tmp = tmp_sms.groupby("phone_no_m")["sms_hour_cnt"].agg(sms_hour_max="max", sms_hour_min="min",
                                                             sms_hour_sum="sum", sms_hour_mean="mean",
-                                                            sms_hour_median="median", sms_hour_var="var")
+                                                            sms_hour_median="median")
     phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
 
     # 每个号码--每天[0-6]通话次数的max/min/sum/mean/median/var
@@ -276,7 +276,7 @@ def etl_sms(path_tr, path_te):
     tmp_sms = tol_sms.drop_duplicates(subset=["phone_no_m", "sms_week"], keep="first")
     tmp = tmp_sms.groupby("phone_no_m")["sms_week_cnt"].agg(sms_week_max="max", sms_week_min="min",
                                                             sms_week_sum="sum", sms_week_mean="mean",
-                                                            sms_week_median="median", sms_week_var="var")
+                                                            sms_week_median="median")
     phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
 
     # 每个号码--短信上行01 短信次数/短信的人数(不重复)--相应的占比
@@ -316,7 +316,7 @@ def etl_app(path_tr, path_te):
     # 每个号码--流量max/min/sum/mean/median/var
     tmp = tol_app.groupby("phone_no_m")["flow"].agg(app_flow_max="max", app_flow_min="min",
                                                     app_flow_sum="sum", app_flow_mean="mean",
-                                                    app_flow_median="median", app_flow_var="var")
+                                                    app_flow_median="median")
     phone_no_m = phone_no_m.merge(tmp, on="phone_no_m", how="left")
 
     # 每个号码--最大流量的APP
