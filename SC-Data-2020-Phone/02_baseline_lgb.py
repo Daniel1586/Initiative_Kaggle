@@ -103,10 +103,6 @@ if __name__ == "__main__":
             infer_df[col] = infer_df[col].astype("category")
 
     # Model Features
-    # "call_dur_median", "voc_days_median", "voc_days_dur_median", "voc_hour_median",
-    # "voc_hour_dur_median", "voc_week_median", "voc_week_dur_median", "voc_oppo_median",
-    # "voc_oppo_dur_median", "sms_days_median", "sms_hour_median", "sms_week_median",
-    # "app_flow_median"
     rm_cols = ["phone_no_m", TARGET,
                ]
     features_cols = [col for col in list(train_df) if col not in rm_cols]
@@ -122,7 +118,7 @@ if __name__ == "__main__":
         'learning_rate': 0.02,
         'max_depth': 5,
         'num_leaves': 24,
-        'min_data_in_leaf': 24,
+        'min_data_in_leaf': 32,
         'bagging_freq': 1,
         'bagging_fraction': 0.75,
         'feature_fraction': 0.7,
@@ -174,7 +170,7 @@ if __name__ == "__main__":
         # Export
         if TRAIN_IF:
             infer_pred["label"] = infer_pred["label"].map(lambda x: 1 if x >= 0.3 else 0)
-            infer_pred[["phone_no_m", "label"]].to_csv("submit_0701.csv", index=False)
+            infer_pred[["phone_no_m", "label"]].to_csv("submit_0702.csv", index=False)
 
     # 贝叶斯参数优化
     Feature_Opt = 0
