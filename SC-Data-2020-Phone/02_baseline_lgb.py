@@ -103,8 +103,7 @@ if __name__ == "__main__":
             infer_df[col] = infer_df[col].astype("category")
 
     # Model Features
-    rm_cols = ["phone_no_m", TARGET,
-               "county_name", "voc_week_dur_min", "voc_days_max", ]
+    rm_cols = ["phone_no_m", TARGET, ]
     features_cols = [col for col in list(train_df) if col not in rm_cols]
 
     # Model params
@@ -150,7 +149,7 @@ if __name__ == "__main__":
         data_name = ["idx", "feature", "OOF_AUC", "OOF_F1"]
         data_res = pd.DataFrame(columns=data_name, data=data_list)
         data_etl = data_res.sort_values(by=["OOF_AUC", "OOF_F1"], axis=0, ascending=False)
-        data_etl.round({"OOF_AUC": 4, "OOF_F1": 4}).to_csv("feat_eva.csv", sep=",", index=False, header=True)
+        data_etl.round({"OOF_AUC": 3, "OOF_F1": 3}).to_csv("feat_eva.csv", sep=",", index=False, header=True)
 
     # 模型训练
     TRAIN_CV = 1
@@ -170,7 +169,7 @@ if __name__ == "__main__":
         # Export
         if TRAIN_IF:
             infer_pred["label"] = infer_pred["label"].map(lambda x: 1 if x >= 0.3 else 0)
-            infer_pred[["phone_no_m", "label"]].to_csv("submit_0706.csv", index=False)
+            infer_pred[["phone_no_m", "label"]].to_csv("submit_0707.csv", index=False)
 
     # 贝叶斯参数优化
     Feature_Opt = 0
