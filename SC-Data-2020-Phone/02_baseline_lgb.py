@@ -103,7 +103,8 @@ if __name__ == "__main__":
             infer_df[col] = infer_df[col].astype("category")
 
     # Model Features
-    rm_cols = ["phone_no_m", TARGET,]
+    rm_cols = ["phone_no_m", TARGET,
+               "county_name", "voc_week_dur_min", "voc_days_max", ]
     features_cols = [col for col in list(train_df) if col not in rm_cols]
 
     # Model params
@@ -137,7 +138,7 @@ if __name__ == "__main__":
             feat_eva = deepcopy(features_cols)
             del feat_eva[i]
             print(i, len(feat_eva))
-            _, valid_pred = make_predictions(train_df, infer_df, feat_eva, TARGET, lgb_params, nfold=6)
+            _, valid_pred = make_predictions(train_df, infer_df, feat_eva, TARGET, lgb_params, nfold=5)
             valid_df = pd.concat(valid_pred)
             fpr, tpr, _ = metrics.roc_curve(valid_df[TARGET], valid_df["pred"])
             valid_auc = metrics.auc(fpr, tpr)
@@ -169,7 +170,7 @@ if __name__ == "__main__":
         # Export
         if TRAIN_IF:
             infer_pred["label"] = infer_pred["label"].map(lambda x: 1 if x >= 0.3 else 0)
-            infer_pred[["phone_no_m", "label"]].to_csv("submit_0705.csv", index=False)
+            infer_pred[["phone_no_m", "label"]].to_csv("submit_0706.csv", index=False)
 
     # 贝叶斯参数优化
     Feature_Opt = 0
