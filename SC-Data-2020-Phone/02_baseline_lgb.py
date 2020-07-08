@@ -36,25 +36,19 @@ def set_seed(seed=0):
     np.random.seed(seed)
 
 
-def make_predictions(tr_df, tt_df, features_columns, target, params, nfold=2):
-    # K折交叉验证
+def model_cv(tr_df, in_df, features_columns, target, params, nfold=5):
     folds = StratifiedKFold(n_splits=nfold, shuffle=True, random_state=SEED)
-
-    # 数据集划分
     train_x, train_y = tr_df[features_columns], tr_df[target]
-    infer_x, infer_y = tt_df[features_columns], tt_df[target]
+    infer_x, infer_y = in_df[features_columns], in_df[target]
 
-    # 测试集和验证集处理
     va_df = []
-    tt_df = tt_df[["phone_no_m"]]
-    predictions = np.zeros(len(tt_df))
-
-    # 模型训练与预测
+    in_df = in_df[["phone_no_m"]]
+    preds = np.zeros(len(in_df))
     for fold_, (tra_idx, val_idx) in enumerate(folds.split(train_x, train_y)):
-        print("-----Fold:", fold_)
+        print("---------- Fold:", fold_)
         tr_x, tr_y = train_x.iloc[tra_idx, :], train_y[tra_idx]
         vl_x, vl_y = train_x.iloc[val_idx, :], train_y[val_idx]
-        print("-----Train num:", len(tr_x), "Valid num:", len(vl_x))
+        print("---------- Train num:", len(tr_x), "Valid num:", len(vl_x))
         tr_data = lgb.Dataset(tr_x, label=tr_y)
         vl_data = lgb.Dataset(vl_x, label=vl_y)
         vl_fold = deepcopy(tr_df.iloc[val_idx, :][["phone_no_m", target]])
@@ -62,15 +56,15 @@ def make_predictions(tr_df, tt_df, features_columns, target, params, nfold=2):
         estimator = lgb.train(params, tr_data, valid_sets=[tr_data, vl_data], verbose_eval=50)
         valid_p = estimator.predict(vl_x)
         infer_p = estimator.predict(infer_x)
-        predictions += infer_p / nfold
+        preds += infer_p / nfold
         vl_fold["pred"] = valid_p
         va_df.append(vl_fold)
         del tr_x, tr_y, vl_x, vl_y, tr_data, vl_data, vl_fold
         gc.collect()
 
-    tt_df["label"] = predictions
+    in_df["label"] = preds
 
-    return tt_df, va_df
+    return in_df, va_df
 
 
 if __name__ == "__main__":
@@ -137,7 +131,7 @@ if __name__ == "__main__":
             feat_eva = deepcopy(features_cols)
             del feat_eva[i]
             print(i, len(feat_eva))
-            _, valid_pred = make_predictions(train_df, infer_df, feat_eva, TARGET, lgb_params, nfold=5)
+            _, valid_pred = model_cv(train_df, infer_df, feat_eva, TARGET, lgb_params, nfold=5)
             valid_df = pd.concat(valid_pred)
             fpr, tpr, _ = metrics.roc_curve(valid_df[TARGET], valid_df["pred"])
             valid_auc = metrics.auc(fpr, tpr)
@@ -157,7 +151,7 @@ if __name__ == "__main__":
     if TRAIN_CV:
         print("===== Used feature len:", len(features_cols))
         print("===== Used feature list:", features_cols)
-        infer_pred, valid_pred = make_predictions(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=5)
+        infer_pred, valid_pred = model_cv(train_df, infer_df, features_cols, TARGET, lgb_params, nfold=5)
         valid_df = pd.concat(valid_pred)
         fpr, tpr, _ = metrics.roc_curve(valid_df[TARGET], valid_df["pred"])
         valid_auc = metrics.auc(fpr, tpr)
@@ -169,7 +163,7 @@ if __name__ == "__main__":
         # Export
         if TRAIN_IF:
             infer_pred["label"] = infer_pred["label"].map(lambda x: 1 if x >= 0.3 else 0)
-            infer_pred[["phone_no_m", "label"]].to_csv("submit_0707.csv", index=False)
+            infer_pred[["phone_no_m", "label"]].to_csv("submit_0708.csv", index=False)
 
     # 贝叶斯参数优化
     Feature_Opt = 0
